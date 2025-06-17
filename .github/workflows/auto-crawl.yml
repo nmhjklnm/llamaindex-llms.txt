@@ -17,6 +17,7 @@ jobs:
     outputs:
       version: ${{ steps.get-version.outputs.version }}
       should-crawl: ${{ steps.compare-version.outputs.should-crawl }}
+      last-version: ${{ steps.get-last-version.outputs.last-version }}
     
     steps:
     - name: Checkout
@@ -87,19 +88,16 @@ jobs:
         crawl4ai-doctor
 
     - name: Archive previous version
-      if: needs.check-version.outputs.version != ''
+      if: needs.check-version.outputs.last-version != ''
       run: |
         python -c "
         import sys
         sys.path.append('.')
         from main import archive_version
-        import os
         
-        if os.path.exists('LAST_VERSION'):
-            with open('LAST_VERSION', 'r') as f:
-                last_version = f.read().strip()
-            if last_version:
-                archive_version(last_version)
+        last_version = '${{ needs.check-version.outputs.last-version }}'
+        if last_version:
+            archive_version(last_version)
         "
 
     - name: Run crawler

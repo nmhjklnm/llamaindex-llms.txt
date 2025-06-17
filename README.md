@@ -53,10 +53,6 @@ llms.txt                    # Latest combined documentation dataset
 versions/
   └── v0.10.0/
       ├── llms.txt         # Archived version dataset
-      └── *.md             # Individual markdown files
-latest/
-  └── *.md                 # Current version individual files
-LAST_VERSION               # Version tracking file
 ```
 
 ## 🚀 Usage
