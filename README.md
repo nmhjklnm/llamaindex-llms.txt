@@ -1,4 +1,4 @@
-# 🚀 LlamaIndex llms.txt Dataset Creator
+# 🚀 LlamaIndex llms.txt
 
 > High-quality, clean documentation dataset for LlamaIndex
 
