@@ -1,0 +1,146 @@
+name: LlamaIndex Documentation Auto-Crawl
+
+on:
+  schedule:
+    # Check for updates daily at 6 AM UTC
+    - cron: '0 6 * * *'
+  workflow_dispatch:
+    inputs:
+      force_crawl:
+        description: 'Force crawl even if version unchanged'
+        type: boolean
+        default: false
+
+jobs:
+  check-version:
+    runs-on: ubuntu-latest
+    outputs:
+      version: ${{ steps.get-version.outputs.version }}
+      should-crawl: ${{ steps.compare-version.outputs.should-crawl }}
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
+
+    - name: Get LlamaIndex version
+      id: get-version
+      run: |
+        # Get version from PyPI API
+        VERSION=$(curl -s https://pypi.org/pypi/llama-index/json | jq -r '.info.version')
+        echo "version=$VERSION" >> $GITHUB_OUTPUT
+        echo "Current LlamaIndex version: $VERSION"
+
+    - name: Get last crawled version
+      id: get-last-version
+      run: |
+        if [ -f "LAST_VERSION" ]; then
+          LAST_VERSION=$(cat LAST_VERSION)
+          echo "last-version=$LAST_VERSION" >> $GITHUB_OUTPUT
+          echo "Last crawled version: $LAST_VERSION"
+        else
+          echo "last-version=" >> $GITHUB_OUTPUT
+          echo "No previous version found"
+        fi
+
+    - name: Compare versions
+      id: compare-version
+      run: |
+        CURRENT="${{ steps.get-version.outputs.version }}"
+        LAST="${{ steps.get-last-version.outputs.last-version }}"
+        FORCE="${{ github.event.inputs.force_crawl }}"
+        
+        if [ "$FORCE" = "true" ] || [ "$CURRENT" != "$LAST" ]; then
+          echo "should-crawl=true" >> $GITHUB_OUTPUT
+          echo "Will crawl: version changed or forced"
+        else
+          echo "should-crawl=false" >> $GITHUB_OUTPUT
+          echo "Skip crawl: version unchanged"
+        fi
+
+  crawl-docs:
+    needs: check-version
+    if: needs.check-version.outputs.should-crawl == 'true'
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v4
+
+    - name: Set up Python
+      uses: actions/setup-python@v4
+      with:
+        python-version: '3.11'
+
+    - name: Install crawl4ai
+      run: |
+        pip install crawl4ai
+        crawl4ai-setup
+
+    - name: Install additional dependencies
+      run: |
+        pip install pathlib
+
+    - name: Verify installation
+      run: |
+        crawl4ai-doctor
+
+    - name: Archive previous version
+      if: needs.check-version.outputs.version != ''
+      run: |
+        python -c "
+        import sys
+        sys.path.append('.')
+        from main import archive_version
+        import os
+        
+        if os.path.exists('LAST_VERSION'):
+            with open('LAST_VERSION', 'r') as f:
+                last_version = f.read().strip()
+            if last_version:
+                archive_version(last_version)
+        "
+
+    - name: Run crawler
+      run: |
+        python main.py
+
+    - name: Update version file
+      run: |
+        echo "${{ needs.check-version.outputs.version }}" > LAST_VERSION
+
+    - name: Commit and push changes
+      run: |
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        git add .
+        
+        if git diff --staged --quiet; then
+          echo "No changes to commit"
+        else
+          git commit -m "🤖 Auto-crawl LlamaIndex docs v${{ needs.check-version.outputs.version }}"
+          git push
+        fi
+
+    - name: Create release
+      if: needs.check-version.outputs.version != ''
+      uses: actions/create-release@v1
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      with:
+        tag_name: v${{ needs.check-version.outputs.version }}
+        release_name: LlamaIndex Docs v${{ needs.check-version.outputs.version }}
+        body: |
+          Automated crawl of LlamaIndex documentation
+          
+          Version: ${{ needs.check-version.outputs.version }}
+          
+          Files updated:
+          - `llms.txt` - Latest combined documentation
+          - `versions/v${{ needs.check-version.outputs.version }}/` - Archived version
+          
+          Total files processed: See commit for details
+        draft: false
+        prerelease: false

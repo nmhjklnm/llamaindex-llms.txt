@@ -10,34 +10,8 @@ This project creates a curated `llms.txt` dataset from LlamaIndex documentation 
 
 ### 1. Basic Installation
 ```bash
-pip install crawl4ai
-```
-
-### 2. Initial Setup and Diagnostics
-After installation, run the setup command:
-```bash
+pip install crawl4ai pathlib
 crawl4ai-setup
-```
-
-This will:
-- Install or update required Playwright browsers (Chromium, Firefox, etc.)
-- Perform OS-level checks (e.g., missing libraries on Linux)
-- Confirm your environment is ready for crawling
-
-### 3. Diagnostics
-Optionally, run the diagnostic to confirm everything works:
-```bash
-crawl4ai-doctor
-```
-
-This command checks:
-- Python version compatibility
-- Playwright installation verification
-- Environment variables or library conflicts
-
-### 4. Additional Dependencies
-```bash
-pip install pathlib
 ```
 
 ## 🤖 Automated GitHub Actions
@@ -70,24 +44,7 @@ You can also trigger crawling manually via GitHub Actions UI with a "force crawl
 - **llms.txt**: Combined dataset of all quality documentation
 - **Versioned Archives**: Historical versions preserved in `versions/v{version}/`
 - **Statistics Tracking**: Detailed reports on filtering results
-
-## 📊 Quality Metrics
-
-The pipeline tracks and reports:
-- Total files processed
-- 404 pages detected and removed
-- Short content files filtered out
-- Empty content detection
-- Version change monitoring
-
-## 🎯 Key Features
-
-- **Intelligent URL Filtering**: Focuses on LlamaIndex documentation, excludes unwanted patterns
-- **Multi-layer Validation**: Content quality verified at multiple stages
-- **Encoding Safety**: Handles various text encodings properly
-- **Automated Version Management**: Tracks and archives different documentation versions
-- **Progress Tracking**: Real-time processing updates
-- **GitHub Integration**: Fully automated CI/CD pipeline
+- 
 
 ## 📁 Output Structure
 
@@ -117,9 +74,4 @@ The workflow runs automatically:
 
 Perfect for maintaining up-to-date, clean LlamaIndex documentation datasets for language model training! 🎉
 
-## 📋 Requirements
 
-- Python 3.11+
-- crawl4ai
-- pathlib
-- GitHub repository with Actions enabled
