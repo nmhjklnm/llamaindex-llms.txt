@@ -10,7 +10,8 @@ Alibaba Cloud OpenSearch | cloud | ✓ |  | ✓ | ✓ | ✓
 Apache Cassandra® | self-hosted / cloud | ✓ |  | ✓ | ✓ |   
 Astra DB | cloud | ✓ |  | ✓ | ✓ |   
 Azure AI Search | cloud | ✓ | ✓ | ✓ | ✓ |   
-Azure CosmosDB MongoDB | cloud |  |  | ✓ | ✓ |   
+Azure CosmosDB Mongo vCore | cloud |  |  | ✓ | ✓ |   
+Azure CosmosDB NoSql | cloud |  |  | ✓ | ✓ |   
 BaiduVectorDB | cloud | ✓ | ✓ |  | ✓ |   
 ChatGPT Retrieval Plugin | aggregator |  |  | ✓ | ✓ |   
 Chroma | self-hosted | ✓ |  | ✓ | ✓ |   
@@ -62,7 +63,8 @@ For more details, see Vector Store Integrations.
   * Astra DB
   * Async Index Creation
   * Azure AI Search
-  * Azure Cosmos DB
+  * Azure Cosmos DB Mongo vCore
+  * Azure Cosmos DB NoSql
   * Baidu
   * Caasandra
   * Chromadb

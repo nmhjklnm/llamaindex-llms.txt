@@ -42,6 +42,7 @@ Calling this agent kicks off a specific loop of actions:
     * The Agent is invoked again with updated history, and either responds directly or selects more calls
 
 
+The `FunctionAgent` is a type of agent that uses an LLM provider's function/tool calling capabilities to execute tools. Other types of agents, such as `ReActAgent` and `CodeActAgent`, use different prompting strategies to execute tools.
 ## Tools#
 Tools can be defined simply as python functions, or further customized using classes like `FunctionTool` and `QueryEngineTool`. LlamaIndex also provides sets of pre-defined tools for common APIs using something called `Tool Specs`.
 You can read more about configuring tools in the tools guide
@@ -104,7 +105,7 @@ resp = await agent.run("query")
 
 ```
 
-Read on to learn more about multi-agent systems.
+This is only one way to build multi-agent systems. Read on to learn more about multi-agent systems.
 ## Manual Agents#
 While the agent classes like `FunctionAgent`, `ReActAgent`, `CodeActAgent`, and `AgentWorkflow` abstract away a lot of details, sometimes its desirable to build your own lower-level agents.
 Using the `LLM` objects directly, you can quickly implement a basic agent loop, while having full control over how the tool calling and error handling works.

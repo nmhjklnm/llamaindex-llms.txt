@@ -1,5 +1,5 @@
 ![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)
-# ReAct Agent - A Simple Intro with Calculator Tools¶
+# ReActAgent - A Simple Intro with Calculator Tools¶
 This is a notebook that showcases the ReAct agent over very simple calculator tools (no fancy RAG pipelines or API calls).
 We show how it can reason step-by-step over different tools to achieve the end goal.
 The main advantage of the ReAct agent over a Function Calling agent is that it can work with any LLM regardless of whether it supports function calling.

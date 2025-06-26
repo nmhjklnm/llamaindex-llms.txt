@@ -12,6 +12,8 @@ LlamaIndex also supports different vector stores as the storage backend for `Vec
   * Astra DB (`AstraDBVectorStore`). Quickstart.
   * AWS Document DB (`AWSDocDbVectorStore`). Quickstart.
   * Azure AI Search (`AzureAISearchVectorStore`). Quickstart
+  * Azure Cosmos DB Mongo vCore(`AzureCosmosDBMongoDBVectorSearch`). Quickstart
+  * Azure Cosmos DB NoSql (`AzureCosmosDBNoSqlVectorSearch`). Quickstart
   * Chroma (`ChromaVectorStore`) Installation
   * ClickHouse (`ClickHouseVectorStore`) Installation
   * Couchbase (`CouchbaseSearchVectorStore`) Installation
@@ -224,6 +226,75 @@ vector_store = AzureAISearchVectorStore(
     search_or_index_client=client,
     index_name=index_name,
     embedding_dimensionality=1536,
+)
+
+```
+
+**Azure CosmosDB Mongo vCore**
+```
+import pymongo
+import os
+from llama_index.vector_stores.azurecosmosmongo import (
+    AzureCosmosDBMongoDBVectorSearch,
+)
+
+# Set up the connection string with your Azure CosmosDB MongoDB URI
+connection_string = os.getenv("YOUR_AZURE_COSMOSDB_MONGODB_URI")
+mongodb_client = pymongo.MongoClient(connection_string)
+
+# Create an instance of AzureCosmosDBMongoDBVectorSearch
+vector_store = AzureCosmosDBMongoDBVectorSearch(
+    mongodb_client=mongodb_client,
+    db_name="demo_vectordb",
+    collection_name="paul_graham_essay",
+)
+
+```
+
+**Azure CosmosDB NoSql**
+```
+from azure.cosmos import CosmosClient, PartitionKey
+import os
+from llama_index.vector_stores.azurecosmosnosql import (
+    AzureCosmosDBNoSqlVectorSearch,
+)
+
+URL = os.getenv("AZURE_COSMOSDB_URI")
+KEY = os.getenv("AZURE_COSMOSDB_KEY")
+database_name = "test_database"
+container_name = "test_container"
+test_client = CosmosClient(URL, credential=KEY)
+
+indexing_policy = {
+    "indexingMode": "consistent",
+    "includedPaths": [{"path": "/*"}],
+    "excludedPaths": [{"path": '/"_etag"/?'}],
+    "vectorIndexes": [{"path": "/embedding", "type": "quantizedFlat"}],
+}
+
+vector_embedding_policy = {
+    "vectorEmbeddings": [
+        {
+            "path": "/embedding",
+            "dataType": "float32",
+            "distanceFunction": "cosine",
+            "dimensions": 1536,
+        }
+    ]
+}
+
+partition_key = PartitionKey(path="/id")
+cosmos_container_properties_test = {"partition_key": partition_key}
+cosmos_database_properties_test = {}
+
+vector_store = AzureCosmosDBNoSqlVectorSearch(
+    cosmos_client=test_client,
+    vector_embedding_policy=vector_embedding_policy,
+    indexing_policy=indexing_policy,
+    database_name=database_name,
+    container_name=container_name,
+    cosmos_database_properties=cosmos_database_properties_test,
+    cosmos_container_properties=cosmos_container_properties_test,
 )
 
 ```

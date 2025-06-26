@@ -2068,7 +2068,7 @@ Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
 `reasoning_key` |  `str` |  |  `'current_reasoning'`  
-`output_parser` |  `ReActOutputParser` |  The react output parser |  `<llama_index.core.agent.react.output_parser.ReActOutputParser object at 0x7f426a13f1a0>`  
+`output_parser` |  `ReActOutputParser` |  The react output parser |  `<llama_index.core.agent.react.output_parser.ReActOutputParser object at 0x73a61972c740>`  
 `formatter` |  `ReActChatFormatter` |  The react chat formatter to format the reasoning steps and chat history into an llm input. |  `<dynamic>`  
 Source code in `llama-index-core/llama_index/core/agent/workflow/react_agent.py`
 
@@ -2084,6 +2084,22 @@ class ReActAgent(BaseWorkflowAgent):
         default_factory=default_formatter,
         description="The react chat formatter to format the reasoning steps and chat history into an llm input.",
     )
+
+    @model_validator(mode="after")
+    def validate_formatter(self) -> "ReActAgent":
+        """Validate the formatter."""
+        if (
+            self.formatter.context
+            and self.system_prompt
+            and self.system_prompt not in self.formatter.context
+        ):
+            self.formatter.context = (
+                self.system_prompt + "\n\n" + self.formatter.context.strip()
+            )
+        elif not self.formatter.context and self.system_prompt:
+            self.formatter.context = self.system_prompt
+
+        return self
 
     def _get_prompts(self) -> PromptDictType:
         """Get prompts."""
@@ -2117,7 +2133,6 @@ class ReActAgent(BaseWorkflowAgent):
 
         output_parser = self.output_parser
         react_chat_formatter = self.formatter
-        react_chat_formatter.context = system_prompt
 
         # Format initial chat input
         current_reasoning: list[BaseReasoningStep] = await ctx.get(
@@ -2278,6 +2293,35 @@ class ReActAgent(BaseWorkflowAgent):
 ```
   
 ---|---  
+###  validate_formatter #
+```
+validate_formatter() -> ReActAgent
+
+```
+
+Validate the formatter.
+Source code in `llama-index-core/llama_index/core/agent/workflow/react_agent.py`
+
+| ```
+@model_validator(mode="after")
+def validate_formatter(self) -> "ReActAgent":
+    """Validate the formatter."""
+    if (
+        self.formatter.context
+        and self.system_prompt
+        and self.system_prompt not in self.formatter.context
+    ):
+        self.formatter.context = (
+            self.system_prompt + "\n\n" + self.formatter.context.strip()
+        )
+    elif not self.formatter.context and self.system_prompt:
+        self.formatter.context = self.system_prompt
+
+    return self
+
+```
+  
+---|---  
 ###  take_step `async` #
 ```
 take_step(ctx: Context, llm_input: List[ChatMessage], tools: Sequence[AsyncBaseTool], memory: BaseMemory) -> AgentOutput
@@ -2305,7 +2349,6 @@ async def take_step(
 
     output_parser = self.output_parser
     react_chat_formatter = self.formatter
-    react_chat_formatter.context = system_prompt
 
     # Format initial chat input
     current_reasoning: list[BaseReasoningStep] = await ctx.get(
@@ -2543,7 +2586,14 @@ class CodeActAgent(BaseWorkflowAgent):
             FunctionTool.from_defaults(code_execute_fn, name=EXECUTE_TOOL_NAME)  # type: ignore
         )
         if isinstance(code_act_system_prompt, str):
+            if system_prompt:
+                code_act_system_prompt += "\n" + system_prompt
             code_act_system_prompt = PromptTemplate(code_act_system_prompt)
+        elif isinstance(code_act_system_prompt, BasePromptTemplate):
+            if system_prompt:
+                code_act_system_str = code_act_system_prompt.get_template()
+                code_act_system_str += "\n" + system_prompt
+            code_act_system_prompt = PromptTemplate(code_act_system_str)
 
         super().__init__(
             name=name,
@@ -3049,7 +3099,7 @@ class AgentStream(Event):
     response: str
     current_agent_name: str
     tool_calls: list[ToolSelection]
-    raw: Any
+    raw: Any = Field(exclude=True)
 
 ```
   

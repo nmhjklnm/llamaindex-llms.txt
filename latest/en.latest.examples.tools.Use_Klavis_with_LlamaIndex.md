@@ -28,6 +28,7 @@ Copied!
 ```
 import os
 from klavis import Klavis
+from klavis.types import McpServerName, ConnectionType
 from llama_index.llms.openai import OpenAI
 from llama_index.tools.mcp import BasicMCPClient
 
@@ -41,7 +42,7 @@ os.environ[
 
 ```
 
-import os from klavis import Klavis from llama_index.llms.openai import OpenAI from llama_index.tools.mcp import BasicMCPClient # Set environment variables os.environ[ "OPENAI_API_KEY" ] = "YOUR_OPENAI_API_KEY" # Replace with your actual OpenAI API key os.environ[ "KLAVIS_API_KEY" ] = "YOUR_KLAVIS_API_KEY" # Replace with your actual Klavis API key
+import os from klavis import Klavis from klavis.types import McpServerName, ConnectionType from llama_index.llms.openai import OpenAI from llama_index.tools.mcp import BasicMCPClient # Set environment variables os.environ[ "OPENAI_API_KEY" ] = "YOUR_OPENAI_API_KEY" # Replace with your actual OpenAI API key os.environ[ "KLAVIS_API_KEY" ] = "YOUR_KLAVIS_API_KEY" # Replace with your actual Klavis API key
 ## Case 1: YouTube AI Agent¶
 #### Create an AI agent to summarize YouTube videos using LlamaIndex and Klavis MCP Server.¶
 #### Step 1 - using Klavis to create youtube MCP Server¶
@@ -51,18 +52,19 @@ Copied!
 klavis_client = Klavis(api_key=os.getenv("KLAVIS_API_KEY"))
 
 # Create a YouTube MCP server and get the server URL
-youtube_mcp_instance = klavis_client.mcp_server.instance.create(
-    server_name="YouTube",
+youtube_mcp_instance = klavis_client.mcp_server.create_server_instance(
+    server_name=McpServerName.YOUTUBE,
     user_id="1234",
     platform_name="Klavis",
+    connection_type=ConnectionType.STREAMABLE_HTTP,
 )
 
 youtube_mcp_server_url = youtube_mcp_instance.server_url
-print(f"🔗 YouTube MCP server created at: {youtube_mcp_server_url}")
+# print(f"🔗 YouTube MCP server created at: {youtube_mcp_server_url}")
 
 ```
 
-klavis_client = Klavis(api_key=os.getenv("KLAVIS_API_KEY")) # Create a YouTube MCP server and get the server URL youtube_mcp_instance = klavis_client.mcp_server.instance.create( server_name="YouTube", user_id="1234", platform_name="Klavis", ) youtube_mcp_server_url = youtube_mcp_instance.server_url print(f"🔗 YouTube MCP server created at: {youtube_mcp_server_url}")
+klavis_client = Klavis(api_key=os.getenv("KLAVIS_API_KEY")) # Create a YouTube MCP server and get the server URL youtube_mcp_instance = klavis_client.mcp_server.create_server_instance( server_name=McpServerName.YOUTUBE, user_id="1234", platform_name="Klavis", connection_type=ConnectionType.STREAMABLE_HTTP, ) youtube_mcp_server_url = youtube_mcp_instance.server_url # print(f"🔗 YouTube MCP server created at: {youtube_mcp_server_url}")
 ```
 🔗 YouTube MCP server created at: https://youtube-mcp-server.klavis.ai/sse?instance_id=270cbd51-e737-407d-85ce-6e6162248671
 
@@ -142,31 +144,32 @@ import webbrowser
 klavis_client = Klavis(api_key=os.getenv("KLAVIS_API_KEY"))
 
 # Create YouTube MCP server
-youtube_mcp_instance = klavis_client.mcp_server.instance.create(
-    server_name="YouTube",
+youtube_mcp_instance = klavis_client.mcp_server.create_server_instance(
+    server_name=McpServerName.YOUTUBE,
     user_id="1234",
     platform_name="Klavis",
+    connection_type=ConnectionType.STREAMABLE_HTTP,
 )
 
 # Create Gmail MCP server with OAuth authorization
-gmail_mcp_instance = klavis_client.mcp_server.instance.create(
-    server_name="Gmail",
+gmail_mcp_instance = klavis_client.mcp_server.create_server_instance(
+    server_name=McpServerName.GMAIL,
     user_id="1234",
     platform_name="Klavis",
+    connection_type=ConnectionType.STREAMABLE_HTTP,
 )
 
 print("✅ Created YouTube and Gmail MCP instances")
 
 # Open Gmail OAuth authorization
-oauth_url = f"https://api.klavis.ai/oauth/gmail/authorize?instance_id={gmail_mcp_instance.instance_id}"
-webbrowser.open(oauth_url)
+webbrowser.open(gmail_mcp_instance.oauth_url)
 print(
-    f"🔐 Opening OAuth authorization for Gmail, if you are not redirected, please open the following URL in your browser: {oauth_url}"
+    f"🔐 Opening OAuth authorization for Gmail, if you are not redirected, please open the following URL in your browser: {gmail_mcp_instance.oauth_url}"
 )
 
 ```
 
-import webbrowser klavis_client = Klavis(api_key=os.getenv("KLAVIS_API_KEY")) # Create YouTube MCP server youtube_mcp_instance = klavis_client.mcp_server.instance.create( server_name="YouTube", user_id="1234", platform_name="Klavis", ) # Create Gmail MCP server with OAuth authorization gmail_mcp_instance = klavis_client.mcp_server.instance.create( server_name="Gmail", user_id="1234", platform_name="Klavis", ) print("✅ Created YouTube and Gmail MCP instances") # Open Gmail OAuth authorization oauth_url = f"https://api.klavis.ai/oauth/gmail/authorize?instance_id={gmail_mcp_instance.instance_id}" webbrowser.open(oauth_url) print( f"🔐 Opening OAuth authorization for Gmail, if you are not redirected, please open the following URL in your browser: {oauth_url}" )
+import webbrowser klavis_client = Klavis(api_key=os.getenv("KLAVIS_API_KEY")) # Create YouTube MCP server youtube_mcp_instance = klavis_client.mcp_server.create_server_instance( server_name=McpServerName.YOUTUBE, user_id="1234", platform_name="Klavis", connection_type=ConnectionType.STREAMABLE_HTTP, ) # Create Gmail MCP server with OAuth authorization gmail_mcp_instance = klavis_client.mcp_server.create_server_instance( server_name=McpServerName.GMAIL, user_id="1234", platform_name="Klavis", connection_type=ConnectionType.STREAMABLE_HTTP, ) print("✅ Created YouTube and Gmail MCP instances") # Open Gmail OAuth authorization webbrowser.open(gmail_mcp_instance.oauth_url) print( f"🔐 Opening OAuth authorization for Gmail, if you are not redirected, please open the following URL in your browser: {gmail_mcp_instance.oauth_url}" )
 ```
 ✅ Created YouTube and Gmail MCP instances
 🔐 Opening OAuth authorization for Gmail, if you are not redirected, please open the following URL in your browser: https://api.klavis.ai/oauth/gmail/authorize?instance_id=d9d482b3-433a-4330-9a8b-9548c0b0a326

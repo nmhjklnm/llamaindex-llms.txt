@@ -14,11 +14,11 @@ This tutorial has three main parts: **Building a RAG pipeline** , **Building an 
     * **Multi-agent systems with AgentWorkflow** : combining multiple agents to collaborate is a powerful technique for building more complex systems; this section shows you how to do so.
   * **Workflows** : Workflows are a lower-level, event-driven abstraction for building agentic applications. They're the base layer you should be using to build any advanced agentic application. You can use the pre-built abstractions you learned above, or build agents completely from scratch. This tutorial covers:
     * **Building a simple workflow** : a simple workflow that shows you how to use the `Workflow` class to build a basic agentic application.
-    * **Visualizing workflows** : workflows can be visualized as a graph to help you understand the flow of control through your application.
     * **Looping and branching** : these core control flow patterns are the building blocks of more complex workflows.
     * **Concurrent execution** : you can run steps in parallel to split up work efficiently.
     * **Streaming events** : your agents can emit user-facing events just like the agents you built above.
-    * **Multi-agent systems from scratch** : you can build multi-agent systems from scratch using the techniques you've learned above.
+    * **Stateful workflows** : workflows can maintain state, which is important for building more complex applications.
+    * **Observability** : workflows can be traced and debugged using various integrations like Arize Pheonix, OpenTelemetry, and more.
   * **Adding RAG to your agents** : Retrieval-Augmented Generation (RAG) is a key technique for getting your data to an LLM, and a component of more sophisticated agentic systems. We'll show you how to enhance your agents with a full-featured RAG pipeline that can answer questions about your data. This includes:
     * **Loading& Ingestion**: Getting your data from wherever it lives, whether that's unstructured text, PDFs, databases, or APIs to other applications. LlamaIndex has hundreds of connectors to every data source over at LlamaHub.
     * **Indexing and Embedding** : Once you've got your data there are an infinite number of ways to structure access to that data to ensure your applications is always working with the most relevant data. LlamaIndex has a huge number of these strategies built-in and can help you select the best ones.

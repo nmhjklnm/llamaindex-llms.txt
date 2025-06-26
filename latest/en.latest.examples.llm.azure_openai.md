@@ -65,7 +65,7 @@ Out[ ]:
 Using Azure deployment of OpenAI models is very similar to normal OpenAI. You just need to configure a couple more environment variables.
   * `OPENAI_API_VERSION`: set this to `2023-07-01-preview` This may change in the future.
   * `AZURE_OPENAI_ENDPOINT`: your endpoint should look like the following https://YOUR_RESOURCE_NAME.openai.azure.com/
-  * `OPENAI_API_KEY`: your API key
+  * `AZURE_OPENAI_API_KEY`: your API key
 
 
 In [ ]:
@@ -73,7 +73,7 @@ Copied!
 ```
 import os
 
-os.environ["OPENAI_API_KEY"] = "<your-api-key>"
+os.environ["AZURE_OPENAI_API_KEY"] = "<your-api-key>"
 os.environ[
     "AZURE_OPENAI_ENDPOINT"
 ] = "https://<your-resource-name>.openai.azure.com/"
@@ -81,7 +81,7 @@ os.environ["OPENAI_API_VERSION"] = "2023-07-01-preview"
 
 ```
 
-import os os.environ["OPENAI_API_KEY"] = "" os.environ[ "AZURE_OPENAI_ENDPOINT" ] = "https://.openai.azure.com/" os.environ["OPENAI_API_VERSION"] = "2023-07-01-preview"
+import os os.environ["AZURE_OPENAI_API_KEY"] = "" os.environ[ "AZURE_OPENAI_ENDPOINT" ] = "https://.openai.azure.com/" os.environ["OPENAI_API_VERSION"] = "2023-07-01-preview"
 ## Use your LLM¶
 In [ ]:
 Copied!

@@ -8,7 +8,7 @@ Name | Type | Description | Default
 ---|---|---|---  
 `include_metadata` |  `bool` |  Whether or not to consider metadata when splitting. |  `True`  
 `include_prev_next_rel` |  `bool` |  Include prev/next node relationships. |  `True`  
-`callback_manager` |  `CallbackManager` |  |  `<llama_index.core.callbacks.base.CallbackManager object at 0x7f426f3e90d0>`  
+`callback_manager` |  `CallbackManager` |  |  `<llama_index.core.callbacks.base.CallbackManager object at 0x73a61c300b00>`  
 `id_func` |  `Annotated[Callable, FieldInfo, BeforeValidator, WithJsonSchema, WithJsonSchema, PlainSerializer] | None` |  Function to generate node IDs. |  `None`  
 Source code in `llama-index-core/llama_index/core/node_parser/interface.py`
 

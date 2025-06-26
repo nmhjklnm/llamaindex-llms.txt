@@ -1,4 +1,4 @@
-# Multi-Agent Research Workflow with AgentWorkflow¶
+# Multi-Agent Report Generation with AgentWorkflow¶
 ![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)
 In this notebook, we will explore how to use the `AgentWorkflow` class to create multi-agent systems. Specifically, we will create a system that can generate a report on a given topic.
 This notebook will assume that you have already either read the basic agent workflow notebook or the agent workflow documentation.

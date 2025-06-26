@@ -18,7 +18,7 @@ Name | Type | Description | Default
 `audio_token_size_estimate` |  `int` |  The token size estimate for audio. |  `256`  
 `tokenizer_fn` |  `Callable[list, List]` |  The tokenizer function to use for token counting. |  `<dynamic>`  
 `sql_store` |  `SQLAlchemyChatStore` |  The chat store to use for storing messages. |  `SQLAlchemyChatStore(table_name='llama_index_memory', async_database_uri='sqlite+aiosqlite:///:memory:')`  
-`session_id` |  `str` |  The key to use for storing messages in the chat store. |  `'613862b7-6cb5-4a90-8bd9-e77cb250d652'`  
+`session_id` |  `str` |  The key to use for storing messages in the chat store. |  `'56e3acb0-133f-43ab-b2f6-6627edbadbe3'`  
 Source code in `llama-index-core/llama_index/core/memory/memory.py`
 
 | ```
@@ -174,7 +174,11 @@ class Memory(BaseMemory):
 
         # Normalize the input to a list of ContentBlocks
         if isinstance(message_or_blocks, ChatMessage):
-            blocks = message_or_blocks.blocks
+            blocks: List[Union[TextBlock, ImageBlock, AudioBlock, DocumentBlock]] = []
+
+            for block in message_or_blocks.blocks:
+                if not isinstance(block, CachePoint):
+                    blocks.append(block)
 
             # Estimate the token count for the additional kwargs
             if message_or_blocks.additional_kwargs:
@@ -184,16 +188,15 @@ class Memory(BaseMemory):
         elif isinstance(message_or_blocks, List):
             # Type narrow the list
             messages: List[ChatMessage] = []
-            content_blocks: List[
-                Union[TextBlock, ImageBlock, AudioBlock, DocumentBlock]
-            ] = []
 
             if all(isinstance(item, ChatMessage) for item in message_or_blocks):
                 messages = cast(List[ChatMessage], message_or_blocks)
 
                 blocks = []
                 for msg in messages:
-                    blocks.extend(msg.blocks)
+                    for block in msg.blocks:
+                        if not isinstance(block, CachePoint):
+                            blocks.append(block)
 
                 # Estimate the token count for the additional kwargs
                 token_count += sum(
@@ -202,14 +205,20 @@ class Memory(BaseMemory):
                     if msg.additional_kwargs
                 )
             elif all(
-                isinstance(item, (TextBlock, ImageBlock, AudioBlock, DocumentBlock))
+                isinstance(
+                    item, (TextBlock, ImageBlock, AudioBlock, DocumentBlock, CachePoint)
+                )
                 for item in message_or_blocks
             ):
-                content_blocks = cast(
-                    List[Union[TextBlock, ImageBlock, AudioBlock, DocumentBlock]],
-                    message_or_blocks,
-                )
-                blocks = content_blocks
+                blocks = []
+                for item in message_or_blocks:
+                    if not isinstance(item, CachePoint):
+                        blocks.append(
+                            cast(
+                                Union[TextBlock, ImageBlock, AudioBlock, DocumentBlock],
+                                item,
+                            )
+                        )
             else:
                 raise ValueError(f"Invalid message type: {type(message_or_blocks)}")
         elif isinstance(message_or_blocks, str):
