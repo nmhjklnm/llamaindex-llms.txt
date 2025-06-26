@@ -81,14 +81,10 @@ jobs:
       with:
         python-version: '3.11'
 
-    - name: Install crawl4ai
+    - name: Install dependencies
       run: |
-        pip install crawl4ai
+        pip install -r requirements.txt
         crawl4ai-setup
-
-    - name: Install additional dependencies
-      run: |
-        pip install pathlib
 
     - name: Verify installation
       run: |
