@@ -10,6 +10,10 @@ on:
         description: 'Force crawl even if version unchanged'
         type: boolean
         default: false
+      force_release:
+        description: 'Force create release (overwrite existing)'
+        type: boolean
+        default: false
 
 permissions:
   contents: write
@@ -127,23 +131,64 @@ jobs:
           git push origin main
         fi
 
-    - name: Create release
-      if: needs.check-version.outputs.version != ''
-      uses: actions/create-release@v1
+    - name: Check if tag exists
+      id: check-tag
+      run: |
+        if git rev-parse "v${{ needs.check-version.outputs.version }}" >/dev/null 2>&1; then
+          echo "tag-exists=true" >> $GITHUB_OUTPUT
+          echo "Tag v${{ needs.check-version.outputs.version }} already exists"
+        else
+          echo "tag-exists=false" >> $GITHUB_OUTPUT
+          echo "Tag v${{ needs.check-version.outputs.version }} does not exist"
+        fi
+
+    - name: Delete existing release and tag
+      if: steps.check-tag.outputs.tag-exists == 'true' && github.event.inputs.force_release == 'true'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-      with:
-        tag_name: v${{ needs.check-version.outputs.version }}
-        release_name: LlamaIndex Docs v${{ needs.check-version.outputs.version }}
-        body: |
-          Automated crawl of LlamaIndex documentation
-          
-          Version: ${{ needs.check-version.outputs.version }}
-          
-          Files updated:
-          - `llms.txt` - Latest combined documentation
-          - `versions/v${{ needs.check-version.outputs.version }}/` - Archived version
-          
-          Total files processed: See commit for details
-        draft: false
-        prerelease: false
+      run: |
+        echo "Force release enabled, deleting existing release and tag..."
+        
+        # Delete release if it exists
+        if gh release view "v${{ needs.check-version.outputs.version }}" >/dev/null 2>&1; then
+          gh release delete "v${{ needs.check-version.outputs.version }}" --yes
+          echo "Deleted existing release"
+        fi
+        
+        # Delete tag if it exists
+        if git rev-parse "v${{ needs.check-version.outputs.version }}" >/dev/null 2>&1; then
+          git push --delete origin "v${{ needs.check-version.outputs.version }}"
+          echo "Deleted existing tag"
+        fi
+
+    - name: Create release
+      if: needs.check-version.outputs.version != '' && (steps.check-tag.outputs.tag-exists == 'false' || github.event.inputs.force_release == 'true')
+      env:
+        GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+      run: |
+        VERSION="${{ needs.check-version.outputs.version }}"
+        FORCE_RELEASE="${{ github.event.inputs.force_release }}"
+        
+        # Create release note with force info
+        RELEASE_NOTES="Automated crawl of LlamaIndex documentation
+        
+        Version: ${VERSION}"
+        
+        if [ "$FORCE_RELEASE" = "true" ]; then
+          RELEASE_NOTES="${RELEASE_NOTES}
+        🔄 Force release - Algorithm/crawler updated"
+        fi
+        
+        RELEASE_NOTES="${RELEASE_NOTES}
+        
+        Files updated:
+        - \`llms.txt\` - Latest combined documentation
+        - \`versions/v${VERSION}/\` - Archived version
+        
+        Total files processed: See commit for details"
+        
+        gh release create "v${VERSION}" \
+          --title "LlamaIndex Docs v${VERSION}" \
+          --notes "${RELEASE_NOTES}"
+        
+        echo "✅ Release v${VERSION} created successfully"
