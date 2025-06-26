@@ -21,7 +21,7 @@ Split docs into ~40 domain-based sections, then generate a high-density "index o
 ## 🛠️ Installation & Setup
 
 ```bash
-pip install crawl4ai pathlib
+pip install -r requirements.txt
 crawl4ai-setup
 ```
 
