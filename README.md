@@ -4,7 +4,7 @@
 
 Compress the entire LlamaIndex documentation into ~50k–100k tokens, so tools like Cursor, ChatGPT, or other LLM-based agents can efficiently load and use the docs without hitting context limits.
 
-*Current status: 54MB dataset with automated crawling from LlamaIndex docs*
+*Current status: 29MB dataset with automated crawling from LlamaIndex docs*
 
 ## 🗺️ Roadmap
 
