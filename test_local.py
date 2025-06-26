@@ -1,84 +1,84 @@
 #!/usr/bin/env python3
 """
-本地测试脚本 - 用于调试和验证爬取功能
+Local test script - for debugging and validating crawling functionality
 """
 import asyncio
 import sys
 from pathlib import Path
 
-# 添加当前目录到 Python 路径
+# Add current directory to Python path
 sys.path.insert(0, str(Path(__file__).parent))
 
 from main import main, get_current_version, update_version, archive_version
 
 def test_version_functions():
-    """测试版本管理函数"""
-    print("🧪 测试版本管理函数...")
+    """Test version management functions"""
+    print("🧪 Testing version management functions...")
     
-    # 测试版本更新
+    # Test version update
     test_version = "0.10.0"
     update_version(test_version)
     
-    # 测试版本读取
+    # Test version reading
     current = get_current_version()
-    print(f"当前版本: {current}")
+    print(f"Current version: {current}")
     
-    # 测试归档功能（如果有现有内容的话）
+    # Test archive functionality (if existing content exists)
     llms_file = Path("llms.txt")
     if llms_file.exists():
-        print("发现现有 llms.txt，测试归档功能...")
+        print("Found existing llms.txt, testing archive functionality...")
         archive_version("test-archive")
     else:
-        print("未发现现有 llms.txt，跳过归档测试")
+        print("No existing llms.txt found, skipping archive test")
 
 async def test_crawl():
-    """测试爬取功能"""
-    print("🕷️ 开始测试爬取功能...")
-    print("这可能需要几分钟时间...")
+    """Test crawling functionality"""
+    print("🕷️ Starting crawling functionality test...")
+    print("This may take a few minutes...")
     
     try:
         await main()
-        print("✅ 爬取测试完成")
+        print("✅ Crawling test completed")
         
-        # 检查输出文件
+        # Check output files
         llms_file = Path("llms.txt")
         latest_dir = Path("latest")
         
         if llms_file.exists():
             size = llms_file.stat().st_size
-            print(f"📄 llms.txt 生成成功，大小: {size:,} 字节")
+            print(f"📄 llms.txt generated successfully, size: {size:,} bytes")
         else:
-            print("❌ llms.txt 未生成")
+            print("❌ llms.txt not generated")
             
         if latest_dir.exists():
             md_files = list(latest_dir.glob("*.md"))
-            print(f"📁 latest/ 目录包含 {len(md_files)} 个 .md 文件")
+            print(f"📁 latest/ directory contains {len(md_files)} .md files")
         else:
-            print("❌ latest/ 目录未创建")
+            print("❌ latest/ directory not created")
             
     except Exception as e:
-        print(f"❌ 爬取过程中出错: {e}")
+        print(f"❌ Error during crawling: {e}")
         import traceback
         traceback.print_exc()
 
 def show_environment():
-    """显示环境信息"""
-    print("🔧 环境信息:")
-    print(f"Python 版本: {sys.version}")
-    print(f"工作目录: {Path.cwd()}")
+    """Show environment information"""
+    print("🔧 Environment information:")
+    print(f"Python version: {sys.version}")
+    print(f"Working directory: {Path.cwd()}")
     
     try:
         import crawl4ai
-        print(f"crawl4ai 版本: {crawl4ai.__version__}")
+        print(f"crawl4ai version: {crawl4ai.__version__}")
     except ImportError:
-        print("❌ crawl4ai 未安装")
+        print("❌ crawl4ai not installed")
     except AttributeError:
-        print("crawl4ai 已安装（版本信息不可用）")
+        print("crawl4ai installed (version info unavailable)")
 
 async def main_test():
-    """主测试函数"""
+    """Main test function"""
     print("=" * 50)
-    print("🚀 LlamaIndex 爬虫本地测试")
+    print("🚀 LlamaIndex Crawler Local Test")
     print("=" * 50)
     
     show_environment()
@@ -87,14 +87,14 @@ async def main_test():
     test_version_functions()
     print()
     
-    # 询问是否运行完整爬取测试
-    response = input("是否运行完整爬取测试？这可能需要几分钟 (y/N): ").strip().lower()
+    # Ask whether to run full crawling test
+    response = input("Run full crawling test? This may take a few minutes (y/N): ").strip().lower()
     if response in ['y', 'yes']:
         await test_crawl()
     else:
-        print("跳过爬取测试")
+        print("Skipping crawling test")
     
-    print("\n🎉 测试完成！")
+    print("\n🎉 Testing completed!")
 
 if __name__ == "__main__":
     asyncio.run(main_test())

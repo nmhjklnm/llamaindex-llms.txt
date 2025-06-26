@@ -1,52 +1,31 @@
 # 🚀 LlamaIndex llms.txt Dataset Creator
 
-> High-quality, clean documentation dataset for LlamaIndex training with automated GitHub Actions
+## 🎯 Goal
 
-## ✨ What This Does
+Compress the entire LlamaIndex documentation into ~50k–100k tokens, so tools like Cursor, ChatGPT, or other LLM-based agents can efficiently load and use the docs without hitting context limits.
 
-This project creates a curated `llms.txt` dataset from LlamaIndex documentation with intelligent filtering, cleaning, and automated version monitoring to ensure maximum quality for language model training.
+*Current status: 54MB dataset with automated crawling from LlamaIndex docs*
+
+## 🗺️ Roadmap
+
+### 1. Entropy-based Filtering
+Using information complexity to remove over 80% of low-signal content (e.g. noisy webpage samples, raw base64 data, bloated HTML). Not fully stable yet but shows promising results.
+
+### 2. Index-level Summarization  
+Split docs into ~40 domain-based sections, then generate a high-density "index of indexes" that lets LLMs selectively focus on relevant sections.
+
+### 3. Split File Strategy
+- **llms.txt**: Minimal version with essential examples only
+- **llm.full.txt**: Full reference content for when complete documentation is needed
 
 ## 🛠️ Installation & Setup
 
-### 1. Basic Installation
 ```bash
 pip install crawl4ai pathlib
 crawl4ai-setup
 ```
 
-## 🤖 Automated GitHub Actions
-
-The project includes automated workflows that:
-- **Monitor LlamaIndex versions daily** via PyPI API
-- **Auto-crawl on version updates** with smart change detection
-- **Archive historical versions** in `versions/` directory
-- **Create tagged releases** for each version
-- **Maintain clean git history** with automated commits
-
-### Manual Triggers
-You can also trigger crawling manually via GitHub Actions UI with a "force crawl" option.
-
-## 🔧 Data Processing Pipeline
-
-### Pre-Processing
-- **Smart File Sorting**: Prioritizes shorter paths (less nested) and maintains stable alphabetical order
-- **Version Detection**: Automatically identifies and separates `stable`, `latest`, and other version documentation
-- **Changelog Exclusion**: Removes changelog files to focus on core documentation
-
-### Post-Processing Quality Control
-- **404 Detection**: Identifies and removes "Not Found" pages
-- **Content Length Filtering**: Removes files with insufficient content (< 10 words)
-- **Numeric Code Block Removal**: Strips code blocks containing only numbers
-- **Link Cleaning**: Removes or simplifies markdown links
-- **Content Pruning**: Advanced filtering using PruningContentFilter
-
-### Final Output
-- **llms.txt**: Combined dataset of all quality documentation
-- **Versioned Archives**: Historical versions preserved in `versions/v{version}/`
-- **Statistics Tracking**: Detailed reports on filtering results
-- 
-
-## 📁 Output Structure
+## 📁 Current Output Structure
 
 ```
 llms.txt                    # Latest combined documentation dataset
@@ -62,12 +41,14 @@ versions/
 python main.py
 ```
 
-### GitHub Actions (Automated)
-The workflow runs automatically:
-- Daily at 6 AM UTC
-- On new LlamaIndex releases
-- Manual trigger available
+### Automated Workflow
+- Daily monitoring of LlamaIndex versions via PyPI API
+- Auto-crawl on version updates with smart change detection
+- Archive historical versions and create tagged releases
+- Manual trigger available via GitHub Actions UI
 
-Perfect for maintaining up-to-date, clean LlamaIndex documentation datasets for language model training! 🎉
+---
+
+*Perfect for maintaining up-to-date, clean LlamaIndex documentation datasets for language model training! 🎉*
 
 

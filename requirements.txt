@@ -1,2 +1,4 @@
 crawl4ai
 pathlib
+wordfreq
+ftfy

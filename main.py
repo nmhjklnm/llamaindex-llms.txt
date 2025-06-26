@@ -1,7 +1,7 @@
 import asyncio
 from crawl4ai import AsyncWebCrawler, CrawlerRunConfig
 from crawl4ai.markdown_generation_strategy import DefaultMarkdownGenerator
-from crawl4ai.content_filter_strategy import PruningContentFilter   # 可选
+from crawl4ai.content_filter_strategy import PruningContentFilter   # optional
 
 from urllib.parse import urlparse
 from crawl4ai.deep_crawling import BFSDeepCrawlStrategy
@@ -11,6 +11,10 @@ from pathlib import Path
 import os
 import shutil
 import re
+import unicodedata
+from wordfreq import zipf_frequency
+from ftfy import fix_text
+from tqdm.auto import tqdm
 
 # Update filters to match LangGraph documentation structure
 url_filter = URLPatternFilter(patterns=["*docs.llamaindex.ai*"], reverse=False)
@@ -36,14 +40,14 @@ def combine_markdown_files():
     )
 
     if not md_files:
-        print("⚠️ 没有找到 markdown 文件进行合并")
+        print("⚠️ No markdown files found for combining")
         return
 
-    print(f"📄 准备合并 {len(md_files)} 个文件:")
-    for f in md_files[:5]:  # 只显示前5个文件名
+    print(f"📄 Preparing to combine {len(md_files)} files:")
+    for f in md_files[:5]:  # Only show first 5 file names
         print(f"  - {f.name}")
     if len(md_files) > 5:
-        print(f"  ... 还有 {len(md_files) - 5} 个文件")
+        print(f"  ... and {len(md_files) - 5} more files")
 
     combined_content = []
     for f in md_files:
@@ -52,16 +56,16 @@ def combine_markdown_files():
             if content:
                 combined_content.append(content)
         except Exception as e:
-            print(f"⚠️ 读取文件 {f.name} 时出错: {e}")
+            print(f"⚠️ Error reading file {f.name}: {e}")
 
     if combined_content:
         OUTPUT_MD.write_text(
             "\n\n---\n\n".join(combined_content),
             encoding="utf-8"
         )
-        print(f"✅ llms.txt 保存成功，包含 {len(combined_content)} 个文档")
+        print(f"✅ llms.txt saved successfully, containing {len(combined_content)} documents")
     else:
-        print("❌ 没有有效内容可合并")
+        print("❌ No valid content to combine")
 
 def archive_version(version_tag):
     """Archive current latest to versioned directory"""
@@ -103,52 +107,104 @@ def strip_numeric(md_text):
         md_text
     )
 
+def is_noise(text: str,
+             min_len: int = 25,
+             word_freq_th: float = 2.0,
+             valid_ratio_th: float = 0.4,
+             alpha_ratio_th: float = 0.3) -> bool:
+    """
+    Returns True if content should be discarded
+    - min_len: Discard paragraphs that are too short
+    - word_freq_th: Using wordfreq's Zipf frequency, common words > 2
+    - valid_ratio_th: Common words / total words ratio threshold
+    - alpha_ratio_th: Alphanumeric character ratio threshold (to remove ====, ------ etc.)
+    """
+    t = text.strip()
+    if len(t) < min_len:
+        return True
+
+    # All symbols/non-alphanumeric characters
+    alpha_num = sum(ch.isalnum() for ch in t)
+    if alpha_num / len(t) < alpha_ratio_th:
+        return True
+
+    # Word-level statistics (only check English alphabet words; can extend for Chinese or other languages)
+    words = re.findall(r"[A-Za-z]+", t.lower())
+    if words:
+        valid = sum(zipf_frequency(w, "en") >= word_freq_th for w in words)
+        if valid / len(words) < valid_ratio_th:
+            return True
+    return False
+
+def filter_content():
+    """Filter noise content from llms.txt"""
+    if not OUTPUT_MD.exists():
+        print("⚠️ llms.txt does not exist, skipping content filtering")
+        return
+    
+    print("🧹 Starting content filtering...")
+    
+    # Read the combined file
+    data = OUTPUT_MD.read_text(encoding="utf-8", errors="ignore")
+    paragraphs = re.split(r"\n\s*\n", data)      # Split by empty lines
+    
+    kept = []
+    for p in tqdm(paragraphs, desc="Filtering paragraphs"):
+        p = fix_text(p)                          # Fix garbled text
+        if is_noise(p):
+            continue
+        kept.append(p.strip())
+    
+    # Write filtered content back to llms.txt
+    OUTPUT_MD.write_text("\n\n".join(kept), encoding="utf-8")
+    print(f"✅ Filtering completed, {len(kept):,} paragraphs remaining, updated {OUTPUT_MD}")
+
 async def main():
-    print("🚀 开始爬取 LlamaIndex 文档...")
+    print("🚀 Starting LlamaIndex documentation crawling...")
     
     # Create directories
     LATEST_DIR.mkdir(exist_ok=True)
-    print(f"📁 创建目录: {LATEST_DIR}")
+    print(f"📁 Created directory: {LATEST_DIR}")
     
-    # 1️⃣ 让 Markdown 生成器把链接都丢掉
+    # 1️⃣ Make Markdown generator remove all links
     md_gen = DefaultMarkdownGenerator(
         options={
-            "ignore_links": True,        # 把 [A](B) → A
-            "skip_internal_links": True  # 干掉 #锚点
+            "ignore_links": True,        # Convert [A](B) → A
+            "skip_internal_links": True  # Remove #anchor links
         },
-        # 2️⃣ 想再去点页面杂质就挂个过滤器
+        # 2️⃣ Add a filter to remove more page clutter
         content_filter=PruningContentFilter(threshold=0.55)
     )
 
-    # 3️⃣ 只截 MkDocs–Material 真正的正文容器
+    # 3️⃣ Only extract MkDocs–Material actual content container
     cfg = CrawlerRunConfig(
         deep_crawl_strategy=BFSDeepCrawlStrategy(
             max_depth=4, 
             filter_chain=FilterChain([url_filter, exclude_filter]),
             include_external=False,
-            # max_pages=80,  # 限制页面数量用于测试
+            # max_pages=80,  # Limit page count for testing
         ),
         scraping_strategy=LXMLWebScrapingStrategy(),
         verbose=True,
-        target_elements=["article.md-content__inner.md-typeset"],  # 视版本自行调整
-        # excluded_tags=["nav", "header", "footer", "form"],    # 再保险
+        target_elements=["article.md-content__inner.md-typeset"],  # Adjust according to version
+        # excluded_tags=["nav", "header", "footer", "form"],    # Extra safety
         word_count_threshold=20,
         markdown_generator=md_gen,
     )
     
     try:
-        from crawl4ai.async_dispatcher import SemaphoreDispatcher  # 1️⃣ 引入 dispatcher
+        from crawl4ai.async_dispatcher import SemaphoreDispatcher  # 1️⃣ Import dispatcher
         
         dispatcher = SemaphoreDispatcher(max_session_permit=20)
-        print("🕷️ 初始化爬虫...")
+        print("🕷️ Initializing crawler...")
         
         async with AsyncWebCrawler() as crawler:
             from urllib.parse import urlparse, unquote
 
-            print("📡 开始爬取 https://docs.llamaindex.ai/en/latest/ ...")
+            print("📡 Starting crawl of https://docs.llamaindex.ai/en/latest/ ...")
             results = await crawler.arun("https://docs.llamaindex.ai/en/latest/", config=cfg, dispatcher=dispatcher)
             
-            print(f"📋 获得 {len(results)} 个爬取结果")
+            print(f"📋 Got {len(results)} crawl results")
             saved_count = 0
             
             for i, result in enumerate(results):
@@ -161,12 +217,12 @@ async def main():
                 filename = f"{safe_slug}.md"
                 filepath = LATEST_DIR / filename
 
-                # 去除404和空内容
+                # Remove 404 and empty content
                 if not result.markdown or len(result.markdown) < 10:
-                    print(f"⏭️ 跳过空内容: {result.url}")
+                    print(f"⏭️ Skipping empty content: {result.url}")
                     continue
                 if result.markdown.strip() == "# 404 - Not found":
-                    print(f"⏭️ 跳过404页面: {result.url}")
+                    print(f"⏭️ Skipping 404 page: {result.url}")
                     continue
 
                 try:
@@ -174,23 +230,27 @@ async def main():
                         f.write(strip_numeric(result.markdown) 
                                 if result.markdown is not None 
                                 else "")
-                    print(f"💾 保存: {filename}")
+                    print(f"💾 Saved: {filename}")
                     saved_count += 1
                 except Exception as e:
-                    print(f"❌ 保存文件 {filename} 时出错: {e}")
+                    print(f"❌ Error saving file {filename}: {e}")
         
-        print(f"✅ 爬取完成，保存了 {saved_count} 个文件")
+        print(f"✅ Crawling completed, saved {saved_count} files")
         
     except Exception as e:
-        print(f"❌ 爬取过程中出错: {e}")
+        print(f"❌ Error during crawling: {e}")
         import traceback
         traceback.print_exc()
         return
     
     # Combine files after crawling
-    print("🔄 合并文件...")
+    print("🔄 Combining files...")
     combine_markdown_files()
-    print("🎉 全部完成！")
+    
+    # Filter content after combining
+    filter_content()
+    
+    print("🎉 All done!")
 
 if __name__ == "__main__":
     asyncio.run(main())
