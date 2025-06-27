@@ -131,64 +131,67 @@ jobs:
           git push origin main
         fi
 
-    - name: Check if tag exists
+    - name: Check if tag and release exist
       id: check-tag
       run: |
-        if git rev-parse "v${{ needs.check-version.outputs.version }}" >/dev/null 2>&1; then
+        # 检查远程 tag 是否存在
+        if git ls-remote --tags origin | grep -q "refs/tags/v${{ needs.check-version.outputs.version }}$"; then
           echo "tag-exists=true" >> $GITHUB_OUTPUT
-          echo "Tag v${{ needs.check-version.outputs.version }} already exists"
+          echo "Tag v${{ needs.check-version.outputs.version }} exists on remote"
         else
           echo "tag-exists=false" >> $GITHUB_OUTPUT
-          echo "Tag v${{ needs.check-version.outputs.version }} does not exist"
+          echo "Tag v${{ needs.check-version.outputs.version }} does not exist on remote"
+        fi
+        # 检查 release 是否存在
+        if gh release view "v${{ needs.check-version.outputs.version }}" >/dev/null 2>&1; then
+          echo "release-exists=true" >> $GITHUB_OUTPUT
+          echo "Release v${{ needs.check-version.outputs.version }} exists"
+        else
+          echo "release-exists=false" >> $GITHUB_OUTPUT
+          echo "Release v${{ needs.check-version.outputs.version }} does not exist"
         fi
 
     - name: Delete existing release and tag
-      if: steps.check-tag.outputs.tag-exists == 'true' && github.event.inputs.force_release == 'true'
+      if: (steps.check-tag.outputs.tag-exists == 'true' || steps.check-tag.outputs.release-exists == 'true') && github.event.inputs.force_release == 'true'
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         echo "Force release enabled, deleting existing release and tag..."
-        
-        # Delete release if it exists
+        # 删除 release 并清理 tag
         if gh release view "v${{ needs.check-version.outputs.version }}" >/dev/null 2>&1; then
-          gh release delete "v${{ needs.check-version.outputs.version }}" --yes
-          echo "Deleted existing release"
+          gh release delete "v${{ needs.check-version.outputs.version }}" --yes --cleanup-tag
+          echo "Deleted existing release and cleaned up tag"
         fi
-        
-        # Delete tag if it exists
-        if git rev-parse "v${{ needs.check-version.outputs.version }}" >/dev/null 2>&1; then
-          git push --delete origin "v${{ needs.check-version.outputs.version }}"
-          echo "Deleted existing tag"
+        # 再次尝试删除远程 tag（防止 tag 残留）
+        if git ls-remote --tags origin | grep -q "refs/tags/v${{ needs.check-version.outputs.version }}$"; then
+          git push --delete origin "v${{ needs.check-version.outputs.version }}" || echo "Tag already deleted or doesn't exist"
+          echo "Attempted to delete remote tag"
         fi
+        sleep 5
 
     - name: Create release
-      if: needs.check-version.outputs.version != '' && (steps.check-tag.outputs.tag-exists == 'false' || github.event.inputs.force_release == 'true')
+      if: needs.check-version.outputs.version != '' && (github.event.inputs.force_release == 'true' || (steps.check-tag.outputs.tag-exists == 'false' && steps.check-tag.outputs.release-exists == 'false'))
       env:
         GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       run: |
         VERSION="${{ needs.check-version.outputs.version }}"
         FORCE_RELEASE="${{ github.event.inputs.force_release }}"
-        
         # Create release note with force info
-        RELEASE_NOTES="Automated crawl of LlamaIndex documentation
-        
-        Version: ${VERSION}"
-        
+        RELEASE_NOTES="Automated crawl of LlamaIndex documentation\n\nVersion: ${VERSION}"
         if [ "$FORCE_RELEASE" = "true" ]; then
-          RELEASE_NOTES="${RELEASE_NOTES}
-        🔄 Force release - Algorithm/crawler updated"
+          RELEASE_NOTES="${RELEASE_NOTES}\n🔄 Force release - Algorithm/crawler updated"
         fi
-        
-        RELEASE_NOTES="${RELEASE_NOTES}
-        
-        Files updated:
-        - \`llms.txt\` - Latest combined documentation
-        - \`versions/v${VERSION}/\` - Archived version
-        
-        Total files processed: See commit for details"
-        
-        gh release create "v${VERSION}" \
+        RELEASE_NOTES="${RELEASE_NOTES}\n\nFiles updated:\n- \`llms.txt\` - Latest combined documentation\n- \`versions/v${VERSION}/\` - Archived version\n\nTotal files processed: See commit for details"
+        if ! gh release create "v${VERSION}" \
           --title "LlamaIndex Docs v${VERSION}" \
-          --notes "${RELEASE_NOTES}"
-        
+          --notes "${RELEASE_NOTES}"; then
+          echo "❌ Failed to create release. Checking if it already exists..."
+          if gh release view "v${VERSION}" >/dev/null 2>&1; then
+            echo "Release v${VERSION} already exists. Use force_release=true to overwrite."
+            exit 1
+          else
+            echo "Unknown error occurred while creating release."
+            exit 1
+          fi
+        fi
         echo "✅ Release v${VERSION} created successfully"
