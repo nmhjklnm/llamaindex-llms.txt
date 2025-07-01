@@ -6,7 +6,7 @@ Kafka message queue configuration.
 Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
-`type` |  `Literal[str]` |  |  `'kafka'`  
+`type` |  `Literal['kafka']` |  |  `'kafka'`  
 `url` |  `str` |  |  `'localhost:9092'`  
 `host` |  `str | None` |  |  `None`  
 `port` |  `int | None` |  |  `None`  

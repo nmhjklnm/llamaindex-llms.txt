@@ -252,7 +252,7 @@ Generic abstract interface for retrievable nodes
 Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
-`id_` |  `str` |  Unique ID of the node. |  `'d60b0dcb-3695-417c-b705-5871499e3f13'`  
+`id_` |  `str` |  Unique ID of the node. |  `'db0ec947-814d-45fe-8544-e125ce57ce2e'`  
 `embedding` |  `List[float] | None` |  Embedding of the node. |  `None`  
 `excluded_embed_metadata_keys` |  `List[str]` |  Metadata keys that are excluded from text for the embed model. |  `<dynamic>`  
 `excluded_llm_metadata_keys` |  `List[str]` |  Metadata keys that are excluded from text for the LLM. |  `<dynamic>`  
@@ -683,7 +683,7 @@ This class represents a generic media resource that can be stored and accessed i
 Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
-`embeddings` |  `dict[Literal[str, str], list[float]] | None` |  Vector representation of this resource. |  `None`  
+`embeddings` |  `dict[Literal['sparse', 'dense'], list[float]] | None` |  Vector representation of this resource. |  `None`  
 `data` |  `bytes | None` |  base64 binary representation of this resource. |  `None`  
 `text` |  `str | None` |  Text representation of this resource. |  `None`  
 `path` |  `Path | None` |  Filesystem path of this resource. |  `None`  

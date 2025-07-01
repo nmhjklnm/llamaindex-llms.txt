@@ -23,7 +23,76 @@ set_global_handler("<handler_name>", **kwargs)
 
 Note that all `kwargs` to `set_global_handler` are passed to the underlying callback handler.
 And that's it! Executions will get seamlessly piped to downstream service and you'll be able to access features such as viewing execution traces of your application.
-## Partner `One-Click` Integrations#
+## Integrations#
+### OpenTelemetry#
+OpenTelemetry is a widely used open-source service for tracing and observability, with numerous backend integrations (such as Jaeger, Zipkin or Prometheus).
+Our OpenTelemetry integration traces all the events produced by pieces of LlamaIndex code, including LLMs, Agents, RAG pipeline components and many more: everything you would get out with LlamaIndex native instrumentation you can export in OpenTelemetry format!
+You can install the library with:
+```
+pip install llama-index-observability-otel
+
+```
+
+And can use it in your code with the default settings, as in this example with a RAG pipeline:
+```
+from llama_index.observability.otel import LlamaIndexOpenTelemetry
+from llama_index.core import SimpleDirectoryReader, VectorStoreIndex
+from llama_index.llms.openai import OpenAI
+from llama_index.embeddings.openai import OpenAIEmbedding
+from llama_index.core import Settings
+
+# initialize the instrumentation object
+instrumentor = LlamaIndexOpenTelemetry()
+
+if __name__ == "__main__":
+    embed_model = OpenAIEmbedding(model_name="text-embedding-3-small")
+    llm = OpenAI(model="gpt-4.1-mini")
+
+    # start listening!
+    instrumentor.start_registering()
+
+    # register events
+    documents = SimpleDirectoryReader(
+        input_dir="./data/paul_graham/"
+    ).load_data()
+
+    index = VectorStoreIndex.from_documents(documents, embed_model=embed_model)
+    query_engine = index.as_query_engine(llm=llm)
+
+    query_result_one = query_engine.query("Who is Paul?")
+    query_result_two = query_engine.query("What did Paul do?")
+
+```
+
+Or you can use a more complex and customized set-up, such as in the following example:
+```
+import json
+from pydantic import BaseModel, Field
+from typing import List
+
+from llama_index.observability.otel import LlamaIndexOpenTelemetry
+from opentelemetry.exporter.otlp.proto.http.trace_exporter import (
+    OTLPSpanExporter,
+)
+
+# define a custom span exporter
+span_exporter = OTLPSpanExporter("http://0.0.0.0:4318/v1/traces")
+
+# initialize the instrumentation object
+instrumentor = LlamaIndexOpenTelemetry(
+    service_name_or_resource="my.test.service.1",
+    span_exporter=span_exporter,
+    debug=True,
+)
+
+
+if __name__ == "__main__":
+    instrumentor.start_registering()
+    # ... your code here
+
+```
+
+We also have a demo repository where we show how to trace agentic workflows and pipe the registered traces into a Postgres database.
 ### LlamaTrace (Hosted Arize Phoenix)#
 We've partnered with Arize on LlamaTrace, a hosted tracing, observability, and evaluation platform that works natively with LlamaIndex open-source users and has integrations with LlamaCloud.
 This is built upon the open-source Arize Phoenix project. Phoenix provides a notebook-first experience for monitoring your models and LLM Applications by providing:

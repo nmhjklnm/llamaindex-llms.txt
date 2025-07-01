@@ -6,10 +6,10 @@ Process messages from a MessageQueue for a specific message type.
 Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
-`id_` |  `str` |  |  `'c122bda6-4d47-4c08-9abc-7c4198e79e8a'`  
+`id_` |  `str` |  |  `'009dac39-3fc7-4d78-879a-2c8a8b7cc0a4'`  
 `message_type` |  `str` |  Type of the message to consume. |  `'default'`  
 `channel` |  `Any` |  The channel if any for which to receive messages. |  `None`  
-`consuming_callable` |  `Callable[..., Coroutine[Any, Any, None]]` |  |  `<function default_start_consuming_callable at 0x73a626699c60>`  
+`consuming_callable` |  `Callable[..., Coroutine[Any, Any, None]]` |  |  `<function default_start_consuming_callable at 0x7c729efede40>`  
 Source code in `llama_deploy/message_consumers/base.py`
 
 | ```

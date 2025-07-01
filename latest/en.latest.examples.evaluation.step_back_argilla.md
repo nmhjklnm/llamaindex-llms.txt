@@ -173,8 +173,8 @@ class RAGWorkflow(Workflow):
             formatted=True,
         )
 
-        await ctx.set("query", query)
-        await ctx.set("index", index)
+        await ctx.store.set("query", query)
+        await ctx.store.set("index", index)
 
         return StepBackEvent(step_back_query=str(step_back_query))
 
@@ -183,10 +183,10 @@ class RAGWorkflow(Workflow):
         self, ctx: Context, ev: StepBackEvent
     ) -> RetrieverEvent | None:
         "Retrieve the relevant nodes for the original and step-back queries."
-        query = await ctx.get("query", default=None)
-        index = await ctx.get("index", default=None)
+        query = await ctx.store.get("query", default=None)
+        index = await ctx.store.get("index", default=None)
 
-        await ctx.set("step_back_query", ev.step_back_query)
+        await ctx.store.set("step_back_query", ev.step_back_query)
 
         retriever = index.as_retriever(similarity_top_k=2)
         nodes_step_back = await retriever.aretrieve(ev.step_back_query)
@@ -209,7 +209,7 @@ class RAGWorkflow(Workflow):
             nodes_step_back, key=lambda node: node.get_score()
         ).get_text()
 
-        query = await ctx.get("query", default=None)
+        query = await ctx.store.get("query", default=None)
         formatted_query = GENERATE_ANSWER_TEMPLATE.format(
             context_original=context_original,
             context_step_back=context_step_back,
@@ -227,7 +227,7 @@ class RAGWorkflow(Workflow):
 
 ```
 
-class RAGWorkflow(Workflow): @step async def step_back( self, ctx: Context, ev: StartEvent ) -> StepBackEvent | None: """Generate the step-back query.""" query = ev.get("query") index = ev.get("index") if not query: return None if not index: return None llm = Settings.llm step_back_query = llm.complete( prompt=STEP_BACK_TEMPLATE.format(original_query=query), formatted=True, ) await ctx.set("query", query) await ctx.set("index", index) return StepBackEvent(step_back_query=str(step_back_query)) @step async def retrieve( self, ctx: Context, ev: StepBackEvent ) -> RetrieverEvent | None: "Retrieve the relevant nodes for the original and step-back queries." query = await ctx.get("query", default=None) index = await ctx.get("index", default=None) await ctx.set("step_back_query", ev.step_back_query) retriever = index.as_retriever(similarity_top_k=2) nodes_step_back = await retriever.aretrieve(ev.step_back_query) nodes_original = await retriever.aretrieve(query) return RetrieverEvent( nodes_original=nodes_original, nodes_step_back=nodes_step_back ) @step async def synthesize(self, ctx: Context, ev: RetrieverEvent) -> StopEvent: """Return a response using the contextualized prompt and retrieved nodes.""" nodes_original = ev.nodes_original nodes_step_back = ev.nodes_step_back context_original = max( nodes_original, key=lambda node: node.get_score() ).get_text() context_step_back = max( nodes_step_back, key=lambda node: node.get_score() ).get_text() query = await ctx.get("query", default=None) formatted_query = GENERATE_ANSWER_TEMPLATE.format( context_original=context_original, context_step_back=context_step_back, query=query, ) response_synthesizer = get_response_synthesizer( response_mode=ResponseMode.COMPACT ) response = response_synthesizer.synthesize( formatted_query, nodes=ev.nodes_original ) return StopEvent(result=response)
+class RAGWorkflow(Workflow): @step async def step_back( self, ctx: Context, ev: StartEvent ) -> StepBackEvent | None: """Generate the step-back query.""" query = ev.get("query") index = ev.get("index") if not query: return None if not index: return None llm = Settings.llm step_back_query = llm.complete( prompt=STEP_BACK_TEMPLATE.format(original_query=query), formatted=True, ) await ctx.store.set("query", query) await ctx.store.set("index", index) return StepBackEvent(step_back_query=str(step_back_query)) @step async def retrieve( self, ctx: Context, ev: StepBackEvent ) -> RetrieverEvent | None: "Retrieve the relevant nodes for the original and step-back queries." query = await ctx.store.get("query", default=None) index = await ctx.store.get("index", default=None) await ctx.store.set("step_back_query", ev.step_back_query) retriever = index.as_retriever(similarity_top_k=2) nodes_step_back = await retriever.aretrieve(ev.step_back_query) nodes_original = await retriever.aretrieve(query) return RetrieverEvent( nodes_original=nodes_original, nodes_step_back=nodes_step_back ) @step async def synthesize(self, ctx: Context, ev: RetrieverEvent) -> StopEvent: """Return a response using the contextualized prompt and retrieved nodes.""" nodes_original = ev.nodes_original nodes_step_back = ev.nodes_step_back context_original = max( nodes_original, key=lambda node: node.get_score() ).get_text() context_step_back = max( nodes_step_back, key=lambda node: node.get_score() ).get_text() query = await ctx.store.get("query", default=None) formatted_query = GENERATE_ANSWER_TEMPLATE.format( context_original=context_original, context_step_back=context_step_back, query=query, ) response_synthesizer = get_response_synthesizer( response_mode=ResponseMode.COMPACT ) response = response_synthesizer.synthesize( formatted_query, nodes=ev.nodes_original ) return StopEvent(result=response)
 In [ ]:
 Copied!
 ```

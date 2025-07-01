@@ -99,7 +99,7 @@ class BaseIndex(Generic[IS], ABC):
 
         with callback_manager.as_trace("index_construction"):
             for doc in documents:
-                docstore.set_document_hash(doc.get_doc_id(), doc.hash)
+                docstore.set_document_hash(doc.id_, doc.hash)
 
             nodes = run_transformations(
                 documents,  # type: ignore
@@ -658,7 +658,7 @@ def from_documents(
 
     with callback_manager.as_trace("index_construction"):
         for doc in documents:
-            docstore.set_document_hash(doc.get_doc_id(), doc.hash)
+            docstore.set_document_hash(doc.id_, doc.hash)
 
         nodes = run_transformations(
             documents,  # type: ignore

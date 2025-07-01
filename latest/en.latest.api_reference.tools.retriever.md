@@ -83,7 +83,7 @@ class RetrieverTool(AsyncBaseTool):
             content += node_copy.get_content(MetadataMode.LLM) + "\n\n"
         return ToolOutput(
             content=content,
-            tool_name=self.metadata.name,
+            tool_name=self.metadata.get_name(),
             raw_input={"input": query_str},
             raw_output=docs,
         )
@@ -107,7 +107,7 @@ class RetrieverTool(AsyncBaseTool):
             content += node_copy.get_content(MetadataMode.LLM) + "\n\n"
         return ToolOutput(
             content=content,
-            tool_name=self.metadata.name,
+            tool_name=self.metadata.get_name(),
             raw_input={"input": query_str},
             raw_output=docs,
         )

@@ -6,7 +6,7 @@ Redis message queue configuration.
 Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
-`type` |  `Literal[str]` |  |  `'redis'`  
+`type` |  `Literal['redis']` |  |  `'redis'`  
 `url` |  `str` |  |  `'redis://localhost:6379'`  
 `host` |  `str | None` |  |  `None`  
 `port` |  `int | None` |  |  `None`  

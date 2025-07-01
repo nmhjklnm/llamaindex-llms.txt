@@ -171,7 +171,7 @@ Simple message queue configuration.
 Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
-`type` |  `Literal[str]` |  |  `'simple'`  
+`type` |  `Literal['simple']` |  |  `'simple'`  
 `host` |  `str` |  |  `'127.0.0.1'`  
 `port` |  `int` |  |  `8001`  
 `raise_exceptions` |  `bool` |  |  `False`  

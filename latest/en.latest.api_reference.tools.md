@@ -407,16 +407,61 @@ Source code in `llama-index-core/llama_index/core/tools/types.py`
 class ToolOutput(BaseModel):
     """Tool output."""
 
-    content: str
+    blocks: List[ContentBlock]
     tool_name: str
     raw_input: Dict[str, Any]
     raw_output: Any
     is_error: bool = False
 
+    def __init__(
+        self,
+        tool_name: str,
+        content: Optional[str] = None,
+        blocks: Optional[List[ContentBlock]] = None,
+        raw_input: Optional[Dict[str, Any]] = None,
+        raw_output: Optional[Any] = None,
+        is_error: bool = False,
+    ):
+        if content and blocks:
+            raise ValueError("Cannot provide both content and blocks.")
+        if content:
+            blocks = [TextBlock(text=content)]
+        elif blocks:
+            pass
+        else:
+            blocks = []
+
+        super().__init__(
+            tool_name=tool_name,
+            blocks=blocks,
+            raw_input=raw_input,
+            raw_output=raw_output,
+            is_error=is_error,
+        )
+
+    @property
+    def content(self) -> str:
+        """Get the content of the tool output."""
+        return "\n".join(
+            [block.text for block in self.blocks if isinstance(block, TextBlock)]
+        )
+
+    @content.setter
+    def content(self, content: str) -> None:
+        """Set the content of the tool output."""
+        self.blocks = [TextBlock(text=content)]
+
     def __str__(self) -> str:
         """String."""
-        return str(self.content)
+        return self.content
 
 ```
   
----|---
+---|---  
+###  content `property` `writable` #
+```
+content: str
+
+```
+
+Get the content of the tool output.

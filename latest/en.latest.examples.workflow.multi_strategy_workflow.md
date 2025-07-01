@@ -152,17 +152,17 @@ class ComplicatedWorkflow(Workflow):
         self, ctx: Context, ev: StartEvent | JudgeEvent
     ) -> BadQueryEvent | NaiveRAGEvent | HighTopKEvent | RerankEvent:
         # initialize
-        llm = await ctx.get("llm", default=None)
+        llm = await ctx.store.get("llm", default=None)
         if llm is None:
-            await ctx.set("llm", OpenAI(model="gpt-4o", temperature=0.1))
-            await ctx.set(
+            await ctx.store.set("llm", OpenAI(model="gpt-4o", temperature=0.1))
+            await ctx.store.set(
                 "index", self.load_or_create_index("data", "storage")
             )
 
             # we use a chat engine so it remembers previous interactions
-            await ctx.set("judge", SimpleChatEngine.from_defaults())
+            await ctx.store.set("judge", SimpleChatEngine.from_defaults())
 
-        response = await ctx.get("judge").chat(
+        response = await ctx.store.get("judge").chat(
             f"""
             Given a user query, determine if this is likely to yield good results from a RAG system as-is. If it's good, return 'good', if it's bad, return 'bad'.
             Good queries use a lot of relevant keywords and are detailed. Bad queries are vague or ambiguous.
@@ -183,7 +183,7 @@ class ComplicatedWorkflow(Workflow):
     async def improve_query(
         self, ctx: Context, ev: BadQueryEvent
     ) -> JudgeEvent:
-        response = await ctx.get("llm").complete(
+        response = await ctx.store.get("llm").complete(
             f"""
             This is a query to a RAG system: {ev.query}
 
@@ -196,7 +196,7 @@ class ComplicatedWorkflow(Workflow):
     async def naive_rag(
         self, ctx: Context, ev: NaiveRAGEvent
     ) -> ResponseEvent:
-        index = await ctx.get("index")
+        index = await ctx.store.get("index")
         engine = index.as_query_engine(similarity_top_k=5)
         response = engine.query(ev.query)
         print("Naive response:", response)
@@ -208,7 +208,7 @@ class ComplicatedWorkflow(Workflow):
     async def high_top_k(
         self, ctx: Context, ev: HighTopKEvent
     ) -> ResponseEvent:
-        index = await ctx.get("index")
+        index = await ctx.store.get("index")
         engine = index.as_query_engine(similarity_top_k=20)
         response = engine.query(ev.query)
         print("High top k response:", response)
@@ -218,8 +218,8 @@ class ComplicatedWorkflow(Workflow):
 
     @step
     async def rerank(self, ctx: Context, ev: RerankEvent) -> ResponseEvent:
-        index = await ctx.get("index")
-        reranker = RankGPTRerank(top_n=5, llm=await ctx.get("llm"))
+        index = await ctx.store.get("index")
+        reranker = RankGPTRerank(top_n=5, llm=await ctx.store.get("llm"))
         retriever = index.as_retriever(similarity_top_k=20)
         engine = RetrieverQueryEngine.from_args(
             retriever=retriever,
@@ -237,7 +237,7 @@ class ComplicatedWorkflow(Workflow):
         if ready is None:
             return None
 
-        response = await ctx.get("judge").chat(
+        response = await ctx.store.get("judge").chat(
             f"""
             A user has provided a query and 3 different strategies have been used
             to try to answer the query. Your job is to decide which strategy best
@@ -260,7 +260,7 @@ class ComplicatedWorkflow(Workflow):
 
 ```
 
-class ComplicatedWorkflow(Workflow): def load_or_create_index(self, directory_path, persist_dir): # Check if the index already exists if os.path.exists(persist_dir): print("Loading existing index...") # Load the index from disk storage_context = StorageContext.from_defaults( persist_dir=persist_dir ) index = load_index_from_storage(storage_context) else: print("Creating new index...") # Load documents from the specified directory documents = SimpleDirectoryReader(directory_path).load_data() # Create a new index from the documents index = VectorStoreIndex.from_documents(documents) # Persist the index to disk index.storage_context.persist(persist_dir=persist_dir) return index @step async def judge_query( self, ctx: Context, ev: StartEvent | JudgeEvent ) -> BadQueryEvent | NaiveRAGEvent | HighTopKEvent | RerankEvent: # initialize llm = await ctx.get("llm", default=None) if llm is None: await ctx.set("llm", OpenAI(model="gpt-4o", temperature=0.1)) await ctx.set( "index", self.load_or_create_index("data", "storage") ) # we use a chat engine so it remembers previous interactions await ctx.set("judge", SimpleChatEngine.from_defaults()) response = await ctx.get("judge").chat( f""" Given a user query, determine if this is likely to yield good results from a RAG system as-is. If it's good, return 'good', if it's bad, return 'bad'. Good queries use a lot of relevant keywords and are detailed. Bad queries are vague or ambiguous. Here is the query: {ev.query} """ ) if response == "bad": # try again return BadQueryEvent(query=ev.query) else: # send query to all 3 strategies self.send_event(NaiveRAGEvent(query=ev.query)) self.send_event(HighTopKEvent(query=ev.query)) self.send_event(RerankEvent(query=ev.query)) @step async def improve_query( self, ctx: Context, ev: BadQueryEvent ) -> JudgeEvent: response = await ctx.get("llm").complete( f""" This is a query to a RAG system: {ev.query} The query is bad because it is too vague. Please provide a more detailed query that includes specific keywords and removes any ambiguity. """ ) return JudgeEvent(query=str(response)) @step async def naive_rag( self, ctx: Context, ev: NaiveRAGEvent ) -> ResponseEvent: index = await ctx.get("index") engine = index.as_query_engine(similarity_top_k=5) response = engine.query(ev.query) print("Naive response:", response) return ResponseEvent( query=ev.query, source="Naive", response=str(response) ) @step async def high_top_k( self, ctx: Context, ev: HighTopKEvent ) -> ResponseEvent: index = await ctx.get("index") engine = index.as_query_engine(similarity_top_k=20) response = engine.query(ev.query) print("High top k response:", response) return ResponseEvent( query=ev.query, source="High top k", response=str(response) ) @step async def rerank(self, ctx: Context, ev: RerankEvent) -> ResponseEvent: index = await ctx.get("index") reranker = RankGPTRerank(top_n=5, llm=await ctx.get("llm")) retriever = index.as_retriever(similarity_top_k=20) engine = RetrieverQueryEngine.from_args( retriever=retriever, node_postprocessors=[reranker], ) response = engine.query(ev.query) print("Reranker response:", response) return ResponseEvent( query=ev.query, source="Reranker", response=str(response) ) @step async def judge(self, ctx: Context, ev: ResponseEvent) -> StopEvent: ready = ctx.collect_events(ev, [ResponseEvent] * 3) if ready is None: return None response = await ctx.get("judge").chat( f""" A user has provided a query and 3 different strategies have been used to try to answer the query. Your job is to decide which strategy best answered the query. The query was: {ev.query} Response 1 ({ready[0].source}): {ready[0].response} Response 2 ({ready[1].source}): {ready[1].response} Response 3 ({ready[2].source}): {ready[2].response} Please provide the number of the best response (1, 2, or 3). Just provide the number, with no other text or preamble. """ ) best_response = int(str(response)) print( f"Best response was number {best_response}, which was from {ready[best_response-1].source}" ) return StopEvent(result=str(ready[best_response - 1].response))
+class ComplicatedWorkflow(Workflow): def load_or_create_index(self, directory_path, persist_dir): # Check if the index already exists if os.path.exists(persist_dir): print("Loading existing index...") # Load the index from disk storage_context = StorageContext.from_defaults( persist_dir=persist_dir ) index = load_index_from_storage(storage_context) else: print("Creating new index...") # Load documents from the specified directory documents = SimpleDirectoryReader(directory_path).load_data() # Create a new index from the documents index = VectorStoreIndex.from_documents(documents) # Persist the index to disk index.storage_context.persist(persist_dir=persist_dir) return index @step async def judge_query( self, ctx: Context, ev: StartEvent | JudgeEvent ) -> BadQueryEvent | NaiveRAGEvent | HighTopKEvent | RerankEvent: # initialize llm = await ctx.store.get("llm", default=None) if llm is None: await ctx.store.set("llm", OpenAI(model="gpt-4o", temperature=0.1)) await ctx.store.set( "index", self.load_or_create_index("data", "storage") ) # we use a chat engine so it remembers previous interactions await ctx.store.set("judge", SimpleChatEngine.from_defaults()) response = await ctx.store.get("judge").chat( f""" Given a user query, determine if this is likely to yield good results from a RAG system as-is. If it's good, return 'good', if it's bad, return 'bad'. Good queries use a lot of relevant keywords and are detailed. Bad queries are vague or ambiguous. Here is the query: {ev.query} """ ) if response == "bad": # try again return BadQueryEvent(query=ev.query) else: # send query to all 3 strategies self.send_event(NaiveRAGEvent(query=ev.query)) self.send_event(HighTopKEvent(query=ev.query)) self.send_event(RerankEvent(query=ev.query)) @step async def improve_query( self, ctx: Context, ev: BadQueryEvent ) -> JudgeEvent: response = await ctx.store.get("llm").complete( f""" This is a query to a RAG system: {ev.query} The query is bad because it is too vague. Please provide a more detailed query that includes specific keywords and removes any ambiguity. """ ) return JudgeEvent(query=str(response)) @step async def naive_rag( self, ctx: Context, ev: NaiveRAGEvent ) -> ResponseEvent: index = await ctx.store.get("index") engine = index.as_query_engine(similarity_top_k=5) response = engine.query(ev.query) print("Naive response:", response) return ResponseEvent( query=ev.query, source="Naive", response=str(response) ) @step async def high_top_k( self, ctx: Context, ev: HighTopKEvent ) -> ResponseEvent: index = await ctx.store.get("index") engine = index.as_query_engine(similarity_top_k=20) response = engine.query(ev.query) print("High top k response:", response) return ResponseEvent( query=ev.query, source="High top k", response=str(response) ) @step async def rerank(self, ctx: Context, ev: RerankEvent) -> ResponseEvent: index = await ctx.store.get("index") reranker = RankGPTRerank(top_n=5, llm=await ctx.store.get("llm")) retriever = index.as_retriever(similarity_top_k=20) engine = RetrieverQueryEngine.from_args( retriever=retriever, node_postprocessors=[reranker], ) response = engine.query(ev.query) print("Reranker response:", response) return ResponseEvent( query=ev.query, source="Reranker", response=str(response) ) @step async def judge(self, ctx: Context, ev: ResponseEvent) -> StopEvent: ready = ctx.collect_events(ev, [ResponseEvent] * 3) if ready is None: return None response = await ctx.store.get("judge").chat( f""" A user has provided a query and 3 different strategies have been used to try to answer the query. Your job is to decide which strategy best answered the query. The query was: {ev.query} Response 1 ({ready[0].source}): {ready[0].response} Response 2 ({ready[1].source}): {ready[1].response} Response 3 ({ready[2].source}): {ready[2].response} Please provide the number of the best response (1, 2, or 3). Just provide the number, with no other text or preamble. """ ) best_response = int(str(response)) print( f"Best response was number {best_response}, which was from {ready[best_response-1].source}" ) return StopEvent(result=str(ready[best_response - 1].response))
 ## Draw flow diagram¶
 This is how we get the diagram we showed at the start.
 In [ ]:

@@ -582,7 +582,7 @@ class DocsAssistantWorkflow(Workflow):
     async def evaluate_query(
         self, ctx: Context, ev: EvaluateQuery
     ) -> QueryAgentEvent | WriteLlamaIndexDocsEvent | WriteWeaviateDocsEvent | None:
-        await ctx.set("results", [])
+        await ctx.store.set("results", [])
         sllm = self.llm.as_structured_llm(Actions)
         response = await sllm.achat(
             [
@@ -591,8 +591,8 @@ class DocsAssistantWorkflow(Workflow):
             ]
         )
         actions = response.raw.actions
-        await ctx.set("num_events", len(actions))
-        await ctx.set("results", [])
+        await ctx.store.set("num_events", len(actions))
+        await ctx.store.set("results", [])
         print(actions)
         for action in actions:
             if isinstance(action, SaveToLlamaIndexDocs):
@@ -615,7 +615,7 @@ class DocsAssistantWorkflow(Workflow):
         write_webpages_to_weaviate(
             client, urls=ev.urls, collection_name="LlamaIndexDocs"
         )
-        results = await ctx.get("results")
+        results = await ctx.store.get("results")
         results.append(f"Wrote {ev.urls} it LlamaIndex Docs")
         return ActionCompleted(result=f"Writing {ev.urls} to LlamaIndex Docs")
 
@@ -627,7 +627,7 @@ class DocsAssistantWorkflow(Workflow):
         write_webpages_to_weaviate(
             client, urls=ev.urls, collection_name="WeaviateDocs"
         )
-        results = await ctx.get("results")
+        results = await ctx.store.get("results")
         results.append(f"Wrote {ev.urls} it Weavite Docs")
         return ActionCompleted(result=f"Writing {ev.urls} to Weaviate Docs")
 
@@ -637,7 +637,7 @@ class DocsAssistantWorkflow(Workflow):
     ) -> ActionCompleted:
         print(f"Sending {ev.query} to agent")
         response = weaviate_agent.run(ev.query)
-        results = await ctx.get("results")
+        results = await ctx.store.get("results")
         results.append(f"QueryAgent responded with:\n {response.final_answer}")
         return ActionCompleted(result=f"Sending `'{ev.query}`' to agent")
 
@@ -645,7 +645,7 @@ class DocsAssistantWorkflow(Workflow):
     async def collect(
         self, ctx: Context, ev: ActionCompleted
     ) -> StopEvent | None:
-        num_events = await ctx.get("num_events")
+        num_events = await ctx.store.get("num_events")
         evs = ctx.collect_events(ev, [ActionCompleted] * num_events)
         if evs is None:
             return None
@@ -656,7 +656,7 @@ everything_docs_agent = DocsAssistantWorkflow(timeout=None)
 
 ```
 
-class ActionCompleted(Event): result: str class DocsAssistantWorkflow(Workflow): def __init__(self, *args, **kwargs): self.llm = OpenAIResponses(model="gpt-4.1-mini") self.system_prompt = """You are a docs assistant. You evaluate incoming queries and break them down to subqueries when needed. You decide on the next best course of action. Overall, here are the options: - You can write the contents of a URL to llamaindex docs (if it's a llamaindex url) - You can write the contents of a URL to weaviate docs (if it's a weaviate url) - You can answer a question about llamaindex and weaviate using the QueryAgent""" super().__init__(*args, **kwargs) @step async def start(self, ctx: Context, ev: StartEvent) -> EvaluateQuery: return EvaluateQuery(query=ev.query) @step async def evaluate_query( self, ctx: Context, ev: EvaluateQuery ) -> QueryAgentEvent | WriteLlamaIndexDocsEvent | WriteWeaviateDocsEvent | None: await ctx.set("results", []) sllm = self.llm.as_structured_llm(Actions) response = await sllm.achat( [ ChatMessage(role="system", content=self.system_prompt), ChatMessage(role="user", content=ev.query), ] ) actions = response.raw.actions await ctx.set("num_events", len(actions)) await ctx.set("results", []) print(actions) for action in actions: if isinstance(action, SaveToLlamaIndexDocs): ctx.send_event( WriteLlamaIndexDocsEvent(urls=action.llama_index_urls) ) elif isinstance(action, SaveToWeaviateDocs): ctx.send_event( WriteWeaviateDocsEvent(urls=action.weaviate_urls) ) elif isinstance(action, Ask): for query in action.queries: ctx.send_event(QueryAgentEvent(query=query)) @step async def write_li_docs( self, ctx: Context, ev: WriteLlamaIndexDocsEvent ) -> ActionCompleted: print(f"Writing {ev.urls} to LlamaIndex Docs") write_webpages_to_weaviate( client, urls=ev.urls, collection_name="LlamaIndexDocs" ) results = await ctx.get("results") results.append(f"Wrote {ev.urls} it LlamaIndex Docs") return ActionCompleted(result=f"Writing {ev.urls} to LlamaIndex Docs") @step async def write_weaviate_docs( self, ctx: Context, ev: WriteWeaviateDocsEvent ) -> ActionCompleted: print(f"Writing {ev.urls} to Weaviate Docs") write_webpages_to_weaviate( client, urls=ev.urls, collection_name="WeaviateDocs" ) results = await ctx.get("results") results.append(f"Wrote {ev.urls} it Weavite Docs") return ActionCompleted(result=f"Writing {ev.urls} to Weaviate Docs") @step async def query_agent( self, ctx: Context, ev: QueryAgentEvent ) -> ActionCompleted: print(f"Sending {ev.query} to agent") response = weaviate_agent.run(ev.query) results = await ctx.get("results") results.append(f"QueryAgent responded with:\n {response.final_answer}") return ActionCompleted(result=f"Sending `'{ev.query}`' to agent") @step async def collect( self, ctx: Context, ev: ActionCompleted ) -> StopEvent | None: num_events = await ctx.get("num_events") evs = ctx.collect_events(ev, [ActionCompleted] * num_events) if evs is None: return None return StopEvent(result=[ev.result for ev in evs]) everything_docs_agent = DocsAssistantWorkflow(timeout=None)
+class ActionCompleted(Event): result: str class DocsAssistantWorkflow(Workflow): def __init__(self, *args, **kwargs): self.llm = OpenAIResponses(model="gpt-4.1-mini") self.system_prompt = """You are a docs assistant. You evaluate incoming queries and break them down to subqueries when needed. You decide on the next best course of action. Overall, here are the options: - You can write the contents of a URL to llamaindex docs (if it's a llamaindex url) - You can write the contents of a URL to weaviate docs (if it's a weaviate url) - You can answer a question about llamaindex and weaviate using the QueryAgent""" super().__init__(*args, **kwargs) @step async def start(self, ctx: Context, ev: StartEvent) -> EvaluateQuery: return EvaluateQuery(query=ev.query) @step async def evaluate_query( self, ctx: Context, ev: EvaluateQuery ) -> QueryAgentEvent | WriteLlamaIndexDocsEvent | WriteWeaviateDocsEvent | None: await ctx.store.set("results", []) sllm = self.llm.as_structured_llm(Actions) response = await sllm.achat( [ ChatMessage(role="system", content=self.system_prompt), ChatMessage(role="user", content=ev.query), ] ) actions = response.raw.actions await ctx.store.set("num_events", len(actions)) await ctx.store.set("results", []) print(actions) for action in actions: if isinstance(action, SaveToLlamaIndexDocs): ctx.send_event( WriteLlamaIndexDocsEvent(urls=action.llama_index_urls) ) elif isinstance(action, SaveToWeaviateDocs): ctx.send_event( WriteWeaviateDocsEvent(urls=action.weaviate_urls) ) elif isinstance(action, Ask): for query in action.queries: ctx.send_event(QueryAgentEvent(query=query)) @step async def write_li_docs( self, ctx: Context, ev: WriteLlamaIndexDocsEvent ) -> ActionCompleted: print(f"Writing {ev.urls} to LlamaIndex Docs") write_webpages_to_weaviate( client, urls=ev.urls, collection_name="LlamaIndexDocs" ) results = await ctx.store.get("results") results.append(f"Wrote {ev.urls} it LlamaIndex Docs") return ActionCompleted(result=f"Writing {ev.urls} to LlamaIndex Docs") @step async def write_weaviate_docs( self, ctx: Context, ev: WriteWeaviateDocsEvent ) -> ActionCompleted: print(f"Writing {ev.urls} to Weaviate Docs") write_webpages_to_weaviate( client, urls=ev.urls, collection_name="WeaviateDocs" ) results = await ctx.store.get("results") results.append(f"Wrote {ev.urls} it Weavite Docs") return ActionCompleted(result=f"Writing {ev.urls} to Weaviate Docs") @step async def query_agent( self, ctx: Context, ev: QueryAgentEvent ) -> ActionCompleted: print(f"Sending {ev.query} to agent") response = weaviate_agent.run(ev.query) results = await ctx.store.get("results") results.append(f"QueryAgent responded with:\n {response.final_answer}") return ActionCompleted(result=f"Sending `'{ev.query}`' to agent") @step async def collect( self, ctx: Context, ev: ActionCompleted ) -> StopEvent | None: num_events = await ctx.store.get("num_events") evs = ctx.collect_events(ev, [ActionCompleted] * num_events) if evs is None: return None return StopEvent(result=[ev.result for ev in evs]) everything_docs_agent = DocsAssistantWorkflow(timeout=None)
 In [ ]:
 Copied!
 ```

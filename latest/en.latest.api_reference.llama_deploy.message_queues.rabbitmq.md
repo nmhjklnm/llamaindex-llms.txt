@@ -6,7 +6,7 @@ RabbitMQ message queue configuration.
 Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
-`type` |  `Literal[str]` |  |  `'rabbitmq'`  
+`type` |  `Literal['rabbitmq']` |  |  `'rabbitmq'`  
 `url` |  `str` |  |  `'amqp://guest:guest@localhost/'`  
 `exchange_name` |  `str` |  |  `'llama-deploy'`  
 `username` |  `str | None` |  |  `None`  

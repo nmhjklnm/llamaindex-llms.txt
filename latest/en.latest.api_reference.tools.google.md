@@ -942,13 +942,42 @@ Source code in `llama-index-integrations/tools/llama-index-tools-google/llama_in
 class GoogleSearchToolSpec(BaseToolSpec):
     """Google Search tool spec."""
 
-    spec_functions = ["google_search"]
+    spec_functions = [("google_search", "agoogle_search")]
 
     def __init__(self, key: str, engine: str, num: Optional[int] = None) -> None:
         """Initialize with parameters."""
         self.key = key
         self.engine = engine
         self.num = num
+
+    def _get_url(self, query: str) -> str:
+        url = QUERY_URL_TMPL.format(
+            key=self.key, engine=self.engine, query=urllib.parse.quote_plus(query)
+        )
+
+        if self.num is not None:
+            if not 1 <= self.num <= 10:
+                raise ValueError("num should be an integer between 1 and 10, inclusive")
+            url += f"&num={self.num}"
+
+        return url
+
+    def _parse_results(self, results: List[Dict]) -> Union[List[Dict], str]:
+        cleaned_results = []
+        if len(results) == 0:
+            return "No search results available"
+
+        for result in results:
+            if "snippet" in result:
+                cleaned_results.append(
+                    {
+                        "title": result["title"],
+                        "link": result["link"],
+                        "snippet": result["snippet"],
+                    }
+                )
+
+        return cleaned_results
 
     def google_search(self, query: str):
         """
@@ -962,17 +991,35 @@ class GoogleSearchToolSpec(BaseToolSpec):
             ValueError: If the 'num' is not an integer between 1 and 10.
 
         """
-        url = QUERY_URL_TMPL.format(
-            key=self.key, engine=self.engine, query=urllib.parse.quote_plus(query)
-        )
+        url = self._get_url(query)
 
-        if self.num is not None:
-            if not 1 <= self.num <= 10:
-                raise ValueError("num should be an integer between 1 and 10, inclusive")
-            url += f"&num={self.num}"
+        with httpx.Client() as client:
+            response = client.get(url)
 
-        response = requests.get(url)
-        return [Document(text=response.text)]
+        results = json.loads(response.text).get("items", [])
+
+        return self._parse_results(results)
+
+    async def agoogle_search(self, query: str):
+        """
+        Make a query to the Google search engine to receive a list of results.
+
+        Args:
+            query (str): The query to be passed to Google search.
+            num (int, optional): The number of search results to return. Defaults to None.
+
+        Raises:
+            ValueError: If the 'num' is not an integer between 1 and 10.
+
+        """
+        url = self._get_url(query)
+
+        async with httpx.AsyncClient() as client:
+            response = await client.get(url)
+
+        results = json.loads(response.text).get("items", [])
+
+        return self._parse_results(results)
 
 ```
   
@@ -1008,17 +1055,57 @@ def google_search(self, query: str):
         ValueError: If the 'num' is not an integer between 1 and 10.
 
     """
-    url = QUERY_URL_TMPL.format(
-        key=self.key, engine=self.engine, query=urllib.parse.quote_plus(query)
-    )
+    url = self._get_url(query)
 
-    if self.num is not None:
-        if not 1 <= self.num <= 10:
-            raise ValueError("num should be an integer between 1 and 10, inclusive")
-        url += f"&num={self.num}"
+    with httpx.Client() as client:
+        response = client.get(url)
 
-    response = requests.get(url)
-    return [Document(text=response.text)]
+    results = json.loads(response.text).get("items", [])
+
+    return self._parse_results(results)
+
+```
+  
+---|---  
+###  agoogle_search `async` #
+```
+agoogle_search(query: str)
+
+```
+
+Make a query to the Google search engine to receive a list of results.
+Parameters:
+Name | Type | Description | Default  
+---|---|---|---  
+`query` |  `str` |  The query to be passed to Google search. |  _required_  
+`num` |  `int` |  The number of search results to return. Defaults to None. |  _required_  
+Raises:
+Type | Description  
+---|---  
+`ValueError` |  If the 'num' is not an integer between 1 and 10.  
+Source code in `llama-index-integrations/tools/llama-index-tools-google/llama_index/tools/google/search/base.py`
+
+| ```
+async def agoogle_search(self, query: str):
+    """
+    Make a query to the Google search engine to receive a list of results.
+
+    Args:
+        query (str): The query to be passed to Google search.
+        num (int, optional): The number of search results to return. Defaults to None.
+
+    Raises:
+        ValueError: If the 'num' is not an integer between 1 and 10.
+
+    """
+    url = self._get_url(query)
+
+    async with httpx.AsyncClient() as client:
+        response = await client.get(url)
+
+    results = json.loads(response.text).get("items", [])
+
+    return self._parse_results(results)
 
 ```
   

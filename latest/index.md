@@ -74,9 +74,13 @@ print(response)
 
 If any part of this trips you up, don't worry! Check out our more comprehensive starter tutorials using remote APIs like OpenAI or any model that runs on your laptop.
 ## LlamaCloud#
-If you're an enterprise developer, check out **LlamaCloud**. It is an end-to-end managed service for data parsing, ingestion, indexing, and retrieval, allowing you to get production-quality data for your production LLM application. It's available both hosted on our servers or as a self-hosted solution.
-### LlamaParse#
-LlamaParse is our state-of-the-art document parsing solution. It's available as part of LlamaCloud and also available as a self-serve API. You can sign up and parse up to 1000 pages/day for free, or enter a credit card for unlimited parsing. Learn more.
+If you're an enterprise developer, check out **LlamaCloud**. It is an end-to-end managed service for document parsing, extraction, indexing, and retrieval - allowing you to get production-quality data for your AI agent. You can sign up and get 10,000 free credits per month, sign up for one of our plans, or come talk to us if you're interested in an enterprise solution. We offer both SaaS and self-hosted plans.
+You can also check out the LlamaCloud documentation for more details.
+  * **Document Parsing (LlamaParse)** : LlamaParse is the best-in-class document parsing solution. It's powered by VLMs and perfect for even the most complex documents (nested tables, embedded charts/images, and more). Learn more or check out the docs.
+  * **Document Extraction (LlamaExtract)** : Given a human-defined or inferred schema, extract structured data from any document. Learn more or check out the docs.
+  * **Indexing/Retrieval** : Set up an e2e pipeline to index a collection of documents for retrieval. Connect your data source (e.g. Sharepoint, Google Drive, S3), your vector DB data sink, and we automatically handle the document processing and syncing. Learn more or check out the docs.
+
+
 ## Community#
 Need help? Have a feature suggestion? Join the LlamaIndex community:
   * Twitter

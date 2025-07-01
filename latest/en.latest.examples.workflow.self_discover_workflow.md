@@ -180,7 +180,7 @@ class SelfDiscoverWorkflow(Workflow):
         if task is None or llm is None:
             raise ValueError("'task' and 'llm' arguments are required.")
 
-        await ctx.set("llm", llm)
+        await ctx.store.set("llm", llm)
 
         # format prompt and get result from LLM
         prompt = SELECT_PRMOPT_TEMPLATE.format(
@@ -197,7 +197,7 @@ class SelfDiscoverWorkflow(Workflow):
         """Refine modules step."""
         task = ev.task
         modules = ev.modules
-        llm: LLM = await ctx.get("llm")
+        llm: LLM = await ctx.store.get("llm")
 
         # format prompt and get result
         prompt = ADAPT_PROMPT_TEMPLATE.format(
@@ -214,7 +214,7 @@ class SelfDiscoverWorkflow(Workflow):
         """Create reasoning structures step."""
         task = ev.task
         refined_modules = ev.refined_modules
-        llm: LLM = await ctx.get("llm")
+        llm: LLM = await ctx.store.get("llm")
 
         # format prompt, get result
         prompt = IMPLEMENT_PROMPT_TEMPLATE.format(
@@ -233,7 +233,7 @@ class SelfDiscoverWorkflow(Workflow):
         """Gets final result from reasoning structure event."""
         task = ev.task
         reasoning_structure = ev.reasoning_structure
-        llm: LLM = await ctx.get("llm")
+        llm: LLM = await ctx.store.get("llm")
 
         # format prompt, get res
         prompt = REASONING_PROMPT_TEMPLATE.format(
@@ -245,7 +245,7 @@ class SelfDiscoverWorkflow(Workflow):
 
 ```
 
-from llama_index.core.workflow import ( Workflow, Context, StartEvent, StopEvent, step, ) from llama_index.core.llms import LLM class SelfDiscoverWorkflow(Workflow): """Self discover workflow.""" @step async def get_modules( self, ctx: Context, ev: StartEvent ) -> GetModulesEvent: """Get modules step.""" # get input data, store llm into ctx task = ev.get("task") llm: LLM = ev.get("llm") if task is None or llm is None: raise ValueError("'task' and 'llm' arguments are required.") await ctx.set("llm", llm) # format prompt and get result from LLM prompt = SELECT_PRMOPT_TEMPLATE.format( task=task, reasoning_modules=_REASONING_MODULES ) result = llm.complete(prompt) return GetModulesEvent(task=task, modules=str(result)) @step async def refine_modules( self, ctx: Context, ev: GetModulesEvent ) -> RefineModulesEvent: """Refine modules step.""" task = ev.task modules = ev.modules llm: LLM = await ctx.get("llm") # format prompt and get result prompt = ADAPT_PROMPT_TEMPLATE.format( task=task, selected_modules=modules ) result = llm.complete(prompt) return RefineModulesEvent(task=task, refined_modules=str(result)) @step async def create_reasoning_structure( self, ctx: Context, ev: RefineModulesEvent ) -> ReasoningStructureEvent: """Create reasoning structures step.""" task = ev.task refined_modules = ev.refined_modules llm: LLM = await ctx.get("llm") # format prompt, get result prompt = IMPLEMENT_PROMPT_TEMPLATE.format( task=task, adapted_modules=refined_modules ) result = llm.complete(prompt) return ReasoningStructureEvent( task=task, reasoning_structure=str(result) ) @step async def get_final_result( self, ctx: Context, ev: ReasoningStructureEvent ) -> StopEvent: """Gets final result from reasoning structure event.""" task = ev.task reasoning_structure = ev.reasoning_structure llm: LLM = await ctx.get("llm") # format prompt, get res prompt = REASONING_PROMPT_TEMPLATE.format( task=task, reasoning_structure=reasoning_structure ) result = llm.complete(prompt) return StopEvent(result=result)
+from llama_index.core.workflow import ( Workflow, Context, StartEvent, StopEvent, step, ) from llama_index.core.llms import LLM class SelfDiscoverWorkflow(Workflow): """Self discover workflow.""" @step async def get_modules( self, ctx: Context, ev: StartEvent ) -> GetModulesEvent: """Get modules step.""" # get input data, store llm into ctx task = ev.get("task") llm: LLM = ev.get("llm") if task is None or llm is None: raise ValueError("'task' and 'llm' arguments are required.") await ctx.store.set("llm", llm) # format prompt and get result from LLM prompt = SELECT_PRMOPT_TEMPLATE.format( task=task, reasoning_modules=_REASONING_MODULES ) result = llm.complete(prompt) return GetModulesEvent(task=task, modules=str(result)) @step async def refine_modules( self, ctx: Context, ev: GetModulesEvent ) -> RefineModulesEvent: """Refine modules step.""" task = ev.task modules = ev.modules llm: LLM = await ctx.store.get("llm") # format prompt and get result prompt = ADAPT_PROMPT_TEMPLATE.format( task=task, selected_modules=modules ) result = llm.complete(prompt) return RefineModulesEvent(task=task, refined_modules=str(result)) @step async def create_reasoning_structure( self, ctx: Context, ev: RefineModulesEvent ) -> ReasoningStructureEvent: """Create reasoning structures step.""" task = ev.task refined_modules = ev.refined_modules llm: LLM = await ctx.store.get("llm") # format prompt, get result prompt = IMPLEMENT_PROMPT_TEMPLATE.format( task=task, adapted_modules=refined_modules ) result = llm.complete(prompt) return ReasoningStructureEvent( task=task, reasoning_structure=str(result) ) @step async def get_final_result( self, ctx: Context, ev: ReasoningStructureEvent ) -> StopEvent: """Gets final result from reasoning structure event.""" task = ev.task reasoning_structure = ev.reasoning_structure llm: LLM = await ctx.store.get("llm") # format prompt, get res prompt = REASONING_PROMPT_TEMPLATE.format( task=task, reasoning_structure=reasoning_structure ) result = llm.complete(prompt) return StopEvent(result=result)
 ## Running the workflow¶
 In [ ]:
 Copied!

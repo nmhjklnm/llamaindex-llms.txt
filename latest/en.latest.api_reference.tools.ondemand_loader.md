@@ -139,7 +139,7 @@ class OnDemandLoaderTool(AsyncBaseTool):
         response = query_engine.query(query_str)
         return ToolOutput(
             content=str(response),
-            tool_name=self.metadata.name,
+            tool_name=self.metadata.get_name(),
             raw_input={"query": query_str},
             raw_output=response,
         )
@@ -154,7 +154,7 @@ class OnDemandLoaderTool(AsyncBaseTool):
         response = await query_engine.aquery(query_str)
         return ToolOutput(
             content=str(response),
-            tool_name=self.metadata.name,
+            tool_name=self.metadata.get_name(),
             raw_input={"query": query_str},
             raw_output=response,
         )
@@ -283,7 +283,7 @@ def call(self, *args: Any, **kwargs: Any) -> ToolOutput:
     response = query_engine.query(query_str)
     return ToolOutput(
         content=str(response),
-        tool_name=self.metadata.name,
+        tool_name=self.metadata.get_name(),
         raw_input={"query": query_str},
         raw_output=response,
     )
@@ -311,7 +311,7 @@ async def acall(self, *args: Any, **kwargs: Any) -> ToolOutput:
     response = await query_engine.aquery(query_str)
     return ToolOutput(
         content=str(response),
-        tool_name=self.metadata.name,
+        tool_name=self.metadata.get_name(),
         raw_input={"query": query_str},
         raw_output=response,
     )

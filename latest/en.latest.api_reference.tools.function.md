@@ -213,6 +213,22 @@ class FunctionTool(AsyncBaseTool):
 
         return self._real_fn
 
+    def _parse_tool_output(self, raw_output: Any) -> List[ContentBlock]:
+        """Parse tool output into content blocks."""
+        if isinstance(
+            raw_output, (TextBlock, ImageBlock, AudioBlock, CitableBlock, CitationBlock)
+        ):
+            return [raw_output]
+        elif isinstance(raw_output, list) and all(
+            isinstance(
+                item, (TextBlock, ImageBlock, AudioBlock, CitableBlock, CitationBlock)
+            )
+            for item in raw_output
+        ):
+            return raw_output
+        else:
+            return [TextBlock(text=str(raw_output))]
+
     def __call__(self, *args: Any, **kwargs: Any) -> ToolOutput:
         all_kwargs = {**self.partial_params, **kwargs}
         return self.call(*args, **all_kwargs)
@@ -231,10 +247,13 @@ class FunctionTool(AsyncBaseTool):
             k: v for k, v in all_kwargs.items() if k != self.ctx_param_name
         }
 
+        # Parse tool output into content blocks
+        output_blocks = self._parse_tool_output(raw_output)
+
         # Default ToolOutput based on the raw output
         default_output = ToolOutput(
-            content=str(raw_output),
-            tool_name=self.metadata.name,
+            blocks=output_blocks,
+            tool_name=self.metadata.get_name(),
             raw_input={"args": args, "kwargs": tool_output_kwargs},
             raw_output=raw_output,
         )
@@ -247,7 +266,7 @@ class FunctionTool(AsyncBaseTool):
                 # Assume callback_result is a string to override the content.
                 return ToolOutput(
                     content=str(callback_result),
-                    tool_name=self.metadata.name,
+                    tool_name=self.metadata.get_name(),
                     raw_input={"args": args, "kwargs": tool_output_kwargs},
                     raw_output=raw_output,
                 )
@@ -267,10 +286,13 @@ class FunctionTool(AsyncBaseTool):
             k: v for k, v in all_kwargs.items() if k != self.ctx_param_name
         }
 
+        # Parse tool output into content blocks
+        output_blocks = self._parse_tool_output(raw_output)
+
         # Default ToolOutput based on the raw output
         default_output = ToolOutput(
-            content=str(raw_output),
-            tool_name=self.metadata.name,
+            blocks=output_blocks,
+            tool_name=self.metadata.get_name(),
             raw_input={"args": args, "kwargs": tool_output_kwargs},
             raw_output=raw_output,
         )
@@ -283,7 +305,7 @@ class FunctionTool(AsyncBaseTool):
                 # Assume callback_result is a string to override the content.
                 return ToolOutput(
                     content=str(callback_result),
-                    tool_name=self.metadata.name,
+                    tool_name=self.metadata.get_name(),
                     raw_input={"args": args, "kwargs": tool_output_kwargs},
                     raw_output=raw_output,
                 )
@@ -372,10 +394,13 @@ def call(self, *args: Any, **kwargs: Any) -> ToolOutput:
         k: v for k, v in all_kwargs.items() if k != self.ctx_param_name
     }
 
+    # Parse tool output into content blocks
+    output_blocks = self._parse_tool_output(raw_output)
+
     # Default ToolOutput based on the raw output
     default_output = ToolOutput(
-        content=str(raw_output),
-        tool_name=self.metadata.name,
+        blocks=output_blocks,
+        tool_name=self.metadata.get_name(),
         raw_input={"args": args, "kwargs": tool_output_kwargs},
         raw_output=raw_output,
     )
@@ -388,7 +413,7 @@ def call(self, *args: Any, **kwargs: Any) -> ToolOutput:
             # Assume callback_result is a string to override the content.
             return ToolOutput(
                 content=str(callback_result),
-                tool_name=self.metadata.name,
+                tool_name=self.metadata.get_name(),
                 raw_input={"args": args, "kwargs": tool_output_kwargs},
                 raw_output=raw_output,
             )
@@ -421,10 +446,13 @@ async def acall(self, *args: Any, **kwargs: Any) -> ToolOutput:
         k: v for k, v in all_kwargs.items() if k != self.ctx_param_name
     }
 
+    # Parse tool output into content blocks
+    output_blocks = self._parse_tool_output(raw_output)
+
     # Default ToolOutput based on the raw output
     default_output = ToolOutput(
-        content=str(raw_output),
-        tool_name=self.metadata.name,
+        blocks=output_blocks,
+        tool_name=self.metadata.get_name(),
         raw_input={"args": args, "kwargs": tool_output_kwargs},
         raw_output=raw_output,
     )
@@ -437,7 +465,7 @@ async def acall(self, *args: Any, **kwargs: Any) -> ToolOutput:
             # Assume callback_result is a string to override the content.
             return ToolOutput(
                 content=str(callback_result),
-                tool_name=self.metadata.name,
+                tool_name=self.metadata.get_name(),
                 raw_input={"args": args, "kwargs": tool_output_kwargs},
                 raw_output=raw_output,
             )

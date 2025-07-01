@@ -18,7 +18,7 @@ Name | Type | Description | Default
 `audio_token_size_estimate` |  `int` |  The token size estimate for audio. |  `256`  
 `tokenizer_fn` |  `Callable[list, List]` |  The tokenizer function to use for token counting. |  `<dynamic>`  
 `sql_store` |  `SQLAlchemyChatStore` |  The chat store to use for storing messages. |  `SQLAlchemyChatStore(table_name='llama_index_memory', async_database_uri='sqlite+aiosqlite:///:memory:')`  
-`session_id` |  `str` |  The key to use for storing messages in the chat store. |  `'56e3acb0-133f-43ab-b2f6-6627edbadbe3'`  
+`session_id` |  `str` |  The key to use for storing messages in the chat store. |  `'588f34d9-c929-4f36-9376-5503fc63f51b'`  
 Source code in `llama-index-core/llama_index/core/memory/memory.py`
 
 | ```
@@ -174,7 +174,16 @@ class Memory(BaseMemory):
 
         # Normalize the input to a list of ContentBlocks
         if isinstance(message_or_blocks, ChatMessage):
-            blocks: List[Union[TextBlock, ImageBlock, AudioBlock, DocumentBlock]] = []
+            blocks: List[
+                Union[
+                    TextBlock,
+                    ImageBlock,
+                    AudioBlock,
+                    DocumentBlock,
+                    CitableBlock,
+                    CitationBlock,
+                ]
+            ] = []
 
             for block in message_or_blocks.blocks:
                 if not isinstance(block, CachePoint):

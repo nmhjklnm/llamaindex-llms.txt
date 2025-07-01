@@ -79,7 +79,7 @@ Solace PubSub+ message queue configuration.
 Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
-`type` |  `Literal[str]` |  |  `'solace'`  
+`type` |  `Literal['solace']` |  |  `'solace'`  
 `host` |  `str` |  |  `''`  
 `vpn_name` |  `str` |  |  `''`  
 `username` |  `str` |  |  `''`  

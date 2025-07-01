@@ -262,7 +262,7 @@ class CodeActAgent(Workflow):
         self, ctx: Context, ev: StartEvent
     ) -> InputEvent:
         # check if memory is setup
-        memory = await ctx.get("memory", default=None)
+        memory = await ctx.store.get("memory", default=None)
         if not memory:
             memory = ChatMemoryBuffer.from_defaults(llm=self.llm)
 
@@ -277,7 +277,7 @@ class CodeActAgent(Workflow):
         chat_history = memory.get()
 
         # update context
-        await ctx.set("memory", memory)
+        await ctx.store.set("memory", memory)
 
         # add the system message to the chat history and return
         return InputEvent(input=[self.system_message, *chat_history])
@@ -294,9 +294,9 @@ class CodeActAgent(Workflow):
             ctx.write_event_to_stream(StreamEvent(delta=response.delta or ""))
 
         # save the final response, which should have all content
-        memory = await ctx.get("memory")
+        memory = await ctx.store.get("memory")
         memory.put(response.message)
-        await ctx.set("memory", memory)
+        await ctx.store.set("memory", memory)
 
         # get the code to execute
         code = self._parse_code(response.message.content)
@@ -315,9 +315,9 @@ class CodeActAgent(Workflow):
         output = self.code_execute_fn(ev.code)
 
         # update the memory
-        memory = await ctx.get("memory")
+        memory = await ctx.store.get("memory")
         memory.put(ChatMessage(role="assistant", content=output))
-        await ctx.set("memory", memory)
+        await ctx.store.set("memory", memory)
 
         # get the latest chat history and loop back to the start
         chat_history = memory.get()
@@ -325,7 +325,7 @@ class CodeActAgent(Workflow):
 
 ```
 
-import inspect import re from typing import Any, Callable, List from llama_index.core.llms import ChatMessage, LLM from llama_index.core.memory import ChatMemoryBuffer from llama_index.core.tools.types import BaseTool from llama_index.core.workflow import ( Context, Workflow, StartEvent, StopEvent, step, ) from llama_index.llms.openai import OpenAI CODEACT_SYSTEM_PROMPT = """ You are a helpful assistant that can execute code. Given the chat history, you can write code within ... tags to help the user with their question. In your code, you can reference any previously used variables or functions. The user has also provided you with some predefined functions: {fn_str} To execute code, write the code between ... tags. """ class CodeActAgent(Workflow): def __init__( self, fns: List[Callable], code_execute_fn: Callable, llm: LLM | None = None, **workflow_kwargs: Any, ) -> None: super().__init__(**workflow_kwargs) self.fns = fns or [] self.code_execute_fn = code_execute_fn self.llm = llm or OpenAI(model="gpt-4o-mini") # parse the functions into truncated function strings self.fn_str = "\n\n".join( f'def {fn.__name__}{str(inspect.signature(fn))}:\n """ {fn.__doc__} """\n ...' for fn in self.fns ) self.system_message = ChatMessage( role="system", content=CODEACT_SYSTEM_PROMPT.format(fn_str=self.fn_str), ) def _parse_code(self, response: str) -> str | None: # find the code between ... tags matches = re.findall(r"(.*?)", response, re.DOTALL) if matches: return "\n\n".join(matches) return None @step async def prepare_chat_history( self, ctx: Context, ev: StartEvent ) -> InputEvent: # check if memory is setup memory = await ctx.get("memory", default=None) if not memory: memory = ChatMemoryBuffer.from_defaults(llm=self.llm) # get user input user_input = ev.get("user_input") if user_input is None: raise ValueError("user_input kwarg is required") user_msg = ChatMessage(role="user", content=user_input) memory.put(user_msg) # get chat history chat_history = memory.get() # update context await ctx.set("memory", memory) # add the system message to the chat history and return return InputEvent(input=[self.system_message, *chat_history]) @step async def handle_llm_input( self, ctx: Context, ev: InputEvent ) -> CodeExecutionEvent | StopEvent: chat_history = ev.input # stream the response response_stream = await self.llm.astream_chat(chat_history) async for response in response_stream: ctx.write_event_to_stream(StreamEvent(delta=response.delta or "")) # save the final response, which should have all content memory = await ctx.get("memory") memory.put(response.message) await ctx.set("memory", memory) # get the code to execute code = self._parse_code(response.message.content) if not code: return StopEvent(result=response) else: return CodeExecutionEvent(code=code) @step async def handle_code_execution( self, ctx: Context, ev: CodeExecutionEvent ) -> InputEvent: # execute the code ctx.write_event_to_stream(ev) output = self.code_execute_fn(ev.code) # update the memory memory = await ctx.get("memory") memory.put(ChatMessage(role="assistant", content=output)) await ctx.set("memory", memory) # get the latest chat history and loop back to the start chat_history = memory.get() return InputEvent(input=[self.system_message, *chat_history])
+import inspect import re from typing import Any, Callable, List from llama_index.core.llms import ChatMessage, LLM from llama_index.core.memory import ChatMemoryBuffer from llama_index.core.tools.types import BaseTool from llama_index.core.workflow import ( Context, Workflow, StartEvent, StopEvent, step, ) from llama_index.llms.openai import OpenAI CODEACT_SYSTEM_PROMPT = """ You are a helpful assistant that can execute code. Given the chat history, you can write code within ... tags to help the user with their question. In your code, you can reference any previously used variables or functions. The user has also provided you with some predefined functions: {fn_str} To execute code, write the code between ... tags. """ class CodeActAgent(Workflow): def __init__( self, fns: List[Callable], code_execute_fn: Callable, llm: LLM | None = None, **workflow_kwargs: Any, ) -> None: super().__init__(**workflow_kwargs) self.fns = fns or [] self.code_execute_fn = code_execute_fn self.llm = llm or OpenAI(model="gpt-4o-mini") # parse the functions into truncated function strings self.fn_str = "\n\n".join( f'def {fn.__name__}{str(inspect.signature(fn))}:\n """ {fn.__doc__} """\n ...' for fn in self.fns ) self.system_message = ChatMessage( role="system", content=CODEACT_SYSTEM_PROMPT.format(fn_str=self.fn_str), ) def _parse_code(self, response: str) -> str | None: # find the code between ... tags matches = re.findall(r"(.*?)", response, re.DOTALL) if matches: return "\n\n".join(matches) return None @step async def prepare_chat_history( self, ctx: Context, ev: StartEvent ) -> InputEvent: # check if memory is setup memory = await ctx.store.get("memory", default=None) if not memory: memory = ChatMemoryBuffer.from_defaults(llm=self.llm) # get user input user_input = ev.get("user_input") if user_input is None: raise ValueError("user_input kwarg is required") user_msg = ChatMessage(role="user", content=user_input) memory.put(user_msg) # get chat history chat_history = memory.get() # update context await ctx.store.set("memory", memory) # add the system message to the chat history and return return InputEvent(input=[self.system_message, *chat_history]) @step async def handle_llm_input( self, ctx: Context, ev: InputEvent ) -> CodeExecutionEvent | StopEvent: chat_history = ev.input # stream the response response_stream = await self.llm.astream_chat(chat_history) async for response in response_stream: ctx.write_event_to_stream(StreamEvent(delta=response.delta or "")) # save the final response, which should have all content memory = await ctx.store.get("memory") memory.put(response.message) await ctx.store.set("memory", memory) # get the code to execute code = self._parse_code(response.message.content) if not code: return StopEvent(result=response) else: return CodeExecutionEvent(code=code) @step async def handle_code_execution( self, ctx: Context, ev: CodeExecutionEvent ) -> InputEvent: # execute the code ctx.write_event_to_stream(ev) output = self.code_execute_fn(ev.code) # update the memory memory = await ctx.store.get("memory") memory.put(ChatMessage(role="assistant", content=output)) await ctx.store.set("memory", memory) # get the latest chat history and loop back to the start chat_history = memory.get() return InputEvent(input=[self.system_message, *chat_history])
 ## Testing the CodeAct Agent¶
 Now, we can test out the CodeAct Agent!
 We'll create a simple agent and slowly build up the complexity with requests.
