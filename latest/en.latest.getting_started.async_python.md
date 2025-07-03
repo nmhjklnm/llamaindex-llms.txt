@@ -26,7 +26,6 @@ Here are some of the key concepts you should understand:
 ## 5. A Practical Example#
 Below is an example demonstrating how to write and run async functions with `asyncio`:
 ```
-python
 import asyncio
 
 
@@ -55,7 +54,7 @@ async def main():
     print("Main complete")
 
 
-if name == "main":
+if __name__ == "__main__":
     asyncio.run(main())
 
 ```

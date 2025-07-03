@@ -5,7 +5,7 @@ A message for the message queue.
 Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
-`id_` |  `str` |  |  `'ded530ca-5135-4150-b129-cc67101aaaa7'`  
+`id_` |  `str` |  |  `'0b4f2025-921b-46ac-b160-fb627c107fec'`  
 `publisher_id` |  `str` |  Id of publisher. |  `'default'`  
 `action` |  `ActionTypes | None` |  |  `None`  
 `stats` |  `QueueMessageStats` |  Stats for a queue message. Attributes: publish_time (Optional[str]): The time the message was published. process_start_time (Optional[str]): The time the message processing started. process_end_time (Optional[str]): The time the message processing ended. |  `<dynamic>`  

@@ -63,8 +63,17 @@ class McpToolSpec(BaseToolSpec):
         """
         An asynchronous method to get the resources list from MCP Client.
         """
-        response = await self.client.list_resources()
-        resources = response.resources if hasattr(response, "resources") else []
+        static_response = await self.client.list_resources()
+        dynamic_response = await self.client.list_resource_templates()
+        static_resources = (
+            static_response.resources if hasattr(static_response, "resources") else []
+        )
+        dynamic_resources = (
+            dynamic_response.resourceTemplates
+            if hasattr(dynamic_response, "resourceTemplates")
+            else []
+        )
+        resources = static_resources + dynamic_resources
         if self.allowed_tools is None:
             return resources
 
@@ -129,7 +138,11 @@ class McpToolSpec(BaseToolSpec):
         if self.include_resources:
             resources_list = await self.fetch_resources()
             for resource in resources_list:
-                fn = self._create_resource_fn(resource.name)
+                if hasattr(resource, "uri"):
+                    uri = resource.uri
+                elif hasattr(resource, "template"):
+                    uri = resource.template
+                fn = self._create_resource_fn(uri)
                 function_tool_list.append(
                     FunctionTool.from_defaults(
                         async_fn=fn,
@@ -208,8 +221,17 @@ async def fetch_resources(self) -> List[Resource]:
     """
     An asynchronous method to get the resources list from MCP Client.
     """
-    response = await self.client.list_resources()
-    resources = response.resources if hasattr(response, "resources") else []
+    static_response = await self.client.list_resources()
+    dynamic_response = await self.client.list_resource_templates()
+    static_resources = (
+        static_response.resources if hasattr(static_response, "resources") else []
+    )
+    dynamic_resources = (
+        dynamic_response.resourceTemplates
+        if hasattr(dynamic_response, "resourceTemplates")
+        else []
+    )
+    resources = static_resources + dynamic_resources
     if self.allowed_tools is None:
         return resources
 
@@ -271,7 +293,11 @@ async def to_tool_list_async(self) -> List[FunctionTool]:
     if self.include_resources:
         resources_list = await self.fetch_resources()
         for resource in resources_list:
-            fn = self._create_resource_fn(resource.name)
+            if hasattr(resource, "uri"):
+                uri = resource.uri
+            elif hasattr(resource, "template"):
+                uri = resource.template
+            fn = self._create_resource_fn(uri)
             function_tool_list.append(
                 FunctionTool.from_defaults(
                     async_fn=fn,

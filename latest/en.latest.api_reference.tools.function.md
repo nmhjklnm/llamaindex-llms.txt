@@ -46,13 +46,13 @@ class FunctionTool(AsyncBaseTool):
         assert fn_to_inspect is not None
         sig = inspect.signature(fn_to_inspect)
         self.requires_context = any(
-            param.annotation == Context for param in sig.parameters.values()
+            _is_context_param(param.annotation) for param in sig.parameters.values()
         )
         self.ctx_param_name = (
             next(
                 param.name
                 for param in sig.parameters.values()
-                if param.annotation == Context
+                if _is_context_param(param.annotation)
             )
             if self.requires_context
             else None
@@ -125,13 +125,13 @@ class FunctionTool(AsyncBaseTool):
             # Remove ctx parameter from schema if present
             ctx_param_name = None
             for param in fn_sig.parameters.values():
-                if param.annotation == Context:
+                if _is_context_param(param.annotation):
                     ctx_param_name = param.name
                     fn_sig = fn_sig.replace(
                         parameters=[
                             param
                             for param in fn_sig.parameters.values()
-                            if param.annotation != Context
+                            if not _is_context_param(param.annotation)
                         ]
                     )
 

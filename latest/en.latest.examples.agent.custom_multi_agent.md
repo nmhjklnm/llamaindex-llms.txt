@@ -113,16 +113,16 @@ async def call_research_agent(ctx: Context, prompt: str) -> str:
         user_msg=f"Write some notes about the following: {prompt}"
     )
 
-    state = await ctx.get("state")
+    state = await ctx.store.get("state")
     state["research_notes"].append(str(result))
-    await ctx.set("state", state)
+    await ctx.store.set("state", state)
 
     return str(result)
 
 
 async def call_write_agent(ctx: Context) -> str:
     """Useful for writing a report based on the research notes or revising the report based on feedback."""
-    state = await ctx.get("state")
+    state = await ctx.store.get("state")
     notes = state.get("research_notes", None)
     if not notes:
         return "No research notes to write from."
@@ -144,14 +144,14 @@ async def call_write_agent(ctx: Context) -> str:
         1
     )
     state["report_content"] = str(report)
-    await ctx.set("state", state)
+    await ctx.store.set("state", state)
 
     return str(report)
 
 
 async def call_review_agent(ctx: Context) -> str:
     """Useful for reviewing the report and providing feedback."""
-    state = await ctx.get("state")
+    state = await ctx.store.get("state")
     report = state.get("report_content", None)
     if not report:
         return "No report content to review."
@@ -160,13 +160,13 @@ async def call_review_agent(ctx: Context) -> str:
         user_msg=f"Review the following report: {report}"
     )
     state["review"] = result
-    await ctx.set("state", state)
+    await ctx.store.set("state", state)
 
     return result
 
 ```
 
-import re from llama_index.core.workflow import Context async def call_research_agent(ctx: Context, prompt: str) -> str: """Useful for recording research notes based on a specific prompt.""" result = await research_agent.run( user_msg=f"Write some notes about the following: {prompt}" ) state = await ctx.get("state") state["research_notes"].append(str(result)) await ctx.set("state", state) return str(result) async def call_write_agent(ctx: Context) -> str: """Useful for writing a report based on the research notes or revising the report based on feedback.""" state = await ctx.get("state") notes = state.get("research_notes", None) if not notes: return "No research notes to write from." user_msg = f"Write a markdown report from the following notes. Be sure to output the report in the following format: ...:\n\n" # Add the feedback to the user message if it exists feedback = state.get("review", None) if feedback: user_msg += f"{feedback}\n\n" # Add the research notes to the user message notes = "\n\n".join(notes) user_msg += f"{notes}\n\n" # Run the write agent result = await write_agent.run(user_msg=user_msg) report = re.search(r"(.*)", str(result), re.DOTALL).group( 1 ) state["report_content"] = str(report) await ctx.set("state", state) return str(report) async def call_review_agent(ctx: Context) -> str: """Useful for reviewing the report and providing feedback.""" state = await ctx.get("state") report = state.get("report_content", None) if not report: return "No report content to review." result = await review_agent.run( user_msg=f"Review the following report: {report}" ) state["review"] = result await ctx.set("state", state) return result
+import re from llama_index.core.workflow import Context async def call_research_agent(ctx: Context, prompt: str) -> str: """Useful for recording research notes based on a specific prompt.""" result = await research_agent.run( user_msg=f"Write some notes about the following: {prompt}" ) state = await ctx.store.get("state") state["research_notes"].append(str(result)) await ctx.store.set("state", state) return str(result) async def call_write_agent(ctx: Context) -> str: """Useful for writing a report based on the research notes or revising the report based on feedback.""" state = await ctx.store.get("state") notes = state.get("research_notes", None) if not notes: return "No research notes to write from." user_msg = f"Write a markdown report from the following notes. Be sure to output the report in the following format: ...:\n\n" # Add the feedback to the user message if it exists feedback = state.get("review", None) if feedback: user_msg += f"{feedback}\n\n" # Add the research notes to the user message notes = "\n\n".join(notes) user_msg += f"{notes}\n\n" # Run the write agent result = await write_agent.run(user_msg=user_msg) report = re.search(r"(.*)", str(result), re.DOTALL).group( 1 ) state["report_content"] = str(report) await ctx.store.set("state", state) return str(report) async def call_review_agent(ctx: Context) -> str: """Useful for reviewing the report and providing feedback.""" state = await ctx.store.get("state") report = state.get("report_content", None) if not report: return "No report content to review." result = await review_agent.run( user_msg=f"Review the following report: {report}" ) state["review"] = result await ctx.store.set("state", state) return result
 ## Defining the Planner Workflow¶
 In order to plan around the other agents, we will write a custom workflow that will explicitly orchestrate and plan the other agents.
 Here our prompt assumes a sequential plan, but we can expand it in the future to support parallel steps. (This just involves more complex parsing and prompting, which is left as an exercise for the reader.)
@@ -267,7 +267,7 @@ class PlannerWorkflow(Workflow):
     ) -> ExecuteEvent | OutputEvent:
         # Set initial state if it exists
         if ev.state:
-            await ctx.set("state", ev.state)
+            await ctx.store.set("state", ev.state)
 
         chat_history = ev.chat_history
 
@@ -279,7 +279,7 @@ class PlannerWorkflow(Workflow):
             chat_history.append(user_msg)
 
         # Inject the system prompt with state and available agents
-        state = await ctx.get("state")
+        state = await ctx.store.get("state")
         available_agents_str = "\n".join(
             [
                 f'<agent name="{agent.name}">{agent.description}</agent>'
@@ -358,7 +358,7 @@ class PlannerWorkflow(Workflow):
             elif step.agent_name == "ReviewAgent":
                 await call_review_agent(ctx)
 
-        state = await ctx.get("state")
+        state = await ctx.store.get("state")
         chat_history.append(
             ChatMessage(
                 role="user",
@@ -372,7 +372,7 @@ class PlannerWorkflow(Workflow):
 
 ```
 
-import re import xml.etree.ElementTree as ET from pydantic import BaseModel, Field from typing import Any, Optional from llama_index.core.llms import ChatMessage from llama_index.core.workflow import ( Context, Event, StartEvent, StopEvent, Workflow, step, ) PLANNER_PROMPT = """You are a planner chatbot. Given a user request and the current state, break the solution into ordered  blocks. Each step must specify the agent to call and the message to send, e.g.  search for … draft a report … ...  {state}  {available_agents}  The general flow should be: - Record research notes - Write a report - Review the report - Write the report again if the review is not positive enough If the user request does not require any steps, you can skip the  block and respond directly. """ class InputEvent(StartEvent): user_msg: Optional[str] = Field(default=None) chat_history: list[ChatMessage] state: Optional[dict[str, Any]] = Field(default=None) class OutputEvent(StopEvent): response: str chat_history: list[ChatMessage] state: dict[str, Any] class StreamEvent(Event): delta: str class PlanEvent(Event): step_info: str # Modelling the plan class PlanStep(BaseModel): agent_name: str agent_input: str class Plan(BaseModel): steps: list[PlanStep] class ExecuteEvent(Event): plan: Plan chat_history: list[ChatMessage] class PlannerWorkflow(Workflow): llm: OpenAI = OpenAI( model="o3-mini", api_key="sk-...", ) agents: dict[str, FunctionAgent] = { "ResearchAgent": research_agent, "WriteAgent": write_agent, "ReviewAgent": review_agent, } @step async def plan( self, ctx: Context, ev: InputEvent ) -> ExecuteEvent | OutputEvent: # Set initial state if it exists if ev.state: await ctx.set("state", ev.state) chat_history = ev.chat_history if ev.user_msg: user_msg = ChatMessage( role="user", content=ev.user_msg, ) chat_history.append(user_msg) # Inject the system prompt with state and available agents state = await ctx.get("state") available_agents_str = "\n".join( [ f'{agent.description}' for agent in self.agents.values() ] ) system_prompt = ChatMessage( role="system", content=PLANNER_PROMPT.format( state=str(state), available_agents=available_agents_str, ), ) # Stream the response from the llm response = await self.llm.astream_chat( messages=[system_prompt] + chat_history, ) full_response = "" async for chunk in response: full_response += chunk.delta or "" if chunk.delta: ctx.write_event_to_stream( StreamEvent(delta=chunk.delta), ) # Parse the response into a plan and decide whether to execute or output xml_match = re.search(r"(.*)", full_response, re.DOTALL) if not xml_match: chat_history.append( ChatMessage( role="assistant", content=full_response, ) ) return OutputEvent( response=full_response, chat_history=chat_history, state=state, ) else: xml_str = xml_match.group(1) root = ET.fromstring(xml_str) plan = Plan(steps=[]) for step in root.findall("step"): plan.steps.append( PlanStep( agent_name=step.attrib["agent"], agent_input=step.text.strip() if step.text else "", ) ) return ExecuteEvent(plan=plan, chat_history=chat_history) @step async def execute(self, ctx: Context, ev: ExecuteEvent) -> InputEvent: chat_history = ev.chat_history plan = ev.plan for step in plan.steps: agent = self.agents[step.agent_name] agent_input = step.agent_input ctx.write_event_to_stream( PlanEvent( step_info=f'{step.agent_input}' ), ) if step.agent_name == "ResearchAgent": await call_research_agent(ctx, agent_input) elif step.agent_name == "WriteAgent": # Note: we aren't passing the input from the plan since # we're using the state to drive the write agent await call_write_agent(ctx) elif step.agent_name == "ReviewAgent": await call_review_agent(ctx) state = await ctx.get("state") chat_history.append( ChatMessage( role="user", content=f"I've completed the previous steps, here's the updated state:\n\n\n{state}\n\n\nDo you need to continue and plan more steps?, If not, write a final response.", ) ) return InputEvent( chat_history=chat_history, )
+import re import xml.etree.ElementTree as ET from pydantic import BaseModel, Field from typing import Any, Optional from llama_index.core.llms import ChatMessage from llama_index.core.workflow import ( Context, Event, StartEvent, StopEvent, Workflow, step, ) PLANNER_PROMPT = """You are a planner chatbot. Given a user request and the current state, break the solution into ordered  blocks. Each step must specify the agent to call and the message to send, e.g.  search for … draft a report … ...  {state}  {available_agents}  The general flow should be: - Record research notes - Write a report - Review the report - Write the report again if the review is not positive enough If the user request does not require any steps, you can skip the  block and respond directly. """ class InputEvent(StartEvent): user_msg: Optional[str] = Field(default=None) chat_history: list[ChatMessage] state: Optional[dict[str, Any]] = Field(default=None) class OutputEvent(StopEvent): response: str chat_history: list[ChatMessage] state: dict[str, Any] class StreamEvent(Event): delta: str class PlanEvent(Event): step_info: str # Modelling the plan class PlanStep(BaseModel): agent_name: str agent_input: str class Plan(BaseModel): steps: list[PlanStep] class ExecuteEvent(Event): plan: Plan chat_history: list[ChatMessage] class PlannerWorkflow(Workflow): llm: OpenAI = OpenAI( model="o3-mini", api_key="sk-...", ) agents: dict[str, FunctionAgent] = { "ResearchAgent": research_agent, "WriteAgent": write_agent, "ReviewAgent": review_agent, } @step async def plan( self, ctx: Context, ev: InputEvent ) -> ExecuteEvent | OutputEvent: # Set initial state if it exists if ev.state: await ctx.store.set("state", ev.state) chat_history = ev.chat_history if ev.user_msg: user_msg = ChatMessage( role="user", content=ev.user_msg, ) chat_history.append(user_msg) # Inject the system prompt with state and available agents state = await ctx.store.get("state") available_agents_str = "\n".join( [ f'{agent.description}' for agent in self.agents.values() ] ) system_prompt = ChatMessage( role="system", content=PLANNER_PROMPT.format( state=str(state), available_agents=available_agents_str, ), ) # Stream the response from the llm response = await self.llm.astream_chat( messages=[system_prompt] + chat_history, ) full_response = "" async for chunk in response: full_response += chunk.delta or "" if chunk.delta: ctx.write_event_to_stream( StreamEvent(delta=chunk.delta), ) # Parse the response into a plan and decide whether to execute or output xml_match = re.search(r"(.*)", full_response, re.DOTALL) if not xml_match: chat_history.append( ChatMessage( role="assistant", content=full_response, ) ) return OutputEvent( response=full_response, chat_history=chat_history, state=state, ) else: xml_str = xml_match.group(1) root = ET.fromstring(xml_str) plan = Plan(steps=[]) for step in root.findall("step"): plan.steps.append( PlanStep( agent_name=step.attrib["agent"], agent_input=step.text.strip() if step.text else "", ) ) return ExecuteEvent(plan=plan, chat_history=chat_history) @step async def execute(self, ctx: Context, ev: ExecuteEvent) -> InputEvent: chat_history = ev.chat_history plan = ev.plan for step in plan.steps: agent = self.agents[step.agent_name] agent_input = step.agent_input ctx.write_event_to_stream( PlanEvent( step_info=f'{step.agent_input}' ), ) if step.agent_name == "ResearchAgent": await call_research_agent(ctx, agent_input) elif step.agent_name == "WriteAgent": # Note: we aren't passing the input from the plan since # we're using the state to drive the write agent await call_write_agent(ctx) elif step.agent_name == "ReviewAgent": await call_review_agent(ctx) state = await ctx.store.get("state") chat_history.append( ChatMessage( role="user", content=f"I've completed the previous steps, here's the updated state:\n\n\n{state}\n\n\nDo you need to continue and plan more steps?, If not, write a final response.", ) ) return InputEvent( chat_history=chat_history, )
 ## Running the Workflow¶
 With our custom planner defined, we can now run the workflow and see it in action!
 As the workflow is running, we will stream the events to get an idea of what is happening under the hood.

@@ -125,7 +125,7 @@ Name | Type | Description | Default
 `is_function` |  `bool | None` |  |  `None`  
 `new_item_event` |  `Event | None` |  |  `None`  
 `is_function_false_event` |  `Event | None` |  |  `None`  
-`is_function_not_none_thread_event` |  `Event` |  Class implementing event objects. Events manage a flag that can be set to true with the set() method and reset to false with the clear() method. The wait() method blocks until the flag is true. The flag is initially false. |  `<threading.Event at 0x7c7294005b80: unset>`  
+`is_function_not_none_thread_event` |  `Event` |  Class implementing event objects. Events manage a flag that can be set to true with the set() method and reset to false with the clear() method. The wait() method blocks until the flag is true. The flag is initially false. |  `<threading.Event at 0x756fe1de5b20: unset>`  
 `is_writing_to_memory` |  `bool` |  |  `True`  
 `exception` |  `Exception | None` |  |  `None`  
 `awrite_response_to_history_task` |  `Task | None` |  |  `None`  

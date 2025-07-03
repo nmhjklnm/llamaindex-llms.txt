@@ -171,21 +171,21 @@ class GlobalExampleFlow(Workflow):
     @step
     async def setup(self, ctx: Context, ev: StartEvent) -> QueryEvent:
         # load our data here
-        await ctx.set("some_database", ["value1", "value2", "value3"])
+        await ctx.store.set("some_database", ["value1", "value2", "value3"])
 
         return QueryEvent(query=ev.query)
 
     @step
     async def query(self, ctx: Context, ev: QueryEvent) -> StopEvent:
         # use our data with our query
-        data = await ctx.get("some_database")
+        data = await ctx.store.get("some_database")
 
         result = f"The answer to your query is {data[1]}"
         return StopEvent(result=result)
 
 ```
 
-class GlobalExampleFlow(Workflow): @step async def setup(self, ctx: Context, ev: StartEvent) -> QueryEvent: # load our data here await ctx.set("some_database", ["value1", "value2", "value3"]) return QueryEvent(query=ev.query) @step async def query(self, ctx: Context, ev: QueryEvent) -> StopEvent: # use our data with our query data = await ctx.get("some_database") result = f"The answer to your query is {data[1]}" return StopEvent(result=result)
+class GlobalExampleFlow(Workflow): @step async def setup(self, ctx: Context, ev: StartEvent) -> QueryEvent: # load our data here await ctx.store.set("some_database", ["value1", "value2", "value3"]) return QueryEvent(query=ev.query) @step async def query(self, ctx: Context, ev: QueryEvent) -> StopEvent: # use our data with our query data = await ctx.store.get("some_database") result = f"The answer to your query is {data[1]}" return StopEvent(result=result)
 In [ ]:
 Copied!
 ```
@@ -213,7 +213,7 @@ class WaitExampleFlow(Workflow):
     @step
     async def setup(self, ctx: Context, ev: StartEvent) -> StopEvent:
         if hasattr(ev, "data"):
-            await ctx.set("data", ev.data)
+            await ctx.store.set("data", ev.data)
 
         return StopEvent(result=None)
 
@@ -222,7 +222,7 @@ class WaitExampleFlow(Workflow):
         if hasattr(ev, "query"):
             # do we have any data?
             if hasattr(self, "data"):
-                data = await ctx.get("data")
+                data = await ctx.store.get("data")
                 return StopEvent(result=f"Got the data {data}")
             else:
                 # there's non data yet
@@ -233,7 +233,7 @@ class WaitExampleFlow(Workflow):
 
 ```
 
-class WaitExampleFlow(Workflow): @step async def setup(self, ctx: Context, ev: StartEvent) -> StopEvent: if hasattr(ev, "data"): await ctx.set("data", ev.data) return StopEvent(result=None) @step async def query(self, ctx: Context, ev: StartEvent) -> StopEvent: if hasattr(ev, "query"): # do we have any data? if hasattr(self, "data"): data = await ctx.get("data") return StopEvent(result=f"Got the data {data}") else: # there's non data yet return None else: # this isn't a query return None
+class WaitExampleFlow(Workflow): @step async def setup(self, ctx: Context, ev: StartEvent) -> StopEvent: if hasattr(ev, "data"): await ctx.store.set("data", ev.data) return StopEvent(result=None) @step async def query(self, ctx: Context, ev: StartEvent) -> StopEvent: if hasattr(ev, "query"): # do we have any data? if hasattr(self, "data"): data = await ctx.store.get("data") return StopEvent(result=f"Got the data {data}") else: # there's non data yet return None else: # this isn't a query return None
 In [ ]:
 Copied!
 ```

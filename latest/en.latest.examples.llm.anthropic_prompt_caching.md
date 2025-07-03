@@ -10,11 +10,11 @@ When you send a request with Prompt Caching enabled:
 
 
 **Note:**
-A. Prompt caching works with `Claude 3.5 Sonnet`, `Claude 3 Haiku` and `Claude 3 Opus` models.
+A. Prompt caching works with `Claude 4 Opus`, `Claude 4 Sonnet`, `Claude 3.7 Sonnet`, `Claude 3.5 Sonnet`, `Claude 3.5 Haiku`, `Claude 3 Haiku` and `Claude 3 Opus` models.
 B. The minimum cacheable prompt length is:
 ```
-1. 1024 tokens for Claude 3.5 Sonnet and Claude 3 Opus
-2. 2048 tokens for Claude 3 Haiku
+1. 2048 tokens for Claude 3.5 Haiku and Claude 3 Haiku
+2. 1024 for all the other models.
 ```
 
 C. Shorter prompts cannot be cached, even if marked with `cache_control`.
@@ -83,11 +83,7 @@ document_text = documents[0].text
 
 from llama_index.core import SimpleDirectoryReader documents = SimpleDirectoryReader( input_files=["./paul_graham_essay.txt"], ).load_data() document_text = documents[0].text
 ### Prompt Caching¶
-Enabling Prompt Cache:
-  1. Include `"cache_control": {"type": "ephemeral"}` for the text prompt you want to cache.
-  2. Add `extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"}` in the request.
-
-
+To enable prompt caching, you can just use the `CachePoint` block within LlamaIndex: everything previous to that block will be cached.
 We can verify if the text is cached by checking the following parameters:
 `cache_creation_input_tokens:` Number of tokens written to the cache when creating a new entry.
 `cache_read_input_tokens:` Number of tokens retrieved from the cache for this request.
@@ -95,7 +91,12 @@ We can verify if the text is cached by checking the following parameters:
 In [ ]:
 Copied!
 ```
-from llama_index.core.llms import ChatMessage, TextBlock
+from llama_index.core.llms import (
+    ChatMessage,
+    TextBlock,
+    CachePoint,
+    CacheControl,
+)
 
 messages = [
     ChatMessage(role="system", content="You are helpful AI Assitant."),
@@ -110,18 +111,16 @@ messages = [
                 text="\n\nWhy did Paul Graham start YC?",
                 type="text",
             ),
+            CachePoint(cache_control=CacheControl(type="ephemeral")),
         ],
-        additional_kwargs={"cache_control": {"type": "ephemeral"}},
     ),
 ]
 
-resp = llm.chat(
-    messages, extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"}
-)
+resp = llm.chat(messages)
 
 ```
 
-from llama_index.core.llms import ChatMessage, TextBlock messages = [ ChatMessage(role="system", content="You are helpful AI Assitant."), ChatMessage( role="user", content=[ TextBlock( text=f"{document_text}", type="text", ), TextBlock( text="\n\nWhy did Paul Graham start YC?", type="text", ), ], additional_kwargs={"cache_control": {"type": "ephemeral"}}, ), ] resp = llm.chat( messages, extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"} )
+from llama_index.core.llms import ( ChatMessage, TextBlock, CachePoint, CacheControl, ) messages = [ ChatMessage(role="system", content="You are helpful AI Assitant."), ChatMessage( role="user", content=[ TextBlock( text=f"{document_text}", type="text", ), TextBlock( text="\n\nWhy did Paul Graham start YC?", type="text", ), CachePoint(cache_control=CacheControl(type="ephemeral")), ], ), ] resp = llm.chat(messages)
 Let's examine the raw response.
 In [ ]:
 Copied!
@@ -161,18 +160,16 @@ messages = [
                 text="\n\nWhat did Paul Graham do growing up?",
                 type="text",
             ),
+            CachePoint(cache_control=CacheControl(type="ephemeral")),
         ],
-        additional_kwargs={"cache_control": {"type": "ephemeral"}},
     ),
 ]
 
-resp = llm.chat(
-    messages, extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"}
-)
+resp = llm.chat(messages)
 
 ```
 
-messages = [ ChatMessage(role="system", content="You are helpful AI Assitant."), ChatMessage( role="user", content=[ TextBlock( text=f"{document_text}", type="text", ), TextBlock( text="\n\nWhat did Paul Graham do growing up?", type="text", ), ], additional_kwargs={"cache_control": {"type": "ephemeral"}}, ), ] resp = llm.chat( messages, extra_headers={"anthropic-beta": "prompt-caching-2024-07-31"} )
+messages = [ ChatMessage(role="system", content="You are helpful AI Assitant."), ChatMessage( role="user", content=[ TextBlock( text=f"{document_text}", type="text", ), TextBlock( text="\n\nWhat did Paul Graham do growing up?", type="text", ), CachePoint(cache_control=CacheControl(type="ephemeral")), ], ), ] resp = llm.chat(messages)
 In [ ]:
 Copied!
 ```
@@ -194,3 +191,32 @@ Out[ ]:
 ```
 
 As you can see, the response was generated using cached text, as indicated by `cache_read_input_tokens`.
+With Anthropic, the default cache lasts 5 minutes. You can also have longer lasting caches, for instance 1 hour, you just have to specify that under the `ttl` argument in `CachControl`.
+In [ ]:
+Copied!
+```
+messages = [
+    ChatMessage(role="system", content="You are helpful AI Assitant."),
+    ChatMessage(
+        role="user",
+        content=[
+            TextBlock(
+                text=f"{document_text}",
+                type="text",
+            ),
+            TextBlock(
+                text="\n\nWhat did Paul Graham do growing up?",
+                type="text",
+            ),
+            CachePoint(
+                cache_control=CacheControl(type="ephemeral", ttl="1h"),
+            ),
+        ],
+    ),
+]
+
+resp = llm.chat(messages)
+
+```
+
+messages = [ ChatMessage(role="system", content="You are helpful AI Assitant."), ChatMessage( role="user", content=[ TextBlock( text=f"{document_text}", type="text", ), TextBlock( text="\n\nWhat did Paul Graham do growing up?", type="text", ), CachePoint( cache_control=CacheControl(type="ephemeral", ttl="1h"), ), ], ), ] resp = llm.chat(messages)

@@ -2080,7 +2080,7 @@ Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
 `reasoning_key` |  `str` |  |  `'current_reasoning'`  
-`output_parser` |  `ReActOutputParser` |  The react output parser |  `<llama_index.core.agent.react.output_parser.ReActOutputParser object at 0x7c72908cc650>`  
+`output_parser` |  `ReActOutputParser` |  The react output parser |  `<llama_index.core.agent.react.output_parser.ReActOutputParser object at 0x756fde014d70>`  
 `formatter` |  `ReActChatFormatter` |  The react chat formatter to format the reasoning steps and chat history into an llm input. |  `<dynamic>`  
 Source code in `llama-index-core/llama_index/core/agent/workflow/react_agent.py`
 

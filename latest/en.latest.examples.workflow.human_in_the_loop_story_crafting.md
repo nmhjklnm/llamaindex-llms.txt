@@ -207,7 +207,7 @@ class ChooseYourOwnAdventureWorkflow(Workflow):
     async def create_segment(
         self, ctx: Context, ev: StartEvent | HumanChoiceEvent
     ) -> NewBlockEvent | StopEvent:
-        blocks = await ctx.get("blocks", [])
+        blocks = await ctx.store.get("blocks", [])
         running_story = "\n".join(str(b) for b in blocks)
 
         if len(blocks) < self.max_steps:
@@ -218,7 +218,7 @@ class ChooseYourOwnAdventureWorkflow(Workflow):
             )
             new_block = Block(segment=new_segment)
             blocks.append(new_block)
-            await ctx.set("blocks", blocks)
+            await ctx.store.set("blocks", blocks)
             return NewBlockEvent(block=new_block)
         else:
             final_segment = self.llm.structured_predict(
@@ -243,16 +243,16 @@ class ChooseYourOwnAdventureWorkflow(Workflow):
         human_prompt += "\n\n"
         human_input = input(human_prompt)
 
-        blocks = await ctx.get("blocks")
+        blocks = await ctx.store.get("blocks")
         block.choice = human_input
         blocks[-1] = block
-        await ctx.set("block", blocks)
+        await ctx.store.set("block", blocks)
 
         return HumanChoiceEvent(block_id=ev.block.id_)
 
 ```
 
-class ChooseYourOwnAdventureWorkflow(Workflow): def __init__(self, max_steps: int = 3, **kwargs): super().__init__(**kwargs) self.llm = OpenAI("gpt-4o") self.max_steps = max_steps @step async def create_segment( self, ctx: Context, ev: StartEvent | HumanChoiceEvent ) -> NewBlockEvent | StopEvent: blocks = await ctx.get("blocks", []) running_story = "\n".join(str(b) for b in blocks) if len(blocks) < self.max_steps: new_segment = self.llm.structured_predict( Segment, PromptTemplate(SEGMENT_GENERATION_TEMPLATE), running_story=running_story, ) new_block = Block(segment=new_segment) blocks.append(new_block) await ctx.set("blocks", blocks) return NewBlockEvent(block=new_block) else: final_segment = self.llm.structured_predict( Segment, PromptTemplate(FINAL_SEGMENT_GENERATION_TEMPLATE), running_story=running_story, ) final_block = Block(segment=final_segment) blocks.append(final_block) return StopEvent(result=blocks) @step async def prompt_human( self, ctx: Context, ev: NewBlockEvent ) -> HumanChoiceEvent: block = ev.block # get human input human_prompt = f"\n===\n{ev.block.segment.plot}\n\n" human_prompt += "Choose your adventure:\n\n" human_prompt += "\n".join(ev.block.segment.actions) human_prompt += "\n\n" human_input = input(human_prompt) blocks = await ctx.get("blocks") block.choice = human_input blocks[-1] = block await ctx.set("block", blocks) return HumanChoiceEvent(block_id=ev.block.id_)
+class ChooseYourOwnAdventureWorkflow(Workflow): def __init__(self, max_steps: int = 3, **kwargs): super().__init__(**kwargs) self.llm = OpenAI("gpt-4o") self.max_steps = max_steps @step async def create_segment( self, ctx: Context, ev: StartEvent | HumanChoiceEvent ) -> NewBlockEvent | StopEvent: blocks = await ctx.store.get("blocks", []) running_story = "\n".join(str(b) for b in blocks) if len(blocks) < self.max_steps: new_segment = self.llm.structured_predict( Segment, PromptTemplate(SEGMENT_GENERATION_TEMPLATE), running_story=running_story, ) new_block = Block(segment=new_segment) blocks.append(new_block) await ctx.store.set("blocks", blocks) return NewBlockEvent(block=new_block) else: final_segment = self.llm.structured_predict( Segment, PromptTemplate(FINAL_SEGMENT_GENERATION_TEMPLATE), running_story=running_story, ) final_block = Block(segment=final_segment) blocks.append(final_block) return StopEvent(result=blocks) @step async def prompt_human( self, ctx: Context, ev: NewBlockEvent ) -> HumanChoiceEvent: block = ev.block # get human input human_prompt = f"\n===\n{ev.block.segment.plot}\n\n" human_prompt += "Choose your adventure:\n\n" human_prompt += "\n".join(ev.block.segment.actions) human_prompt += "\n\n" human_input = input(human_prompt) blocks = await ctx.store.get("blocks") block.choice = human_input blocks[-1] = block await ctx.store.set("block", blocks) return HumanChoiceEvent(block_id=ev.block.id_)
 ### Running The Workflow¶
 Since workflows are async first, this all runs fine in a notebook. If you were running in your own code, you would want to use `asyncio.run()` to start an async event loop if one isn't already running.
 ```
