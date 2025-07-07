@@ -1,11 +1,15 @@
 # Openvino
 ##  OpenVINOMultiModal #
-Bases: `MultiModalLLM`
+Bases: `OpenVINOLLM`
 This class provides a base implementation for interacting with OpenVINO multi-modal models. It handles model initialization, input preparation, and text/image-based interaction.
 Source code in `llama-index-integrations/multi_modal_llms/llama-index-multi-modal-llms-openvino/llama_index/multi_modal_llms/openvino/base.py`
 
 | ```
-class OpenVINOMultiModal(MultiModalLLM):
+@deprecated(
+    reason="This package has been deprecated and thus will no longer be maintained. Please feel free to contribute to multi modal support in llama-index-llms-openvino instead. See Multi Modal LLMs documentation for a complete guide on migration: https://docs.llamaindex.ai/en/stable/understanding/using_llms/using_llms/#multi-modal-llms",
+    version="0.3.1",
+)
+class OpenVINOMultiModal(OpenVINOLLM):
     """
     This class provides a base implementation for interacting with OpenVINO multi-modal models.
     It handles model initialization, input preparation, and text/image-based interaction.
@@ -96,13 +100,19 @@ class OpenVINOMultiModal(MultiModalLLM):
         """
         Prepares the input messages and images.
         """
+        if all(isinstance(doc, ImageNode) for doc in image_documents):
+            image_docs: Sequence[ImageBlock] = [
+                image_node_to_image_block(doc) for doc in image_documents
+            ]
+        else:
+            image_docs = cast(Sequence[ImageBlock], image_documents)
         conversation = []
         images = []
         conversation.append(
             {"type": "text", "text": messages[0].content}
         )  # Add user text message
-        for img_doc in image_documents:
-            images.append(Image.open(img_doc.image_path))
+        for img_doc in image_docs:
+            images.append(Image.open(img_doc.path))
             conversation.append({"type": "image"})
         messages = [
             {"role": "user", "content": conversation}
@@ -198,39 +208,6 @@ class OpenVINOMultiModal(MultiModalLLM):
         return ChatResponse(
             message=ChatMessage(role="assistant", content=generated_text),
             raw={"model_output": generated_text},
-        )
-
-    async def astream_chat(
-        self, messages: Sequence[ChatMessage], **kwargs: Any
-    ) -> ChatResponseAsyncGen:
-        raise NotImplementedError(
-            "OpenVINOMultiModal does not support async streaming chat yet."
-        )
-
-    async def astream_complete(
-        self, prompt: str, image_documents: Sequence[ImageNode], **kwargs: Any
-    ) -> CompletionResponseAsyncGen:
-        raise NotImplementedError(
-            "HuggingFaceMultiModal does not support async streaming completion yet."
-        )
-
-    async def acomplete(
-        self, prompt: str, image_documents: Sequence[ImageNode], **kwargs: Any
-    ) -> CompletionResponse:
-        raise NotImplementedError(
-            "OpenVINOMultiModal does not support async completion yet."
-        )
-
-    async def achat(
-        self, messages: Sequence[ChatMessage], **kwargs: Any
-    ) -> ChatResponse:
-        raise NotImplementedError("OpenVINOMultiModal does not support async chat yet.")
-
-    async def stream_chat(
-        self, messages: Sequence[ChatMessage], **kwargs: Any
-    ) -> ChatResponse:
-        raise NotImplementedError(
-            "OpenVINOMultiModal does not support async streaming chat yet."
         )
 
 ```

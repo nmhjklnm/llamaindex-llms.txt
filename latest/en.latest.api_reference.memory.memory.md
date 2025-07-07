@@ -18,7 +18,7 @@ Name | Type | Description | Default
 `audio_token_size_estimate` |  `int` |  The token size estimate for audio. |  `256`  
 `tokenizer_fn` |  `Callable[list, List]` |  The tokenizer function to use for token counting. |  `<dynamic>`  
 `sql_store` |  `SQLAlchemyChatStore` |  The chat store to use for storing messages. |  `SQLAlchemyChatStore(table_name='llama_index_memory', async_database_uri='sqlite+aiosqlite:///:memory:')`  
-`session_id` |  `str` |  The key to use for storing messages in the chat store. |  `'aa9d5a92-3b9e-42b3-ad70-ece3f887309f'`  
+`session_id` |  `str` |  The key to use for storing messages in the chat store. |  `'1a39710b-c750-4147-9f8c-46b628b2d0e1'`  
 Source code in `llama-index-core/llama_index/core/memory/memory.py`
 
 | ```

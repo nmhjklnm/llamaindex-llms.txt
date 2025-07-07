@@ -49,6 +49,10 @@ print(str(response))
 Source code in `llama-index-integrations/multi_modal_llms/llama-index-multi-modal-llms-openai-like/llama_index/multi_modal_llms/openai_like/base.py`
 
 | ```
+@deprecated(
+    reason="This package has been deprecated and will no longer be maintained. Please use llama-index-llms-openai-like instead. See Multi Modal LLMs documentation for a complete guide on migration: https://docs.llamaindex.ai/en/stable/understanding/using_llms/using_llms/#multi-modal-llms",
+    version="0.1.1",
+)
 class OpenAILikeMultiModal(OpenAILike):
     """
     OpenAI-like Multi-Modal LLM.
@@ -153,51 +157,28 @@ class OpenAILikeMultiModal(OpenAILike):
         self,
         prompt: str,
         role: str,
-        image_documents: Sequence[ImageNode],
-        image_detail: Optional[str] = "low",
+        image_documents: Sequence[Union[ImageBlock, ImageNode]],
     ) -> ChatMessage:
-        """Create a multi-modal chat message with text and images."""
         chat_msg = ChatMessage(role=role, content=prompt)
         if not image_documents:
             # if image_documents is empty, return text only chat message
             return chat_msg
 
-        for image_document in image_documents:
-            # Create the appropriate ContentBlock depending on the document content
-            if image_document.image:
-                chat_msg.blocks.append(
-                    ImageBlock(
-                        image=bytes(image_document.image, encoding="utf-8"),
-                        detail=image_detail,
-                    )
-                )
-            elif image_document.image_url:
-                chat_msg.blocks.append(
-                    ImageBlock(url=image_document.image_url, detail=image_detail)
-                )
-            elif image_document.image_path:
-                chat_msg.blocks.append(
-                    ImageBlock(
-                        path=Path(image_document.image_path),
-                        detail=image_detail,
-                        image_mimetype=image_document.image_mimetype
-                        or image_document.metadata.get("file_type"),
-                    )
-                )
-            elif f_path := image_document.metadata.get("file_path"):
-                chat_msg.blocks.append(
-                    ImageBlock(
-                        path=Path(f_path),
-                        detail=image_detail,
-                        image_mimetype=image_document.metadata.get("file_type"),
-                    )
-                )
+        chat_msg.blocks.append(TextBlock(text=prompt))
+
+        if all(isinstance(doc, ImageNode) for doc in image_documents):
+            chat_msg.blocks.extend(
+                [image_node_to_image_block(doc) for doc in image_documents]
+            )
+        else:
+            chat_msg.blocks.extend(image_documents)
+
         return chat_msg
 
     def complete(
         self,
         prompt: str,
-        image_documents: Optional[Sequence[ImageNode]] = None,
+        image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None,
         formatted: bool = False,
         **kwargs: Any,
     ) -> CompletionResponse:
@@ -218,7 +199,7 @@ class OpenAILikeMultiModal(OpenAILike):
     def stream_complete(
         self,
         prompt: str,
-        image_documents: Optional[Sequence[ImageNode]] = None,
+        image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None,
         formatted: bool = False,
         **kwargs: Any,
     ) -> CompletionResponseGen:
@@ -241,7 +222,7 @@ class OpenAILikeMultiModal(OpenAILike):
     async def acomplete(
         self,
         prompt: str,
-        image_documents: Optional[Sequence[ImageNode]] = None,
+        image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None,
         formatted: bool = False,
         **kwargs: Any,
     ) -> CompletionResponse:
@@ -262,7 +243,7 @@ class OpenAILikeMultiModal(OpenAILike):
     async def astream_complete(
         self,
         prompt: str,
-        image_documents: Optional[Sequence[ImageNode]] = None,
+        image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None,
         formatted: bool = False,
         **kwargs: Any,
     ) -> CompletionResponseAsyncGen:
@@ -285,7 +266,7 @@ class OpenAILikeMultiModal(OpenAILike):
     def multi_modal_chat(
         self,
         messages: Sequence[ChatMessage],
-        image_documents: Optional[Sequence[ImageNode]] = None,
+        image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None,
         **kwargs: Any,
     ) -> ChatResponse:
         """Chat with multi-modal support."""
@@ -307,7 +288,7 @@ class OpenAILikeMultiModal(OpenAILike):
     def multi_modal_stream_chat(
         self,
         messages: Sequence[ChatMessage],
-        image_documents: Optional[Sequence[ImageNode]] = None,
+        image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None,
         **kwargs: Any,
     ) -> ChatResponseGen:
         """Stream chat with multi-modal support."""
@@ -331,7 +312,7 @@ class OpenAILikeMultiModal(OpenAILike):
     async def amulti_modal_chat(
         self,
         messages: Sequence[ChatMessage],
-        image_documents: Optional[Sequence[ImageNode]] = None,
+        image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None,
         **kwargs: Any,
     ) -> ChatResponse:
         """Async chat with multi-modal support."""
@@ -355,7 +336,7 @@ class OpenAILikeMultiModal(OpenAILike):
     async def amulti_modal_stream_chat(
         self,
         messages: Sequence[ChatMessage],
-        image_documents: Optional[Sequence[ImageNode]] = None,
+        image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None,
         **kwargs: Any,
     ) -> ChatResponseAsyncGen:
         """Async stream chat with multi-modal support."""
@@ -381,7 +362,7 @@ class OpenAILikeMultiModal(OpenAILike):
 ---|---  
 ###  complete #
 ```
-complete(prompt: str, image_documents: Optional[Sequence[ImageNode]] = None, formatted: bool = False, **kwargs: Any) -> CompletionResponse
+complete(prompt: str, image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None, formatted: bool = False, **kwargs: Any) -> CompletionResponse
 
 ```
 
@@ -392,7 +373,7 @@ Source code in `llama-index-integrations/multi_modal_llms/llama-index-multi-moda
 def complete(
     self,
     prompt: str,
-    image_documents: Optional[Sequence[ImageNode]] = None,
+    image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None,
     formatted: bool = False,
     **kwargs: Any,
 ) -> CompletionResponse:
@@ -415,7 +396,7 @@ def complete(
 ---|---  
 ###  stream_complete #
 ```
-stream_complete(prompt: str, image_documents: Optional[Sequence[ImageNode]] = None, formatted: bool = False, **kwargs: Any) -> CompletionResponseGen
+stream_complete(prompt: str, image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None, formatted: bool = False, **kwargs: Any) -> CompletionResponseGen
 
 ```
 
@@ -426,7 +407,7 @@ Source code in `llama-index-integrations/multi_modal_llms/llama-index-multi-moda
 def stream_complete(
     self,
     prompt: str,
-    image_documents: Optional[Sequence[ImageNode]] = None,
+    image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None,
     formatted: bool = False,
     **kwargs: Any,
 ) -> CompletionResponseGen:
@@ -449,7 +430,7 @@ def stream_complete(
 ---|---  
 ###  acomplete `async` #
 ```
-acomplete(prompt: str, image_documents: Optional[Sequence[ImageNode]] = None, formatted: bool = False, **kwargs: Any) -> CompletionResponse
+acomplete(prompt: str, image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None, formatted: bool = False, **kwargs: Any) -> CompletionResponse
 
 ```
 
@@ -460,7 +441,7 @@ Source code in `llama-index-integrations/multi_modal_llms/llama-index-multi-moda
 async def acomplete(
     self,
     prompt: str,
-    image_documents: Optional[Sequence[ImageNode]] = None,
+    image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None,
     formatted: bool = False,
     **kwargs: Any,
 ) -> CompletionResponse:
@@ -483,7 +464,7 @@ async def acomplete(
 ---|---  
 ###  astream_complete `async` #
 ```
-astream_complete(prompt: str, image_documents: Optional[Sequence[ImageNode]] = None, formatted: bool = False, **kwargs: Any) -> CompletionResponseAsyncGen
+astream_complete(prompt: str, image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None, formatted: bool = False, **kwargs: Any) -> CompletionResponseAsyncGen
 
 ```
 
@@ -494,7 +475,7 @@ Source code in `llama-index-integrations/multi_modal_llms/llama-index-multi-moda
 async def astream_complete(
     self,
     prompt: str,
-    image_documents: Optional[Sequence[ImageNode]] = None,
+    image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None,
     formatted: bool = False,
     **kwargs: Any,
 ) -> CompletionResponseAsyncGen:
@@ -517,7 +498,7 @@ async def astream_complete(
 ---|---  
 ###  multi_modal_chat #
 ```
-multi_modal_chat(messages: Sequence[ChatMessage], image_documents: Optional[Sequence[ImageNode]] = None, **kwargs: Any) -> ChatResponse
+multi_modal_chat(messages: Sequence[ChatMessage], image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None, **kwargs: Any) -> ChatResponse
 
 ```
 
@@ -528,7 +509,7 @@ Source code in `llama-index-integrations/multi_modal_llms/llama-index-multi-moda
 def multi_modal_chat(
     self,
     messages: Sequence[ChatMessage],
-    image_documents: Optional[Sequence[ImageNode]] = None,
+    image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None,
     **kwargs: Any,
 ) -> ChatResponse:
     """Chat with multi-modal support."""
@@ -552,7 +533,7 @@ def multi_modal_chat(
 ---|---  
 ###  multi_modal_stream_chat #
 ```
-multi_modal_stream_chat(messages: Sequence[ChatMessage], image_documents: Optional[Sequence[ImageNode]] = None, **kwargs: Any) -> ChatResponseGen
+multi_modal_stream_chat(messages: Sequence[ChatMessage], image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None, **kwargs: Any) -> ChatResponseGen
 
 ```
 
@@ -563,7 +544,7 @@ Source code in `llama-index-integrations/multi_modal_llms/llama-index-multi-moda
 def multi_modal_stream_chat(
     self,
     messages: Sequence[ChatMessage],
-    image_documents: Optional[Sequence[ImageNode]] = None,
+    image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None,
     **kwargs: Any,
 ) -> ChatResponseGen:
     """Stream chat with multi-modal support."""
@@ -589,7 +570,7 @@ def multi_modal_stream_chat(
 ---|---  
 ###  amulti_modal_chat `async` #
 ```
-amulti_modal_chat(messages: Sequence[ChatMessage], image_documents: Optional[Sequence[ImageNode]] = None, **kwargs: Any) -> ChatResponse
+amulti_modal_chat(messages: Sequence[ChatMessage], image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None, **kwargs: Any) -> ChatResponse
 
 ```
 
@@ -600,7 +581,7 @@ Source code in `llama-index-integrations/multi_modal_llms/llama-index-multi-moda
 async def amulti_modal_chat(
     self,
     messages: Sequence[ChatMessage],
-    image_documents: Optional[Sequence[ImageNode]] = None,
+    image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None,
     **kwargs: Any,
 ) -> ChatResponse:
     """Async chat with multi-modal support."""
@@ -626,7 +607,7 @@ async def amulti_modal_chat(
 ---|---  
 ###  amulti_modal_stream_chat `async` #
 ```
-amulti_modal_stream_chat(messages: Sequence[ChatMessage], image_documents: Optional[Sequence[ImageNode]] = None, **kwargs: Any) -> ChatResponseAsyncGen
+amulti_modal_stream_chat(messages: Sequence[ChatMessage], image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None, **kwargs: Any) -> ChatResponseAsyncGen
 
 ```
 
@@ -637,7 +618,7 @@ Source code in `llama-index-integrations/multi_modal_llms/llama-index-multi-moda
 async def amulti_modal_stream_chat(
     self,
     messages: Sequence[ChatMessage],
-    image_documents: Optional[Sequence[ImageNode]] = None,
+    image_documents: Optional[Sequence[Union[ImageNode, ImageBlock]]] = None,
     **kwargs: Any,
 ) -> ChatResponseAsyncGen:
     """Async stream chat with multi-modal support."""

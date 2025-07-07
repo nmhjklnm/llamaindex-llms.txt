@@ -6,6 +6,10 @@ This class is a thin wrapper around Gemini to support legacy multimodal completi
 Source code in `llama-index-integrations/multi_modal_llms/llama-index-multi-modal-llms-gemini/llama_index/multi_modal_llms/gemini/base.py`
 
 | ```
+@deprecated(
+    reason="This package has been deprecated and will no longer be maintained. Please use llama-index-llms-google-genai instead. See Multi Modal LLMs documentation for a complete guide on migration: https://docs.llamaindex.ai/en/stable/understanding/using_llms/using_llms/#multi-modal-llms.",
+    version="0.5.1",
+)
 class GeminiMultiModal(Gemini):
     """
     Gemini multimodal.
@@ -18,7 +22,10 @@ class GeminiMultiModal(Gemini):
         return "Gemini_MultiModal_LLM"
 
     def complete(
-        self, prompt: str, image_documents: Sequence[ImageNode], **kwargs: Any
+        self,
+        prompt: str,
+        image_documents: Sequence[Union[ImageNode, ImageBlock]],
+        **kwargs: Any,
     ) -> CompletionResponse:
         documents = []
         for node in image_documents:
@@ -32,7 +39,10 @@ class GeminiMultiModal(Gemini):
         return CompletionResponse(text=response.message.content or "")
 
     async def acomplete(
-        self, prompt: str, image_documents: Sequence[ImageNode], **kwargs: Any
+        self,
+        prompt: str,
+        image_documents: Sequence[Union[ImageNode, ImageBlock]],
+        **kwargs: Any,
     ) -> CompletionResponse:
         documents = []
         for node in image_documents:
@@ -46,7 +56,10 @@ class GeminiMultiModal(Gemini):
         return CompletionResponse(text=response.message.content or "")
 
     def stream_complete(
-        self, prompt: str, image_documents: Sequence[ImageNode], **kwargs: Any
+        self,
+        prompt: str,
+        image_documents: Sequence[Union[ImageNode, ImageBlock]],
+        **kwargs: Any,
     ) -> CompletionResponseGen:
         documents = []
         for node in image_documents:
@@ -67,7 +80,10 @@ class GeminiMultiModal(Gemini):
         return gen()
 
     async def astream_complete(
-        self, prompt: str, image_documents: Sequence[ImageNode], **kwargs: Any
+        self,
+        prompt: str,
+        image_documents: Sequence[Union[ImageNode, ImageBlock]],
+        **kwargs: Any,
     ) -> CompletionResponseAsyncGen:
         documents = []
         for node in image_documents:

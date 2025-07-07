@@ -1,11 +1,15 @@
 # Huggingface
 ##  HuggingFaceMultiModal #
-Bases: `MultiModalLLM`
+Bases: `HuggingFaceLLM`
 This class provides a base implementation for interacting with HuggingFace multi-modal models. It handles model initialization, input preparation, and text/image-based interaction.
 Source code in `llama-index-integrations/multi_modal_llms/llama-index-multi-modal-llms-huggingface/llama_index/multi_modal_llms/huggingface/base.py`
 
 | ```
-class HuggingFaceMultiModal(MultiModalLLM):
+@deprecated(
+    reason="This package has been deprecated and will no longer be maintained. Please feel free to contribute to multi-modal support in llama-index-llms-huggingface instead. See Multi Modal LLMs documentation for a complete guide on migration: https://docs.llamaindex.ai/en/stable/understanding/using_llms/using_llms/#multi-modal-llms",
+    version="0.4.3",
+)
+class HuggingFaceMultiModal(HuggingFaceLLM):
     """
     This class provides a base implementation for interacting with HuggingFace multi-modal models.
     It handles model initialization, input preparation, and text/image-based interaction.
@@ -164,14 +168,20 @@ class HuggingFaceMultiModal(MultiModalLLM):
         )
 
     async def astream_complete(
-        self, prompt: str, image_documents: Sequence[ImageNode], **kwargs: Any
+        self,
+        prompt: str,
+        image_documents: Sequence[Union[ImageNode, ImageBlock]],
+        **kwargs: Any,
     ) -> CompletionResponseAsyncGen:
         raise NotImplementedError(
             "HuggingFaceMultiModal does not support async streaming completion yet."
         )
 
     async def acomplete(
-        self, prompt: str, image_documents: Sequence[ImageNode], **kwargs: Any
+        self,
+        prompt: str,
+        image_documents: Sequence[Union[ImageNode, ImageBlock]],
+        **kwargs: Any,
     ) -> CompletionResponse:
         raise NotImplementedError(
             "HuggingFaceMultiModal does not support async completion yet."
@@ -185,7 +195,10 @@ class HuggingFaceMultiModal(MultiModalLLM):
         )
 
     async def stream_complete(
-        self, prompt: str, image_documents: Sequence[ImageNode], **kwargs: Any
+        self,
+        prompt: str,
+        image_documents: Sequence[Union[ImageNode, ImageBlock]],
+        **kwargs: Any,
     ) -> CompletionResponse:
         raise NotImplementedError(
             "HuggingFaceMultiModal does not support async completion yet."

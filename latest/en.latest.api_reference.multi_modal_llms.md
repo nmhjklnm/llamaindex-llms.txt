@@ -89,13 +89,19 @@ class MultiModalLLM(ChainableMixin, BaseComponent, DispatcherSpanMixin):
 
     @abstractmethod
     def complete(
-        self, prompt: str, image_documents: List[ImageNode], **kwargs: Any
+        self,
+        prompt: str,
+        image_documents: List[Union[ImageNode, ImageBlock]],
+        **kwargs: Any,
     ) -> CompletionResponse:
         """Completion endpoint for Multi-Modal LLM."""
 
     @abstractmethod
     def stream_complete(
-        self, prompt: str, image_documents: List[ImageNode], **kwargs: Any
+        self,
+        prompt: str,
+        image_documents: List[Union[ImageNode, ImageBlock]],
+        **kwargs: Any,
     ) -> CompletionResponseGen:
         """Streaming completion endpoint for Multi-Modal LLM."""
 
@@ -119,13 +125,19 @@ class MultiModalLLM(ChainableMixin, BaseComponent, DispatcherSpanMixin):
 
     @abstractmethod
     async def acomplete(
-        self, prompt: str, image_documents: List[ImageNode], **kwargs: Any
+        self,
+        prompt: str,
+        image_documents: List[Union[ImageNode, ImageBlock]],
+        **kwargs: Any,
     ) -> CompletionResponse:
         """Async completion endpoint for Multi-Modal LLM."""
 
     @abstractmethod
     async def astream_complete(
-        self, prompt: str, image_documents: List[ImageNode], **kwargs: Any
+        self,
+        prompt: str,
+        image_documents: List[Union[ImageNode, ImageBlock]],
+        **kwargs: Any,
     ) -> CompletionResponseAsyncGen:
         """Async streaming completion endpoint for Multi-Modal LLM."""
 
@@ -187,7 +199,7 @@ metadata: MultiModalLLMMetadata
 Multi-Modal LLM metadata.
 ###  complete `abstractmethod` #
 ```
-complete(prompt: str, image_documents: List[ImageNode], **kwargs: Any) -> CompletionResponse
+complete(prompt: str, image_documents: List[Union[ImageNode, ImageBlock]], **kwargs: Any) -> CompletionResponse
 
 ```
 
@@ -197,7 +209,10 @@ Source code in `llama-index-core/llama_index/core/multi_modal_llms/base.py`
 | ```
 @abstractmethod
 def complete(
-    self, prompt: str, image_documents: List[ImageNode], **kwargs: Any
+    self,
+    prompt: str,
+    image_documents: List[Union[ImageNode, ImageBlock]],
+    **kwargs: Any,
 ) -> CompletionResponse:
     """Completion endpoint for Multi-Modal LLM."""
 
@@ -206,7 +221,7 @@ def complete(
 ---|---  
 ###  stream_complete `abstractmethod` #
 ```
-stream_complete(prompt: str, image_documents: List[ImageNode], **kwargs: Any) -> CompletionResponseGen
+stream_complete(prompt: str, image_documents: List[Union[ImageNode, ImageBlock]], **kwargs: Any) -> CompletionResponseGen
 
 ```
 
@@ -216,7 +231,10 @@ Source code in `llama-index-core/llama_index/core/multi_modal_llms/base.py`
 | ```
 @abstractmethod
 def stream_complete(
-    self, prompt: str, image_documents: List[ImageNode], **kwargs: Any
+    self,
+    prompt: str,
+    image_documents: List[Union[ImageNode, ImageBlock]],
+    **kwargs: Any,
 ) -> CompletionResponseGen:
     """Streaming completion endpoint for Multi-Modal LLM."""
 
@@ -267,7 +285,7 @@ def stream_chat(
 ---|---  
 ###  acomplete `abstractmethod` `async` #
 ```
-acomplete(prompt: str, image_documents: List[ImageNode], **kwargs: Any) -> CompletionResponse
+acomplete(prompt: str, image_documents: List[Union[ImageNode, ImageBlock]], **kwargs: Any) -> CompletionResponse
 
 ```
 
@@ -277,7 +295,10 @@ Source code in `llama-index-core/llama_index/core/multi_modal_llms/base.py`
 | ```
 @abstractmethod
 async def acomplete(
-    self, prompt: str, image_documents: List[ImageNode], **kwargs: Any
+    self,
+    prompt: str,
+    image_documents: List[Union[ImageNode, ImageBlock]],
+    **kwargs: Any,
 ) -> CompletionResponse:
     """Async completion endpoint for Multi-Modal LLM."""
 
@@ -286,7 +307,7 @@ async def acomplete(
 ---|---  
 ###  astream_complete `abstractmethod` `async` #
 ```
-astream_complete(prompt: str, image_documents: List[ImageNode], **kwargs: Any) -> CompletionResponseAsyncGen
+astream_complete(prompt: str, image_documents: List[Union[ImageNode, ImageBlock]], **kwargs: Any) -> CompletionResponseAsyncGen
 
 ```
 
@@ -296,7 +317,10 @@ Source code in `llama-index-core/llama_index/core/multi_modal_llms/base.py`
 | ```
 @abstractmethod
 async def astream_complete(
-    self, prompt: str, image_documents: List[ImageNode], **kwargs: Any
+    self,
+    prompt: str,
+    image_documents: List[Union[ImageNode, ImageBlock]],
+    **kwargs: Any,
 ) -> CompletionResponseAsyncGen:
     """Async streaming completion endpoint for Multi-Modal LLM."""
 
@@ -412,9 +436,9 @@ class MultiModalCompleteComponent(BaseMultiModalComponent):
             if not isinstance(input["image_documents"], list):
                 raise ValueError("image_documents must be a list.")
             for doc in input["image_documents"]:
-                if not isinstance(doc, (ImageDocument, ImageNode)):
+                if not isinstance(doc, (ImageDocument, ImageBlock, ImageNode)):
                     raise ValueError(
-                        "image_documents must be a list of ImageNode objects."
+                        "image_documents must be a list of Union[ImageNode, ImageBlock] objects."
                     )
 
         return input

@@ -4,23 +4,30 @@ Bases: `Ollama`
 Source code in `llama-index-integrations/multi_modal_llms/llama-index-multi-modal-llms-ollama/llama_index/multi_modal_llms/ollama/base.py`
 
 | ```
+@deprecated(
+    reason="This package has been deprecated and will no longer be maintained. Please use llama-index-llms-ollama instead. See Multi Modal LLMs documentation for a complete guide on migration: https://docs.llamaindex.ai/en/stable/understanding/using_llms/using_llms/#multi-modal-llms",
+    version="0.5.1",
+)
 class OllamaMultiModal(Ollama):
     @classmethod
     def class_name(cls) -> str:
         return "Ollama_multi_modal_llm"
 
     def _get_messages(
-        self, prompt: str, image_documents: Sequence[ImageNode]
+        self, prompt: str, image_documents: Sequence[Union[ImageNode, ImageBlock]]
     ) -> Sequence[ChatMessage]:
-        image_blocks = [
-            ImageBlock(
-                image=image_document.image,
-                path=image_document.image_path,
-                url=image_document.image_url,
-                image_mimetype=image_document.image_mimetype,
-            )
-            for image_document in image_documents
-        ]
+        if all(isinstance(doc, ImageNode) for doc in image_documents):
+            image_blocks = [
+                ImageBlock(
+                    image=image_document.image,
+                    path=image_document.image_path,
+                    url=image_document.image_url,
+                    image_mimetype=image_document.image_mimetype,
+                )
+                for image_document in image_documents
+            ]
+        else:
+            image_blocks = image_documents
 
         return [
             ChatMessage(
@@ -36,7 +43,7 @@ class OllamaMultiModal(Ollama):
     def complete(
         self,
         prompt: str,
-        image_documents: Sequence[ImageNode],
+        image_documents: Sequence[Union[ImageNode, ImageBlock]],
         formatted: bool = False,
         **kwargs: Any,
     ) -> CompletionResponse:
@@ -49,7 +56,7 @@ class OllamaMultiModal(Ollama):
     def stream_complete(
         self,
         prompt: str,
-        image_documents: Sequence[ImageNode],
+        image_documents: Sequence[Union[ImageNode, ImageBlock]],
         formatted: bool = False,
         **kwargs: Any,
     ) -> CompletionResponseGen:
@@ -62,7 +69,7 @@ class OllamaMultiModal(Ollama):
     async def acomplete(
         self,
         prompt: str,
-        image_documents: Sequence[ImageNode],
+        image_documents: Sequence[Union[ImageNode, ImageBlock]],
         **kwargs: Any,
     ) -> CompletionResponse:
         """Async complete."""
@@ -73,7 +80,7 @@ class OllamaMultiModal(Ollama):
     async def astream_complete(
         self,
         prompt: str,
-        image_documents: Sequence[ImageNode],
+        image_documents: Sequence[Union[ImageNode, ImageBlock]],
         **kwargs: Any,
     ) -> CompletionResponseAsyncGen:
         """Async stream complete."""
@@ -86,7 +93,7 @@ class OllamaMultiModal(Ollama):
 ---|---  
 ###  complete #
 ```
-complete(prompt: str, image_documents: Sequence[ImageNode], formatted: bool = False, **kwargs: Any) -> CompletionResponse
+complete(prompt: str, image_documents: Sequence[Union[ImageNode, ImageBlock]], formatted: bool = False, **kwargs: Any) -> CompletionResponse
 
 ```
 
@@ -98,7 +105,7 @@ Source code in `llama-index-integrations/multi_modal_llms/llama-index-multi-moda
 def complete(
     self,
     prompt: str,
-    image_documents: Sequence[ImageNode],
+    image_documents: Sequence[Union[ImageNode, ImageBlock]],
     formatted: bool = False,
     **kwargs: Any,
 ) -> CompletionResponse:
@@ -112,7 +119,7 @@ def complete(
 ---|---  
 ###  stream_complete #
 ```
-stream_complete(prompt: str, image_documents: Sequence[ImageNode], formatted: bool = False, **kwargs: Any) -> CompletionResponseGen
+stream_complete(prompt: str, image_documents: Sequence[Union[ImageNode, ImageBlock]], formatted: bool = False, **kwargs: Any) -> CompletionResponseGen
 
 ```
 
@@ -124,7 +131,7 @@ Source code in `llama-index-integrations/multi_modal_llms/llama-index-multi-moda
 def stream_complete(
     self,
     prompt: str,
-    image_documents: Sequence[ImageNode],
+    image_documents: Sequence[Union[ImageNode, ImageBlock]],
     formatted: bool = False,
     **kwargs: Any,
 ) -> CompletionResponseGen:
@@ -138,7 +145,7 @@ def stream_complete(
 ---|---  
 ###  acomplete `async` #
 ```
-acomplete(prompt: str, image_documents: Sequence[ImageNode], **kwargs: Any) -> CompletionResponse
+acomplete(prompt: str, image_documents: Sequence[Union[ImageNode, ImageBlock]], **kwargs: Any) -> CompletionResponse
 
 ```
 
@@ -150,7 +157,7 @@ Source code in `llama-index-integrations/multi_modal_llms/llama-index-multi-moda
 async def acomplete(
     self,
     prompt: str,
-    image_documents: Sequence[ImageNode],
+    image_documents: Sequence[Union[ImageNode, ImageBlock]],
     **kwargs: Any,
 ) -> CompletionResponse:
     """Async complete."""
@@ -163,7 +170,7 @@ async def acomplete(
 ---|---  
 ###  astream_complete `async` #
 ```
-astream_complete(prompt: str, image_documents: Sequence[ImageNode], **kwargs: Any) -> CompletionResponseAsyncGen
+astream_complete(prompt: str, image_documents: Sequence[Union[ImageNode, ImageBlock]], **kwargs: Any) -> CompletionResponseAsyncGen
 
 ```
 
@@ -174,7 +181,7 @@ Source code in `llama-index-integrations/multi_modal_llms/llama-index-multi-moda
 async def astream_complete(
     self,
     prompt: str,
-    image_documents: Sequence[ImageNode],
+    image_documents: Sequence[Union[ImageNode, ImageBlock]],
     **kwargs: Any,
 ) -> CompletionResponseAsyncGen:
     """Async stream complete."""

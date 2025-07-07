@@ -778,3 +778,271 @@ Source: https://www.technologyreview.com/2025/01/08/1109188/whats-next-for-ai-in
 
 ```
 
+## Tool Calling + Citations¶
+In `llama-index-core>=0.12.46` + `llama-index-llms-anthropic>=0.7.6`, we've added support for outputting citable tool results!
+Using Anthropic, you can now utilize server-side citations to cite specific parts of your tool results.
+If the LLM cites a tool result, the citation will appear in the output as a `CitationBlock`, containing the source, title, and cited content.
+Let's cover a few ways to do this in practice.
+First, let's define a dummy tool/function that returns a citable block.
+In [ ]:
+Copied!
+```
+from llama_index.core import Document
+from llama_index.core.llms import CitableBlock, TextBlock
+from llama_index.core.tools import FunctionTool
+
+dummy_text = Document.example().text
+
+
+async def search_fn(query: str):
+    """Useful for searching the web to answer questions."""
+    return CitableBlock(
+        content=[TextBlock(text=dummy_text)],
+        title="Facts about LLMs and LlamaIndex",
+        source="https://docs.llamaindex.ai",
+    )
+
+
+search_tool = FunctionTool.from_defaults(search_fn)
+
+```
+
+from llama_index.core import Document from llama_index.core.llms import CitableBlock, TextBlock from llama_index.core.tools import FunctionTool dummy_text = Document.example().text async def search_fn(query: str): """Useful for searching the web to answer questions.""" return CitableBlock( content=[TextBlock(text=dummy_text)], title="Facts about LLMs and LlamaIndex", source="https://docs.llamaindex.ai", ) search_tool = FunctionTool.from_defaults(search_fn)
+In [ ]:
+Copied!
+```
+from llama_index.llms.anthropic import Anthropic
+
+llm = Anthropic(
+    model="claude-sonnet-4-0",
+    api_key="sk-...",
+    # NOTE: beta headers are required for this feature as of 2025-07-03
+    additional_kwargs={
+        "extra_headers": {"anthropic-beta": "search-results-2025-06-09"}
+    },
+)
+
+```
+
+from llama_index.llms.anthropic import Anthropic llm = Anthropic( model="claude-sonnet-4-0", api_key="sk-...", # NOTE: beta headers are required for this feature as of 2025-07-03 additional_kwargs={ "extra_headers": {"anthropic-beta": "search-results-2025-06-09"} }, )
+### Agents + Citable Tools¶
+You can also use these tools directly in pre-built agents, like the `FunctionAgent`, to get the same citations in the output.
+In [ ]:
+Copied!
+```
+from llama_index.core.agent.workflow import FunctionAgent
+
+agent = FunctionAgent(
+    tools=[search_tool],
+    llm=llm,
+    # Since we have a fake tool that returns a static result, we don't want to waste LLM tokens
+    system_prompt="Only make one search query per user message.",
+    timeout=None,
+)
+
+```
+
+from llama_index.core.agent.workflow import FunctionAgent agent = FunctionAgent( tools=[search_tool], llm=llm, # Since we have a fake tool that returns a static result, we don't want to waste LLM tokens system_prompt="Only make one search query per user message.", timeout=None, )
+In [ ]:
+Copied!
+```
+output = await agent.run("How do LlamaIndex and LLMs work together?")
+
+```
+
+output = await agent.run("How do LlamaIndex and LLMs work together?")
+In [ ]:
+Copied!
+```
+from llama_index.core.llms import CitationBlock
+
+print(output.response.content)
+print("----" * 20)
+for block in output.response.blocks:
+    if isinstance(block, CitationBlock):
+        print("Source: ", block.source)
+        print("Title: ", block.title)
+        print("Cited Content:\n", block.cited_content.text)
+        print("----" * 20)
+
+```
+
+from llama_index.core.llms import CitationBlock print(output.response.content) print("----" * 20) for block in output.response.blocks: if isinstance(block, CitationBlock): print("Source: ", block.source) print("Title: ", block.title) print("Cited Content:\n", block.cited_content.text) print("----" * 20)
+```
+Based on the search results, I can explain how LlamaIndex and LLMs work together:
+
+
+LLMs are a phenomenal piece of technology for knowledge generation and reasoning. They are pre-trained on large amounts of publicly available data. However, there's a key challenge: How do we best augment LLMs with our own private data?
+
+This is where LlamaIndex comes in as the solution. LlamaIndex is a "data framework" to help you build LLM apps. Here's how they work together:
+
+## Data Integration and Structure
+LlamaIndex offers data connectors to ingest your existing data sources and data formats (APIs, PDFs, docs, SQL, etc.) and provides ways to structure your data (indices, graphs) so that this data can be easily used with LLMs.
+
+## Enhanced Query Interface
+LlamaIndex provides an advanced retrieval/query interface over your data: Feed in any LLM input prompt, get back retrieved context and knowledge-augmented output. This means when you ask a question, LlamaIndex retrieves relevant information from your private data and combines it with the LLM's capabilities to provide more accurate, contextual responses.
+
+## Flexible Integration
+LlamaIndex allows easy integrations with your outer application framework (e.g. with LangChain, Flask, Docker, ChatGPT, anything else).
+
+## User-Friendly Design
+LlamaIndex provides tools for both beginner users and advanced users. The high-level API allows beginner users to use LlamaIndex to ingest and query their data in 5 lines of code. The lower-level APIs allow advanced users to customize and extend any module (data connectors, indices, retrievers, query engines, reranking modules), to fit
+--------------------------------------------------------------------------------
+Source:  https://docs.llamaindex.ai
+Title:  Facts about LLMs and LlamaIndex
+Cited Content:
+ 
+Context
+LLMs are a phenomenal piece of technology for knowledge generation and reasoning.
+They are pre-trained on large amounts of publicly available data.
+How do we best augment LLMs with our own private data?
+We need a comprehensive toolkit to help perform this data augmentation for LLMs.
+
+Proposed Solution
+That's where LlamaIndex comes in. LlamaIndex is a "data framework" to help
+you build LLM  apps. It provides the following tools:
+
+Offers data connectors to ingest your existing data sources and data formats
+(APIs, PDFs, docs, SQL, etc.)
+Provides ways to structure your data (indices, graphs) so that this data can be
+easily used with LLMs.
+Provides an advanced retrieval/query interface over your data:
+Feed in any LLM input prompt, get back retrieved context and knowledge-augmented output.
+Allows easy integrations with your outer application framework
+(e.g. with LangChain, Flask, Docker, ChatGPT, anything else).
+LlamaIndex provides tools for both beginner users and advanced users.
+Our high-level API allows beginner users to use LlamaIndex to ingest and
+query their data in 5 lines of code. Our lower-level APIs allow advanced users to
+customize and extend any module (data connectors, indices, retrievers, query engines,
+reranking modules), to fit their needs.
+
+--------------------------------------------------------------------------------
+
+```
+
+### Manual Tool Calling + Citations¶
+Using our tool that returns a citable block, we can manually call the LLM with the given tool in a manual agent loop.
+Once the LLM stops making tool calls, we can return the final response and parse the citations from the response.
+In [ ]:
+Copied!
+```
+from llama_index.core.llms import ChatMessage, CitationBlock
+
+chat_history = [
+    ChatMessage(
+        role="system",
+        # Since we have a fake tool that returns a static result, we don't want to waste LLM tokens
+        content="Only make one search query per user message.",
+    ),
+    ChatMessage(
+        role="user", content="How do LlamaIndex and LLMs work together?"
+    ),
+]
+resp = llm.chat_with_tools([search_tool], chat_history=chat_history)
+chat_history.append(resp.message)
+
+tool_calls = llm.get_tool_calls_from_response(
+    resp, error_on_no_tool_call=False
+)
+while tool_calls:
+    for tool_call in tool_calls:
+        if tool_call.tool_name == "search_fn":
+            tool_result = search_tool.call(tool_call.tool_kwargs)
+            chat_history.append(
+                ChatMessage(
+                    role="tool",
+                    blocks=tool_result.blocks,
+                    additional_kwargs={"tool_call_id": tool_call.tool_id},
+                )
+            )
+
+    resp = llm.chat_with_tools([search_tool], chat_history=chat_history)
+    chat_history.append(resp.message)
+    tool_calls = llm.get_tool_calls_from_response(
+        resp, error_on_no_tool_call=False
+    )
+
+print(resp.message.content)
+print("----" * 20)
+for block in resp.message.blocks:
+    if isinstance(block, CitationBlock):
+        print("Source: ", block.source)
+        print("Title: ", block.title)
+        print("Cited Content:\n", block.cited_content.text)
+        print("----" * 20)
+
+```
+
+from llama_index.core.llms import ChatMessage, CitationBlock chat_history = [ ChatMessage( role="system", # Since we have a fake tool that returns a static result, we don't want to waste LLM tokens content="Only make one search query per user message.", ), ChatMessage( role="user", content="How do LlamaIndex and LLMs work together?" ), ] resp = llm.chat_with_tools([search_tool], chat_history=chat_history) chat_history.append(resp.message) tool_calls = llm.get_tool_calls_from_response( resp, error_on_no_tool_call=False ) while tool_calls: for tool_call in tool_calls: if tool_call.tool_name == "search_fn": tool_result = search_tool.call(tool_call.tool_kwargs) chat_history.append( ChatMessage( role="tool", blocks=tool_result.blocks, additional_kwargs={"tool_call_id": tool_call.tool_id}, ) ) resp = llm.chat_with_tools([search_tool], chat_history=chat_history) chat_history.append(resp.message) tool_calls = llm.get_tool_calls_from_response( resp, error_on_no_tool_call=False ) print(resp.message.content) print("----" * 20) for block in resp.message.blocks: if isinstance(block, CitationBlock): print("Source: ", block.source) print("Title: ", block.title) print("Cited Content:\n", block.cited_content.text) print("----" * 20)
+```
+Based on the search results, I can explain how LlamaIndex and LLMs work together:
+
+
+LLMs are a phenomenal piece of technology for knowledge generation and reasoning. They are pre-trained on large amounts of publicly available data.
+ However, there's a key challenge: 
+How do we best augment LLMs with our own private data?
+
+
+
+That's where LlamaIndex comes in. LlamaIndex is a "data framework" to help you build LLM apps.
+ Here's how they work together:
+
+## Key Integration Points
+
+**1. Data Ingestion and Connection**
+
+LlamaIndex offers data connectors to ingest your existing data sources and data formats (APIs, PDFs, docs, SQL, etc.)
+
+
+**2. Data Structuring for LLM Compatibility**
+
+LlamaIndex provides ways to structure your data (indices, graphs) so that this data can be easily used with LLMs.
+
+
+**3. Enhanced Query Interface**
+
+LlamaIndex provides an advanced retrieval/query interface over your data: Feed in any LLM input prompt, get back retrieved context and knowledge-augmented output.
+
+
+**4. Application Integration**
+
+LlamaIndex allows easy integrations with your outer application framework (e.g. with LangChain, Flask, Docker, ChatGPT, anything else).
+
+
+## Flexibility for Different Users
+
+
+LlamaIndex provides tools for both beginner users and advanced users. The high-level API allows beginner users to use LlamaIndex to ingest and query their data in 5 lines of code. The lower-level APIs allow advanced users to customize and extend any module (data connectors, indices, retrievers, query engines, reranking modules), to fit their needs.
+--------------------------------------------------------------------------------
+Source:  https://docs.llamaindex.ai
+Title:  Facts about LLMs and LlamaIndex
+Cited Content:
+ 
+Context
+LLMs are a phenomenal piece of technology for knowledge generation and reasoning.
+They are pre-trained on large amounts of publicly available data.
+How do we best augment LLMs with our own private data?
+We need a comprehensive toolkit to help perform this data augmentation for LLMs.
+
+Proposed Solution
+That's where LlamaIndex comes in. LlamaIndex is a "data framework" to help
+you build LLM  apps. It provides the following tools:
+
+Offers data connectors to ingest your existing data sources and data formats
+(APIs, PDFs, docs, SQL, etc.)
+Provides ways to structure your data (indices, graphs) so that this data can be
+easily used with LLMs.
+Provides an advanced retrieval/query interface over your data:
+Feed in any LLM input prompt, get back retrieved context and knowledge-augmented output.
+Allows easy integrations with your outer application framework
+(e.g. with LangChain, Flask, Docker, ChatGPT, anything else).
+LlamaIndex provides tools for both beginner users and advanced users.
+Our high-level API allows beginner users to use LlamaIndex to ingest and
+query their data in 5 lines of code. Our lower-level APIs allow advanced users to
+customize and extend any module (data connectors, indices, retrievers, query engines,
+reranking modules), to fit their needs.
+
+--------------------------------------------------------------------------------
+
+```
+

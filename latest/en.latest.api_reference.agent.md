@@ -190,6 +190,14 @@ class AgentWorkflow(Workflow, PromptMixin, metaclass=AgentWorkflowMeta):
             await ctx.store.set(
                 "handoff_output_prompt", self.handoff_output_prompt.get_template()
             )
+        if not await ctx.get("max_iterations", default=None):
+            max_iterations = (
+                ev.get("max_iterations", default=None) or DEFAULT_MAX_ITERATIONS
+            )
+            await ctx.set("max_iterations", max_iterations)
+
+        # Reset the number of iterations
+        await ctx.set("num_iterations", 0)
 
         # always set to false initially
         await ctx.store.set("formatted_input_with_state", False)
@@ -325,6 +333,17 @@ class AgentWorkflow(Workflow, PromptMixin, metaclass=AgentWorkflowMeta):
     async def parse_agent_output(
         self, ctx: Context, ev: AgentOutput
     ) -> Union[StopEvent, ToolCall, None]:
+        max_iterations = await ctx.get("max_iterations", default=DEFAULT_MAX_ITERATIONS)
+        num_iterations = await ctx.get("num_iterations", default=0)
+        num_iterations += 1
+        await ctx.set("num_iterations", num_iterations)
+
+        if num_iterations >= max_iterations:
+            raise WorkflowRuntimeError(
+                f"Max iterations of {max_iterations} reached! Either something went wrong, or you can "
+                "increase the max iterations with `.run(.., max_iterations=...)`"
+            )
+
         if not ev.tool_calls:
             agent = self.agents[ev.current_agent_name]
             memory: BaseMemory = await ctx.store.get("memory")
@@ -475,6 +494,7 @@ class AgentWorkflow(Workflow, PromptMixin, metaclass=AgentWorkflowMeta):
         ctx: Optional[Context] = None,
         stepwise: bool = False,
         checkpoint_callback: Optional[CheckpointCallback] = None,
+        max_iterations: Optional[int] = None,
         **kwargs: Any,
     ) -> WorkflowHandler:
         # Detect if hitl is needed
@@ -491,6 +511,7 @@ class AgentWorkflow(Workflow, PromptMixin, metaclass=AgentWorkflowMeta):
                     user_msg=user_msg,
                     chat_history=chat_history,
                     memory=memory,
+                    max_iterations=max_iterations,
                     **kwargs,
                 ),
                 ctx=ctx,
@@ -1107,6 +1128,15 @@ class BaseWorkflowAgent(
         if not await ctx.store.get("state", default=None):
             await ctx.store.set("state", self.initial_state.copy())
 
+        if not await ctx.get("max_iterations", default=None):
+            max_iterations = (
+                ev.get("max_iterations", default=None) or DEFAULT_MAX_ITERATIONS
+            )
+            await ctx.set("max_iterations", max_iterations)
+
+        # Reset the number of iterations
+        await ctx.set("num_iterations", 0)
+
         # always set to false initially
         await ctx.store.set("formatted_input_with_state", False)
 
@@ -1237,6 +1267,17 @@ class BaseWorkflowAgent(
     async def parse_agent_output(
         self, ctx: Context, ev: AgentOutput
     ) -> Union[StopEvent, ToolCall, None]:
+        max_iterations = await ctx.get("max_iterations", default=DEFAULT_MAX_ITERATIONS)
+        num_iterations = await ctx.get("num_iterations", default=0)
+        num_iterations += 1
+        await ctx.set("num_iterations", num_iterations)
+
+        if num_iterations >= max_iterations:
+            raise WorkflowRuntimeError(
+                f"Max iterations of {max_iterations} reached! Either something went wrong, or you can "
+                "increase the max iterations with `.run(.., max_iterations=...)`"
+            )
+
         if not ev.tool_calls:
             memory: BaseMemory = await ctx.store.get("memory")
             output = await self.finalize(ctx, ev, memory)
@@ -1367,6 +1408,7 @@ class BaseWorkflowAgent(
         ctx: Optional[Context] = None,
         stepwise: bool = False,
         checkpoint_callback: Optional[CheckpointCallback] = None,
+        max_iterations: Optional[int] = None,
         **kwargs: Any,
     ) -> WorkflowHandler:
         # Detect if hitl is needed
@@ -1383,6 +1425,7 @@ class BaseWorkflowAgent(
                     user_msg=user_msg,
                     chat_history=chat_history,
                     memory=memory,
+                    max_iterations=max_iterations,
                     **kwargs,
                 ),
                 ctx=ctx,
@@ -2080,7 +2123,7 @@ Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
 `reasoning_key` |  `str` |  |  `'current_reasoning'`  
-`output_parser` |  `ReActOutputParser` |  The react output parser |  `<llama_index.core.agent.react.output_parser.ReActOutputParser object at 0x756fde014d70>`  
+`output_parser` |  `ReActOutputParser` |  The react output parser |  `<llama_index.core.agent.react.output_parser.ReActOutputParser object at 0x7059fb1bb410>`  
 `formatter` |  `ReActChatFormatter` |  The react chat formatter to format the reasoning steps and chat history into an llm input. |  `<dynamic>`  
 Source code in `llama-index-core/llama_index/core/agent/workflow/react_agent.py`
 
@@ -3123,7 +3166,7 @@ class AgentStream(Event):
     response: str
     current_agent_name: str
     tool_calls: list[ToolSelection]
-    raw: Any = Field(exclude=True)
+    raw: Optional[Any] = Field(default=None, exclude=True)
 
 ```
   
@@ -3146,7 +3189,7 @@ class AgentOutput(Event):
 
     response: ChatMessage
     tool_calls: list[ToolSelection]
-    raw: Any
+    raw: Optional[Any] = Field(default=None, exclude=True)
     current_agent_name: str
 
     def __str__(self) -> str:

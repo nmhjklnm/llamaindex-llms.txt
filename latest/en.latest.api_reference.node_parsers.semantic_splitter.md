@@ -9,7 +9,7 @@ Name | Type | Description | Default
 ---|---|---|---  
 `buffer_size` |  `int` |  number of sentences to group together when evaluating semantic similarity |  `1`  
 `embed_model` |  `BaseEmbedding` |  (BaseEmbedding): embedding model to use |  _required_  
-`sentence_splitter` |  `Optional[Callable]` |  splits text into sentences |  `<function split_by_sentence_tokenizer.<locals>.<lambda> at 0x756fde027ce0>`  
+`sentence_splitter` |  `Optional[Callable]` |  splits text into sentences |  `<function split_by_sentence_tokenizer.<locals>.<lambda> at 0x7059fad33ba0>`  
 `include_metadata` |  `bool` |  whether to include metadata in nodes |  _required_  
 `include_prev_next_rel` |  `bool` |  whether to include prev/next relationships |  _required_  
 `breakpoint_percentile_threshold` |  `int` |  The percentile of cosine dissimilarity that must be exceeded between a group of sentences and the next to form a node. The smaller this number is, the more nodes will be generated |  `95`  
