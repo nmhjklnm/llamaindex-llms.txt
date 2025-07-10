@@ -663,12 +663,12 @@ Copied!
 async def run_docs_agent(query: str):
     handler = everything_docs_agent.run(start_event=StartEvent(query=query))
     result = await handler
-    for response in await handler.ctx.get("results"):
+    for response in await handler.ctx.store.get("results"):
         print(response)
 
 ```
 
-async def run_docs_agent(query: str): handler = everything_docs_agent.run(start_event=StartEvent(query=query)) result = await handler for response in await handler.ctx.get("results"): print(response)
+async def run_docs_agent(query: str): handler = everything_docs_agent.run(start_event=StartEvent(query=query)) result = await handler for response in await handler.ctx.store.get("results"): print(response)
 In [ ]:
 Copied!
 ```

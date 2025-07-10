@@ -3596,7 +3596,7 @@ class XMLReader(BaseReader):
         self.tree_level_split = tree_level_split
 
     def _parse_xmlelt_to_document(
-        self, root: ET.Element, extra_info: Optional[Dict] = None
+        self, root: _XmlET.Element, extra_info: Optional[Dict] = None
     ) -> List[Document]:
         """
         Parse the xml object into a list of Documents.

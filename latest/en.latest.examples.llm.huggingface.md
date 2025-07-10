@@ -1,8 +1,8 @@
 ![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)
 # Hugging Face LLMs¶
-There are many ways to interface with LLMs from Hugging Face. Hugging Face itself provides several Python packages to enable access, which LlamaIndex wraps into `LLM` entities:
+There are many ways to interface with LLMs from Hugging Face, either locally or via Hugging Face's Inference Providers. Hugging Face itself provides several Python packages to enable access, which LlamaIndex wraps into `LLM` entities:
   * The `transformers` package: use `llama_index.llms.HuggingFaceLLM`
-  * The Hugging Face Inference API, wrapped by `huggingface_hub[inference]`: use `llama_index.llms.HuggingFaceInferenceAPI`
+  * The Hugging Face Inference Providers, wrapped by `huggingface_hub[inference]`: use `llama_index.llms.HuggingFaceInferenceAPI`
 
 
 There are _many_ possible permutations of these two, so this notebook only details a few. Let's use Hugging Face's Text Generation task as our example.
@@ -15,12 +15,12 @@ In the below line, we install the packages necessary for this demo:
 In [ ]:
 Copied!
 ```
-%pip install llama-index-llms-huggingface
-%pip install llama-index-llms-huggingface-api
+%pip install llama-index-llms-huggingface # for local inference
+%pip install llama-index-llms-huggingface-api # for remote inference
 
 ```
 
-%pip install llama-index-llms-huggingface %pip install llama-index-llms-huggingface-api
+%pip install llama-index-llms-huggingface # for local inference %pip install llama-index-llms-huggingface-api # for remote inference
 In [ ]:
 Copied!
 ```
@@ -29,7 +29,6 @@ Copied!
 ```
 
 !pip install "transformers[torch]" "huggingface_hub[inference]"
-Now that we're set up, let's play around:
 If you're opening this Notebook on colab, you will probably need to install LlamaIndex 🦙.
 In [ ]:
 Copied!
@@ -39,6 +38,14 @@ Copied!
 ```
 
 !pip install llama-index
+Now that we're set up, let's play around:
+# Setup Hugging Face Account¶
+First, you need to create a Hugging Face account and get a token. You can sign up here. Then you'll need to create a token here.
+```
+export HUGGING_FACE_TOKEN=hf_your_token_here
+
+```
+
 In [ ]:
 Copied!
 ```
@@ -48,47 +55,76 @@ from typing import List, Optional
 from llama_index.llms.huggingface import HuggingFaceLLM
 from llama_index.llms.huggingface_api import HuggingFaceInferenceAPI
 
-# SEE: https://huggingface.co/docs/hub/security-tokens
-# We just need a token with read permissions for this demo
 HF_TOKEN: Optional[str] = os.getenv("HUGGING_FACE_TOKEN")
 # NOTE: None default will fall back on Hugging Face's token storage
 # when this token gets used within HuggingFaceInferenceAPI
 
 ```
 
-import os from typing import List, Optional from llama_index.llms.huggingface import HuggingFaceLLM from llama_index.llms.huggingface_api import HuggingFaceInferenceAPI # SEE: https://huggingface.co/docs/hub/security-tokens # We just need a token with read permissions for this demo HF_TOKEN: Optional[str] = os.getenv("HUGGING_FACE_TOKEN") # NOTE: None default will fall back on Hugging Face's token storage # when this token gets used within HuggingFaceInferenceAPI
+import os from typing import List, Optional from llama_index.llms.huggingface import HuggingFaceLLM from llama_index.llms.huggingface_api import HuggingFaceInferenceAPI HF_TOKEN: Optional[str] = os.getenv("HUGGING_FACE_TOKEN") # NOTE: None default will fall back on Hugging Face's token storage # when this token gets used within HuggingFaceInferenceAPI
+## Use a model via Inference Providers¶
+The easiest way to use an open source model is to use the Hugging Face Inference Providers. Let's use the DeepSeek R1 model, which is great for complex tasks.
+With inference providers, you can use the model on serverless infrastructure from inference providers.
 In [ ]:
 Copied!
 ```
-# This uses https://huggingface.co/HuggingFaceH4/zephyr-7b-alpha
-# downloaded (if first invocation) to the local Hugging Face model cache,
-# and actually runs the model on your local machine's hardware
-locally_run = HuggingFaceLLM(model_name="HuggingFaceH4/zephyr-7b-alpha")
-
-# This will use the same model, but run remotely on Hugging Face's servers,
-# accessed via the Hugging Face Inference API
-# Note that using your token will not charge you money,
-# the Inference API is free it just has rate limits
 remotely_run = HuggingFaceInferenceAPI(
-    model_name="HuggingFaceH4/zephyr-7b-alpha", token=HF_TOKEN
+    model_name="deepseek-ai/DeepSeek-R1-0528",
+    token=HF_TOKEN,
+    provider="auto",  # this will use the best provider available
 )
 
-# Or you can skip providing a token, using Hugging Face Inference API anonymously
-remotely_run_anon = HuggingFaceInferenceAPI(
-    model_name="HuggingFaceH4/zephyr-7b-alpha"
+```
+
+remotely_run = HuggingFaceInferenceAPI( model_name="deepseek-ai/DeepSeek-R1-0528", token=HF_TOKEN, provider="auto", # this will use the best provider available )
+We can also specify our preferred inference provider. Let's use the `together` provider.
+In [ ]:
+Copied!
+```
+remotely_run = HuggingFaceInferenceAPI(
+    model_name="Qwen/Qwen3-235B-A22B",
+    token=HF_TOKEN,
+    provider="together",  # this will use the best provider available
 )
 
-# If you don't provide a model_name to the HuggingFaceInferenceAPI,
-# Hugging Face's recommended model gets used (thanks to huggingface_hub)
-remotely_run_recommended = HuggingFaceInferenceAPI(token=HF_TOKEN)
+```
 
+remotely_run = HuggingFaceInferenceAPI( model_name="Qwen/Qwen3-235B-A22B", token=HF_TOKEN, provider="together", # this will use the best provider available )
+## Use an open source model locally¶
+First, we'll use an open source model that's optimized for local inference. This model is downloaded (if first invocation) to the local Hugging Face model cache, and actually runs the model on your local machine's hardware.
+We'll use the Gemma 3N E4B model, which is optimized for local inference.
+In [ ]:
+Copied!
+```
+locally_run = HuggingFaceLLM(model_name="google/gemma-3n-E4B-it")
+
+```
+
+locally_run = HuggingFaceLLM(model_name="google/gemma-3n-E4B-it")
+## Use a dedicated Inference Endpoint¶
+We can also spin up a dedicated Inference Endpoint for a model and use that to run the model.
+In [ ]:
+Copied!
+```
+endpoint_server = HuggingFaceInferenceAPI(
+    model="https://(<your-endpoint>.eu-west-1.aws.endpoints.huggingface.cloud"
+)
+
+```
+
+endpoint_server = HuggingFaceInferenceAPI( model="https://(.eu-west-1.aws.endpoints.huggingface.cloud" )
+## Use a local inference engine (vLLM or TGI)¶
+We can also use a local inference engine like vLLM or TGI to run the model.
+In [ ]:
+Copied!
+```
 # You can also connect to a model being served by a local or remote
 # Text Generation Inference server
 tgi_server = HuggingFaceInferenceAPI(model="http://localhost:8080")
 
 ```
 
-# This uses https://huggingface.co/HuggingFaceH4/zephyr-7b-alpha # downloaded (if first invocation) to the local Hugging Face model cache, # and actually runs the model on your local machine's hardware locally_run = HuggingFaceLLM(model_name="HuggingFaceH4/zephyr-7b-alpha") # This will use the same model, but run remotely on Hugging Face's servers, # accessed via the Hugging Face Inference API # Note that using your token will not charge you money, # the Inference API is free it just has rate limits remotely_run = HuggingFaceInferenceAPI( model_name="HuggingFaceH4/zephyr-7b-alpha", token=HF_TOKEN ) # Or you can skip providing a token, using Hugging Face Inference API anonymously remotely_run_anon = HuggingFaceInferenceAPI( model_name="HuggingFaceH4/zephyr-7b-alpha" ) # If you don't provide a model_name to the HuggingFaceInferenceAPI, # Hugging Face's recommended model gets used (thanks to huggingface_hub) remotely_run_recommended = HuggingFaceInferenceAPI(token=HF_TOKEN) # You can also connect to a model being served by a local or remote # Text Generation Inference server tgi_server = HuggingFaceInferenceAPI(model="http://localhost:8080")
+# You can also connect to a model being served by a local or remote # Text Generation Inference server tgi_server = HuggingFaceInferenceAPI(model="http://localhost:8080")
 Underlying a completion with `HuggingFaceInferenceAPI` is Hugging Face's Text Generation task.
 In [ ]:
 Copied!
@@ -105,6 +141,7 @@ The Infinity Wall Clock is a unique and stylish way to keep track of time. The c
 
 ```
 
+## Setting a tokenizer¶
 If you are modifying the LLM, you should also change the global tokenizer to match!
 In [ ]:
 Copied!

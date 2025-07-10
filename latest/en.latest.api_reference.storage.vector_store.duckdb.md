@@ -217,9 +217,12 @@ class DuckDBVectorStore(BasePydanticVectorStore):
         }
 
     def _arrow_row_to_node(self, row_dict: dict) -> BaseNode:
-        return metadata_dict_to_node(
+        node = metadata_dict_to_node(
             metadata=json.loads(row_dict["metadata_"]), text=row_dict["text"]
         )
+        node.embedding = row_dict["embedding"]
+
+        return node
 
     def _arrow_row_to_query_result(self, rows: list[dict]) -> VectorStoreQueryResult:
         nodes = []

@@ -435,12 +435,12 @@ Now, we can retrieve the final report in the system for ourselves.
 In [ ]:
 Copied!
 ```
-state = await handler.ctx.get("state")
+state = await handler.ctx.store.get("state")
 print(state["report_content"])
 
 ```
 
-state = await handler.ctx.get("state") print(state["report_content"])
+state = await handler.ctx.store.get("state") print(state["report_content"])
 ```
 # History of the Internet
 

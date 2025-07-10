@@ -259,6 +259,223 @@ In summary, Paul Graham is a highly influential figure in the startup world, kno
 
 ```
 
+## Cached Content Support¶
+Google GenAI supports cached content for improved performance and cost efficiency when reusing large contexts across multiple requests. This is particularly useful for RAG applications, document analysis, and multi-turn conversations with consistent context.
+#### Benefits¶
+  * **Faster responses**
+  * **Cost savings** through reduced input token usage
+  * **Consistent context** across multiple queries
+  * **Perfect for document analysis** with large files
+
+
+#### Creating Cached Content¶
+First, create cached content using the Google GenAI SDK:
+In [ ]:
+Copied!
+```
+from google import genai
+from google.genai.types import CreateCachedContentConfig, Content, Part
+import time
+
+client = genai.Client(api_key="your-api-key")
+
+# For VertexAI
+# client = genai.Client(
+#     http_options=HttpOptions(api_version="v1"),
+#     project="your-project-id",
+#     location="us-central1",
+#     vertexai="True"
+# )
+
+```
+
+from google import genai from google.genai.types import CreateCachedContentConfig, Content, Part import time client = genai.Client(api_key="your-api-key") # For VertexAI # client = genai.Client( # http_options=HttpOptions(api_version="v1"), # project="your-project-id", # location="us-central1", # vertexai="True" # )
+Option 1: Upload Local Files
+In [ ]:
+Copied!
+```
+# Upload and process local PDF files
+pdf_file = client.files.upload(file="./your_document.pdf")
+while pdf_file.state.name == "PROCESSING":
+    print("Waiting for PDF to be processed.")
+    time.sleep(2)
+    pdf_file = client.files.get(name=pdf_file.name)
+
+# Create cache with uploaded file
+cache = client.caches.create(
+    model="gemini-2.0-flash-001",
+    config=CreateCachedContentConfig(
+        display_name="Document Analysis Cache",
+        system_instruction=(
+            "You are an expert document analyzer. Answer questions "
+            "based on the provided documents with accuracy and detail."
+        ),
+        contents=[pdf_file],  # Direct file reference
+        ttl="3600s",  # Cache for 1 hour
+    ),
+)
+
+```
+
+# Upload and process local PDF files pdf_file = client.files.upload(file="./your_document.pdf") while pdf_file.state.name == "PROCESSING": print("Waiting for PDF to be processed.") time.sleep(2) pdf_file = client.files.get(name=pdf_file.name) # Create cache with uploaded file cache = client.caches.create( model="gemini-2.0-flash-001", config=CreateCachedContentConfig( display_name="Document Analysis Cache", system_instruction=( "You are an expert document analyzer. Answer questions " "based on the provided documents with accuracy and detail." ), contents=[pdf_file], # Direct file reference ttl="3600s", # Cache for 1 hour ), )
+Option 2: Multiple Files with Content Structure
+In [ ]:
+Copied!
+```
+# For multiple files or Cloud Storage files with VertexAI
+contents = [
+    Content(
+        role="user",
+        parts=[
+            Part.from_uri(
+                # file_uri=pdf_file.uri,    # you can use the uploaded file's URI too
+                file_uri="gs://cloud-samples-data/generative-ai/pdf/2312.11805v3.pdf",
+                mime_type="application/pdf",
+            ),
+            Part.from_uri(
+                file_uri="gs://cloud-samples-data/generative-ai/pdf/2403.05530.pdf",
+                mime_type="application/pdf",
+            ),
+        ],
+    )
+]
+
+cache = client.caches.create(
+    model="gemini-2.0-flash-001",
+    config=CreateCachedContentConfig(
+        display_name="Multi-Document Cache",
+        system_instruction=(
+            "You are an expert researcher. Analyze and compare "
+            "information across the provided documents."
+        ),
+        contents=contents,
+        ttl="3600s",
+    ),
+)
+
+print(f"Cache created: {cache.name}")
+print(f"Cached tokens: {cache.usage_metadata.total_token_count}")
+
+```
+
+# For multiple files or Cloud Storage files with VertexAI contents = [ Content( role="user", parts=[ Part.from_uri( # file_uri=pdf_file.uri, # you can use the uploaded file's URI too file_uri="gs://cloud-samples-data/generative-ai/pdf/2312.11805v3.pdf", mime_type="application/pdf", ), Part.from_uri( file_uri="gs://cloud-samples-data/generative-ai/pdf/2403.05530.pdf", mime_type="application/pdf", ), ], ) ] cache = client.caches.create( model="gemini-2.0-flash-001", config=CreateCachedContentConfig( display_name="Multi-Document Cache", system_instruction=( "You are an expert researcher. Analyze and compare " "information across the provided documents." ), contents=contents, ttl="3600s", ), ) print(f"Cache created: {cache.name}") print(f"Cached tokens: {cache.usage_metadata.total_token_count}")
+```
+Cache created: projects/391.../locations/us-central1/cachedContents/267...
+Cached tokens: 43102
+
+```
+
+Using Cached Content with LlamaIndex
+Once you have created the cache, use it with LlamaIndex:
+In [ ]:
+Copied!
+```
+from llama_index.llms.google_genai import GoogleGenAI
+from llama_index.core.llms import ChatMessage
+
+llm = GoogleGenAI(
+    model="gemini-2.0-flash-001",
+    api_key="your-api-key",
+    cached_content=cache.name,
+)
+
+# For VertexAI
+# llm = GoogleGenAI(
+#     model="gemini-2.0-flash-001",
+#     vertexai_config={"project": "your-project-id", "location": "us-central1"},
+#     cached_content=cache.name
+# )
+
+# Use the cached content
+message = ChatMessage(
+    role="user", content="Summarize the key findings from Chapter 4."
+)
+response = llm.chat([message])
+print(response)
+
+```
+
+from llama_index.llms.google_genai import GoogleGenAI from llama_index.core.llms import ChatMessage llm = GoogleGenAI( model="gemini-2.0-flash-001", api_key="your-api-key", cached_content=cache.name, ) # For VertexAI # llm = GoogleGenAI( # model="gemini-2.0-flash-001", # vertexai_config={"project": "your-project-id", "location": "us-central1"}, # cached_content=cache.name # ) # Use the cached content message = ChatMessage( role="user", content="Summarize the key findings from Chapter 4." ) response = llm.chat([message]) print(response)
+```
+assistant: Chapter 4, "The Abstraction: The Process," introduces the concept of a process as a running program, which is a fundamental abstraction provided by the operating system (OS). Here are the key findings:
+
+1.  **Process Definition:** A process is essentially a running program, characterized by its machine state, including memory (address space), registers (including the program counter and stack pointer), and I/O information.
+
+2.  **Process API:** The OS provides a process API that includes functions for creating processes (Create), destroying processes (Destroy), waiting for processes to complete (Wait), controlling processes (Miscellaneous Control), and obtaining status information (Status).
+
+3.  **Process Creation:** Creating a process involves loading code and static data into memory, allocating memory for the stack and heap, initializing the stack, and then starting the program at its entry point (main()).
+
+4.  **Process States:** A process can be in one of three states: Running (executing on a processor), Ready (ready to run but not currently running), or Blocked (waiting for an event, such as I/O completion).
+
+5.  **Data Structures:** The OS maintains data structures, such as a process list, to track the state of each process. These structures contain information like the register context (saved register values) and the process state.
+
+In essence, Chapter 4 lays the groundwork for understanding how the OS manages and virtualizes the CPU by introducing the concept of a process and its associated attributes and states.
+
+
+```
+
+Using Cached Content in Generation Config
+For request-level caching control:
+In [ ]:
+Copied!
+```
+import google.genai.types as types
+
+# Specify cached content per request
+config = types.GenerateContentConfig(
+    cached_content=cache.name, temperature=0.1, max_output_tokens=1024
+)
+
+llm = GoogleGenAI(model="gemini-2.0-flash-001", generation_config=config)
+
+response = llm.complete("List the first five chapters of the document")
+print(response)
+
+```
+
+import google.genai.types as types # Specify cached content per request config = types.GenerateContentConfig( cached_content=cache.name, temperature=0.1, max_output_tokens=1024 ) llm = GoogleGenAI(model="gemini-2.0-flash-001", generation_config=config) response = llm.complete("List the first five chapters of the document") print(response)
+```
+Here are the first five chapters of the document, as listed in the Table of Contents:
+
+1.  A Dialogue on the Book
+2.  Introduction to Operating Systems
+3.  A Dialogue on Virtualization
+4.  The Abstraction: The Process
+5.  Interlude: Process API
+
+```
+
+Cache Management
+In [ ]:
+Copied!
+```
+# List all caches
+caches = client.caches.list()
+for cache_item in caches:
+    print(f"Cache: {cache_item.display_name} ({cache_item.name})")
+    print(f"Tokens: {cache_item.usage_metadata.total_token_count}")
+
+# Get cache details
+cache_info = client.caches.get(name=cache.name)
+print(f"Created: {cache_info.create_time}")
+print(f"Expires: {cache_info.expire_time}")
+
+# Delete cache when done
+client.caches.delete(name=cache.name)
+print("Cache deleted")
+
+```
+
+# List all caches caches = client.caches.list() for cache_item in caches: print(f"Cache: {cache_item.display_name} ({cache_item.name})") print(f"Tokens: {cache_item.usage_metadata.total_token_count}") # Get cache details cache_info = client.caches.get(name=cache.name) print(f"Created: {cache_info.create_time}") print(f"Expires: {cache_info.expire_time}") # Delete cache when done client.caches.delete(name=cache.name) print("Cache deleted")
+```
+Cache: Document Analysis Cache (cachedContents/8v3va2x...)
+Tokens: 77421
+Created: 2025-07-08 16:06:11.821190+00:00
+Expires: 2025-07-08 17:06:10.813310+00:00
+Cache deleted
+
+```
+
 ## Multi-Modal Support¶
 Using `ChatMessage` objects, you can pass in images and text to the LLM.
 In [ ]:
