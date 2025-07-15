@@ -252,7 +252,7 @@ Generic abstract interface for retrievable nodes
 Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
-`id_` |  `str` |  Unique ID of the node. |  `'9283586a-ad86-4592-996d-98d65c7b1e58'`  
+`id_` |  `str` |  Unique ID of the node. |  `'23cad6dc-6477-45e8-bc1e-d7e51b960792'`  
 `embedding` |  `List[float] | None` |  Embedding of the node. |  `None`  
 `excluded_embed_metadata_keys` |  `List[str]` |  Metadata keys that are excluded from text for the embed model. |  `<dynamic>`  
 `excluded_llm_metadata_keys` |  `List[str]` |  Metadata keys that are excluded from text for the LLM. |  `<dynamic>`  

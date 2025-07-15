@@ -17,6 +17,10 @@ class AgentWorkflow(Workflow, PromptMixin, metaclass=AgentWorkflowMeta):
         handoff_output_prompt: Optional[Union[str, BasePromptTemplate]] = None,
         state_prompt: Optional[Union[str, BasePromptTemplate]] = None,
         timeout: Optional[float] = None,
+        output_cls: Optional[Type[BaseModel]] = None,
+        structured_output_fn: Optional[
+            Callable[[List[ChatMessage]], Dict[str, Any]]
+        ] = None,
         **workflow_kwargs: Any,
     ):
         super().__init__(timeout=timeout, **workflow_kwargs)
@@ -83,6 +87,11 @@ class AgentWorkflow(Workflow, PromptMixin, metaclass=AgentWorkflowMeta):
             ):
                 raise ValueError("State prompt must contain {state} and {msg}")
         self.state_prompt = state_prompt
+
+        self.output_cls = output_cls
+        self.structured_output_fn = structured_output_fn
+        if output_cls is not None and structured_output_fn is not None:
+            self.structured_output_fn = None
 
     def _get_prompts(self) -> PromptDictType:
         """Get prompts."""
@@ -332,7 +341,7 @@ class AgentWorkflow(Workflow, PromptMixin, metaclass=AgentWorkflowMeta):
     @step
     async def parse_agent_output(
         self, ctx: Context, ev: AgentOutput
-    ) -> Union[StopEvent, ToolCall, None]:
+    ) -> Union[StopEvent, AgentInput, ToolCall, None]:
         max_iterations = await ctx.store.get(
             "max_iterations", default=DEFAULT_MAX_ITERATIONS
         )
@@ -346,16 +355,59 @@ class AgentWorkflow(Workflow, PromptMixin, metaclass=AgentWorkflowMeta):
                 "increase the max iterations with `.run(.., max_iterations=...)`"
             )
 
+        memory: BaseMemory = await ctx.store.get("memory")
+
+        if ev.retry_messages:
+            # Retry with the given messages to let the LLM fix potential errors
+            history = await memory.aget()
+            user_msg_str = await ctx.store.get("user_msg_str")
+            agent_name: str = await ctx.store.get("current_agent_name")
+
+            return AgentInput(
+                input=[
+                    *history,
+                    ChatMessage(role="user", content=user_msg_str),
+                    *ev.retry_messages,
+                ],
+                current_agent_name=agent_name,
+            )
+
         if not ev.tool_calls:
             agent = self.agents[ev.current_agent_name]
-            memory: BaseMemory = await ctx.store.get("memory")
+            memory = await ctx.store.get("memory")
+            # important: messages should always be fetched after calling finalize, otherwise they do not contain the agent's response
             output = await agent.finalize(ctx, ev, memory)
+            messages = await memory.aget()
 
             cur_tool_calls: List[ToolCallResult] = await ctx.store.get(
                 "current_tool_calls", default=[]
             )
             output.tool_calls.extend(cur_tool_calls)  # type: ignore
             await ctx.store.set("current_tool_calls", [])
+
+            if self.structured_output_fn is not None:
+                try:
+                    if inspect.iscoroutinefunction(self.structured_output_fn):
+                        output.structured_response = await self.structured_output_fn(
+                            messages
+                        )
+                    else:
+                        output.structured_response = cast(
+                            Dict[str, Any], self.structured_output_fn(messages)
+                        )
+                except Exception as e:
+                    warnings.warn(
+                        f"There was a problem with the generation of the structured output: {e}"
+                    )
+            if self.output_cls is not None:
+                try:
+                    output.structured_response = await generate_structured_response(
+                        messages=messages, llm=agent.llm, output_cls=self.output_cls
+                    )
+                except Exception as e:
+                    warnings.warn(
+                        f"There was a problem with the generation of the structured output: {e}"
+                    )
 
             return StopEvent(result=output)
 
@@ -998,6 +1050,17 @@ class BaseWorkflowAgent(
         description="The prompt to use to update the state of the agent",
         validate_default=True,
     )
+    output_cls: Optional[Type[BaseModel]] = Field(
+        description="Output class for the agent. If you set this field to a non-null value, `structured_output_fn` will be ignored.",
+        default=None,
+        exclude=True,
+    )
+    structured_output_fn: Optional[Callable[[List[ChatMessage]], Dict[str, Any]]] = (
+        Field(
+            description="Custom function to generate structured output from the agent's run. It has to take a list of ChatMessage instances (derived from the memory) and output a BaseModel subclass instance. If you set `output_cls` to a non-null value, this field will be ignored.",
+            default=None,
+        )
+    )
 
     def __init__(
         self,
@@ -1010,6 +1073,8 @@ class BaseWorkflowAgent(
         llm: Optional[LLM] = None,
         initial_state: Optional[Dict[str, Any]] = None,
         state_prompt: Optional[Union[str, BasePromptTemplate]] = None,
+        output_cls: Optional[Type[BaseModel]] = None,
+        structured_output_fn: Optional[Callable[[List[ChatMessage]], BaseModel]] = None,
         timeout: Optional[float] = None,
         verbose: bool = False,
         **kwargs: Any,
@@ -1024,6 +1089,9 @@ class BaseWorkflowAgent(
         elif state_prompt is None:
             state_prompt = DEFAULT_STATE_PROMPT
 
+        if output_cls is not None and structured_output_fn is not None:
+            structured_output_fn = None
+
         BaseModel.__init__(
             self,
             name=name,
@@ -1035,6 +1103,8 @@ class BaseWorkflowAgent(
             llm=llm or get_default_llm(),
             initial_state=initial_state or {},
             state_prompt=state_prompt,
+            output_cls=output_cls,
+            structured_output_fn=structured_output_fn,
             **model_kwargs,
         )
 
@@ -1268,7 +1338,7 @@ class BaseWorkflowAgent(
     @step
     async def parse_agent_output(
         self, ctx: Context, ev: AgentOutput
-    ) -> Union[StopEvent, ToolCall, None]:
+    ) -> Union[StopEvent, AgentInput, ToolCall, None]:
         max_iterations = await ctx.store.get(
             "max_iterations", default=DEFAULT_MAX_ITERATIONS
         )
@@ -1282,14 +1352,55 @@ class BaseWorkflowAgent(
                 "increase the max iterations with `.run(.., max_iterations=...)`"
             )
 
-        if not ev.tool_calls:
-            memory: BaseMemory = await ctx.store.get("memory")
-            output = await self.finalize(ctx, ev, memory)
+        memory: BaseMemory = await ctx.store.get("memory")
 
+        if ev.retry_messages:
+            # Retry with the given messages to let the LLM fix potential errors
+            history = await memory.aget()
+            user_msg_str = await ctx.store.get("user_msg_str")
+
+            return AgentInput(
+                input=[
+                    *history,
+                    ChatMessage(role="user", content=user_msg_str),
+                    *ev.retry_messages,
+                ],
+                current_agent_name=self.name,
+            )
+
+        if not ev.tool_calls:
+            # important: messages should always be fetched after calling finalize, otherwise they do not contain the agent's response
+            output = await self.finalize(ctx, ev, memory)
+            messages = await memory.aget()
             cur_tool_calls: List[ToolCallResult] = await ctx.store.get(
                 "current_tool_calls", default=[]
             )
             output.tool_calls.extend(cur_tool_calls)  # type: ignore
+
+            if self.structured_output_fn is not None:
+                try:
+                    if inspect.iscoroutinefunction(self.structured_output_fn):
+                        output.structured_response = await self.structured_output_fn(
+                            messages
+                        )
+                    else:
+                        output.structured_response = cast(
+                            Dict[str, Any], self.structured_output_fn(messages)
+                        )
+                except Exception as e:
+                    warnings.warn(
+                        f"There was a problem with the generation of the structured output: {e}"
+                    )
+            if self.output_cls is not None:
+                try:
+                    output.structured_response = await generate_structured_response(
+                        messages=messages, llm=self.llm, output_cls=self.output_cls
+                    )
+                except Exception as e:
+                    warnings.warn(
+                        f"There was a problem with the generation of the structured output: {e}"
+                    )
+
             await ctx.store.set("current_tool_calls", [])
 
             return StopEvent(result=output)
@@ -2127,7 +2238,7 @@ Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
 `reasoning_key` |  `str` |  |  `'current_reasoning'`  
-`output_parser` |  `ReActOutputParser` |  The react output parser |  `<llama_index.core.agent.react.output_parser.ReActOutputParser object at 0x7a289cbc3590>`  
+`output_parser` |  `ReActOutputParser` |  The react output parser |  `<llama_index.core.agent.react.output_parser.ReActOutputParser object at 0x7f7029f0e6c0>`  
 `formatter` |  `ReActChatFormatter` |  The react chat formatter to format the reasoning steps and chat history into an llm input. |  `<dynamic>`  
 Source code in `llama-index-core/llama_index/core/agent/workflow/react_agent.py`
 
@@ -2221,7 +2332,6 @@ class ReActAgent(BaseWorkflowAgent):
                 AgentStream(
                     delta=last_chat_response.delta or "",
                     response=last_chat_response.message.content or "",
-                    tool_calls=[],
                     raw=raw,
                     current_agent_name=self.name,
                 )
@@ -2236,19 +2346,21 @@ class ReActAgent(BaseWorkflowAgent):
             reasoning_step = output_parser.parse(message_content, is_streaming=False)
         except ValueError as e:
             error_msg = f"Error: Could not parse output. Please follow the thought-action-input format. Try again. Details: {e!s}"
-            await memory.aput(last_chat_response.message)
-            await memory.aput(ChatMessage(role="user", content=error_msg))
 
             raw = (
                 last_chat_response.raw.model_dump()
                 if isinstance(last_chat_response.raw, BaseModel)
                 else last_chat_response.raw
             )
+            # Return with retry messages to let the LLM fix the error
             return AgentOutput(
                 response=last_chat_response.message,
-                tool_calls=[],
                 raw=raw,
                 current_agent_name=self.name,
+                retry_messages=[
+                    last_chat_response.message,
+                    ChatMessage(role="user", content=error_msg),
+                ],
             )
 
         # add to reasoning if not a handoff
@@ -2264,7 +2376,6 @@ class ReActAgent(BaseWorkflowAgent):
         if reasoning_step.is_done:
             return AgentOutput(
                 response=last_chat_response.message,
-                tool_calls=[],
                 raw=raw,
                 current_agent_name=self.name,
             )
@@ -2437,7 +2548,6 @@ async def take_step(
             AgentStream(
                 delta=last_chat_response.delta or "",
                 response=last_chat_response.message.content or "",
-                tool_calls=[],
                 raw=raw,
                 current_agent_name=self.name,
             )
@@ -2452,19 +2562,21 @@ async def take_step(
         reasoning_step = output_parser.parse(message_content, is_streaming=False)
     except ValueError as e:
         error_msg = f"Error: Could not parse output. Please follow the thought-action-input format. Try again. Details: {e!s}"
-        await memory.aput(last_chat_response.message)
-        await memory.aput(ChatMessage(role="user", content=error_msg))
 
         raw = (
             last_chat_response.raw.model_dump()
             if isinstance(last_chat_response.raw, BaseModel)
             else last_chat_response.raw
         )
+        # Return with retry messages to let the LLM fix the error
         return AgentOutput(
             response=last_chat_response.message,
-            tool_calls=[],
             raw=raw,
             current_agent_name=self.name,
+            retry_messages=[
+                last_chat_response.message,
+                ChatMessage(role="user", content=error_msg),
+            ],
         )
 
     # add to reasoning if not a handoff
@@ -2480,7 +2592,6 @@ async def take_step(
     if reasoning_step.is_done:
         return AgentOutput(
             response=last_chat_response.message,
-            tool_calls=[],
             raw=raw,
             current_agent_name=self.name,
         )
@@ -3169,7 +3280,7 @@ class AgentStream(Event):
     delta: str
     response: str
     current_agent_name: str
-    tool_calls: list[ToolSelection]
+    tool_calls: list[ToolSelection] = Field(default_factory=list)
     raw: Optional[Any] = Field(default=None, exclude=True)
 
 ```
@@ -3192,9 +3303,23 @@ class AgentOutput(Event):
     """LLM output."""
 
     response: ChatMessage
-    tool_calls: list[ToolSelection]
-    raw: Optional[Any] = Field(default=None, exclude=True)
+    structured_response: Optional[Dict[str, Any]] = Field(default=None)
     current_agent_name: str
+    raw: Optional[Any] = Field(default=None, exclude=True)
+    tool_calls: list[ToolSelection] = Field(default_factory=list)
+    retry_messages: list[ChatMessage] = Field(default_factory=list)
+
+    def get_pydantic_model(self, model: Type[BaseModel]) -> Optional[BaseModel]:
+        if self.structured_response is None:
+            return self.structured_response
+        try:
+            return model.model_validate(self.structured_response)
+        except ValidationError as e:
+            warnings.warn(
+                f"Conversion of structured response to Pydantic model failed because:\n\n{e.title}\n\nPlease check the model you provided.",
+                PydanticConversionWarning,
+            )
+            return None
 
     def __str__(self) -> str:
         return self.response.content or ""

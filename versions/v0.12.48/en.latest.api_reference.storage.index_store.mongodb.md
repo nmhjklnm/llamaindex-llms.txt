@@ -1,0 +1,114 @@
+# Mongodb
+##  MongoIndexStore #
+Bases: `KVIndexStore`
+Mongo Index store.
+Parameters:
+Name | Type | Description | Default  
+---|---|---|---  
+`mongo_kvstore` |  `MongoDBKVStore` |  MongoDB key-value store |  _required_  
+`namespace` |  `str` |  namespace for the index store |  `None`  
+`collection_suffix` |  `str` |  suffix for the collection name |  `None`  
+Source code in `llama-index-integrations/storage/index_store/llama-index-storage-index-store-mongodb/llama_index/storage/index_store/mongodb/base.py`
+
+| ```
+class MongoIndexStore(KVIndexStore):
+    """
+    Mongo Index store.
+
+    Args:
+        mongo_kvstore (MongoDBKVStore): MongoDB key-value store
+        namespace (str): namespace for the index store
+        collection_suffix (str): suffix for the collection name
+
+    """
+
+    def __init__(
+        self,
+        mongo_kvstore: MongoDBKVStore,
+        namespace: Optional[str] = None,
+        collection_suffix: Optional[str] = None,
+    ) -> None:
+        """Init a MongoIndexStore."""
+        super().__init__(
+            mongo_kvstore, namespace=namespace, collection_suffix=collection_suffix
+        )
+
+    @classmethod
+    def from_uri(
+        cls,
+        uri: str,
+        db_name: Optional[str] = None,
+        namespace: Optional[str] = None,
+        collection_suffix: Optional[str] = None,
+    ) -> "MongoIndexStore":
+        """Load a MongoIndexStore from a MongoDB URI."""
+        mongo_kvstore = MongoDBKVStore.from_uri(uri, db_name)
+        return cls(mongo_kvstore, namespace, collection_suffix)
+
+    @classmethod
+    def from_host_and_port(
+        cls,
+        host: str,
+        port: int,
+        db_name: Optional[str] = None,
+        namespace: Optional[str] = None,
+        collection_suffix: Optional[str] = None,
+    ) -> "MongoIndexStore":
+        """Load a MongoIndexStore from a MongoDB host and port."""
+        mongo_kvstore = MongoDBKVStore.from_host_and_port(host, port, db_name)
+        return cls(mongo_kvstore, namespace, collection_suffix)
+
+```
+  
+---|---  
+###  from_uri `classmethod` #
+```
+from_uri(uri: str, db_name: Optional[str] = None, namespace: Optional[str] = None, collection_suffix: Optional[str] = None) -> MongoIndexStore
+
+```
+
+Load a MongoIndexStore from a MongoDB URI.
+Source code in `llama-index-integrations/storage/index_store/llama-index-storage-index-store-mongodb/llama_index/storage/index_store/mongodb/base.py`
+
+| ```
+@classmethod
+def from_uri(
+    cls,
+    uri: str,
+    db_name: Optional[str] = None,
+    namespace: Optional[str] = None,
+    collection_suffix: Optional[str] = None,
+) -> "MongoIndexStore":
+    """Load a MongoIndexStore from a MongoDB URI."""
+    mongo_kvstore = MongoDBKVStore.from_uri(uri, db_name)
+    return cls(mongo_kvstore, namespace, collection_suffix)
+
+```
+  
+---|---  
+###  from_host_and_port `classmethod` #
+```
+from_host_and_port(host: str, port: int, db_name: Optional[str] = None, namespace: Optional[str] = None, collection_suffix: Optional[str] = None) -> MongoIndexStore
+
+```
+
+Load a MongoIndexStore from a MongoDB host and port.
+Source code in `llama-index-integrations/storage/index_store/llama-index-storage-index-store-mongodb/llama_index/storage/index_store/mongodb/base.py`
+
+| ```
+@classmethod
+def from_host_and_port(
+    cls,
+    host: str,
+    port: int,
+    db_name: Optional[str] = None,
+    namespace: Optional[str] = None,
+    collection_suffix: Optional[str] = None,
+) -> "MongoIndexStore":
+    """Load a MongoIndexStore from a MongoDB host and port."""
+    mongo_kvstore = MongoDBKVStore.from_host_and_port(host, port, db_name)
+    return cls(mongo_kvstore, namespace, collection_suffix)
+
+```
+  
+---|---

@@ -7,7 +7,7 @@ Splits a document into Nodes, with each node being a sentence. Each node contain
 Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
-`sentence_splitter` |  `Optional[Callable]` |  splits text into sentences |  `<function split_by_sentence_tokenizer.<locals>.<lambda> at 0x7a289f477f60>`  
+`sentence_splitter` |  `Optional[Callable]` |  splits text into sentences |  `<function split_by_sentence_tokenizer.<locals>.<lambda> at 0x7f7029c54ea0>`  
 `include_metadata` |  `bool` |  whether to include metadata in nodes |  _required_  
 `include_prev_next_rel` |  `bool` |  whether to include prev/next relationships |  _required_  
 `window_size` |  `int` |  The number of sentences on each side of a sentence to capture. |  `3`  

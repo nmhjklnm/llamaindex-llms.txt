@@ -11,7 +11,7 @@ Name | Type | Description | Default
 ---|---|---|---  
 `vector_index` |  `Any` |  |  _required_  
 `batch_by_user_message` |  `bool` |  |  `True`  
-`cur_batch_textnode` |  `TextNode` |  The super node for the current active user-message batch. |  `TextNode(id_='4782cde5-6690-41a4-b74d-86e6c2fd23a2', embedding=None, metadata={'sub_dicts': []}, excluded_embed_metadata_keys=['sub_dicts'], excluded_llm_metadata_keys=['sub_dicts'], relationships={}, metadata_template='{key}: {value}', metadata_separator='\n', text='', mimetype='text/plain', start_char_idx=None, end_char_idx=None, metadata_seperator='\n', text_template='{metadata_str}\n\n{content}')`  
+`cur_batch_textnode` |  `TextNode` |  The super node for the current active user-message batch. |  `TextNode(id_='54548bf0-6769-4329-b261-97a2e896e651', embedding=None, metadata={'sub_dicts': []}, excluded_embed_metadata_keys=['sub_dicts'], excluded_llm_metadata_keys=['sub_dicts'], relationships={}, metadata_template='{key}: {value}', metadata_separator='\n', text='', mimetype='text/plain', start_char_idx=None, end_char_idx=None, metadata_seperator='\n', text_template='{metadata_str}\n\n{content}')`  
 Source code in `llama-index-core/llama_index/core/memory/vector_memory.py`
 
 | ```

@@ -7,7 +7,7 @@ Name | Type | Description | Default
 ---|---|---|---  
 `model_name` |  `str` |  The name of the embedding model. |  `'unknown'`  
 `embed_batch_size` |  `int` |  The batch size for embedding calls. |  `10`  
-`callback_manager` |  `CallbackManager` |  |  `<llama_index.core.callbacks.base.CallbackManager object at 0x7a289c403dd0>`  
+`callback_manager` |  `CallbackManager` |  |  `<llama_index.core.callbacks.base.CallbackManager object at 0x7f702a1a0a10>`  
 `num_workers` |  `int | None` |  The number of workers to use for async embedding calls. |  `None`  
 `embeddings_cache` |  `Any | None` |  Cache for the embeddings: if None, the embeddings are not cached |  `None`  
 Source code in `llama-index-core/llama_index/core/base/embeddings/base.py`
