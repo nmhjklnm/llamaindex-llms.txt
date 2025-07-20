@@ -794,6 +794,11 @@ class AzureAISearchVectorStore(BasePydanticVectorStore):
             if self._index_management == IndexManagement.VALIDATE_INDEX:
                 self._validate_index(index_name)
 
+    @classmethod
+    def class_name(cls) -> str:
+        """Class name."""
+        return "AzureAISearchVectorStore"
+
     @property
     def client(self) -> Any:
         """Get client."""
@@ -1439,6 +1444,24 @@ aclient: Any
 ```
 
 Get async client.
+###  class_name `classmethod` #
+```
+class_name() -> str
+
+```
+
+Class name.
+Source code in `llama-index-integrations/vector_stores/llama-index-vector-stores-azureaisearch/llama_index/vector_stores/azureaisearch/base.py`
+
+| ```
+@classmethod
+def class_name(cls) -> str:
+    """Class name."""
+    return "AzureAISearchVectorStore"
+
+```
+  
+---|---  
 ###  add #
 ```
 add(nodes: List[BaseNode], **add_kwargs: Any) -> List[str]

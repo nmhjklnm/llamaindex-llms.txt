@@ -345,6 +345,11 @@ class MilvusVectorStore(BasePydanticVectorStore):
             f"Successfully set properties for collection: {self.collection_name}"
         )
 
+    @classmethod
+    def class_name(cls) -> str:
+        """Class name."""
+        return "MilvusVectorStore"
+
     @property
     def client(self) -> MilvusClient:
         """Get client."""
@@ -1390,6 +1395,24 @@ aclient: AsyncMilvusClient
 ```
 
 Get async client.
+###  class_name `classmethod` #
+```
+class_name() -> str
+
+```
+
+Class name.
+Source code in `llama-index-integrations/vector_stores/llama-index-vector-stores-milvus/llama_index/vector_stores/milvus/base.py`
+
+| ```
+@classmethod
+def class_name(cls) -> str:
+    """Class name."""
+    return "MilvusVectorStore"
+
+```
+  
+---|---  
 ###  add #
 ```
 add(nodes: List[BaseNode], **add_kwargs: Any) -> List[str]

@@ -47,11 +47,10 @@ from llama_index.core import SimpleDirectoryReader, StorageContext
 from llama_index.core import VectorStoreIndex
 from llama_index.vector_stores.postgres import PGVectorStore
 import textwrap
-import openai
 
 ```
 
-# import logging # import sys # Uncomment to see debug logs # logging.basicConfig(stream=sys.stdout, level=logging.DEBUG) # logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout)) from llama_index.core import SimpleDirectoryReader, StorageContext from llama_index.core import VectorStoreIndex from llama_index.vector_stores.postgres import PGVectorStore import textwrap import openai
+# import logging # import sys # Uncomment to see debug logs # logging.basicConfig(stream=sys.stdout, level=logging.DEBUG) # logging.getLogger().addHandler(logging.StreamHandler(stream=sys.stdout)) from llama_index.core import SimpleDirectoryReader, StorageContext from llama_index.core import VectorStoreIndex from llama_index.vector_stores.postgres import PGVectorStore import textwrap
 ### Setup OpenAI¶
 The first step is to configure the openai key. It will be used to created embeddings for the documents loaded into the index
 In [ ]:
@@ -59,12 +58,11 @@ Copied!
 ```
 import os
 
-os.environ["OPENAI_API_KEY"] = "<your key>"
-openai.api_key = os.environ["OPENAI_API_KEY"]
+os.environ["OPENAI_API_KEY"] = "sk-..."
 
 ```
 
-import os os.environ["OPENAI_API_KEY"] = "" openai.api_key = os.environ["OPENAI_API_KEY"]
+import os os.environ["OPENAI_API_KEY"] = "sk-..."
 Download Data
 In [ ]:
 Copied!
@@ -76,16 +74,16 @@ Copied!
 
 !mkdir -p 'data/paul_graham/' !wget 'https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt' -O 'data/paul_graham/paul_graham_essay.txt'
 ```
---2024-07-29 15:29:26--  https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt
-Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 2606:50c0:8000::154, 2606:50c0:8002::154, 2606:50c0:8003::154, ...
-Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|2606:50c0:8000::154|:443... connected.
+--2025-07-18 16:24:08--  https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.109.133, 185.199.110.133, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
 HTTP request sent, awaiting response... 200 OK
 Length: 75042 (73K) [text/plain]
 Saving to: ‘data/paul_graham/paul_graham_essay.txt’
 
 data/paul_graham/pa 100%[===================>]  73.28K  --.-KB/s    in 0.04s   
 
-2024-07-29 15:29:26 (1.75 MB/s) - ‘data/paul_graham/paul_graham_essay.txt’ saved [75042/75042]
+2025-07-18 16:24:09 (1.62 MB/s) - ‘data/paul_graham/paul_graham_essay.txt’ saved [75042/75042]
 
 
 ```
@@ -102,7 +100,7 @@ print("Document ID:", documents[0].doc_id)
 
 documents = SimpleDirectoryReader("./data/paul_graham").load_data() print("Document ID:", documents[0].doc_id)
 ```
-Document ID: e9a28a97-73af-42dd-8b40-9c585e222e69
+Document ID: 370b5f28-a362-429b-ad6d-a931b30e00a0
 
 ```
 
@@ -158,6 +156,14 @@ query_engine = index.as_query_engine()
 ```
 
 from sqlalchemy import make_url url = make_url(connection_string) vector_store = PGVectorStore.from_params( database=db_name, host=url.host, password=url.password, port=url.port, user=url.username, table_name="paul_graham_essay", embed_dim=1536, # openai embedding dimension hnsw_kwargs={ "hnsw_m": 16, "hnsw_ef_construction": 64, "hnsw_ef_search": 40, "hnsw_dist_method": "vector_cosine_ops", }, ) storage_context = StorageContext.from_defaults(vector_store=vector_store) index = VectorStoreIndex.from_documents( documents, storage_context=storage_context, show_progress=True ) query_engine = index.as_query_engine()
+```
+/Users/loganmarkewich/giant_change/llama_index/.venv/lib/python3.12/site-packages/tqdm/auto.py:21: TqdmWarning: IProgress not found. Please update jupyter and ipywidgets. See https://ipywidgets.readthedocs.io/en/stable/user_install.html
+  from .autonotebook import tqdm as notebook_tqdm
+Parsing nodes: 100%|██████████| 1/1 [00:00<00:00,  7.66it/s]
+Generating embeddings: 100%|██████████| 22/22 [00:01<00:00, 18.30it/s]
+
+```
+
 ### Query the index¶
 We can now ask questions using our index.
 In [ ]:
@@ -177,8 +183,8 @@ print(textwrap.fill(str(response), 100))
 
 print(textwrap.fill(str(response), 100))
 ```
-The author worked on writing essays, programming, developing software, giving talks, and starting a
-startup.
+The author worked on writing essays, programming, creating microcomputers, developing software,
+giving talks, and starting a startup.
 
 ```
 
@@ -199,9 +205,9 @@ print(textwrap.fill(str(response), 100))
 
 print(textwrap.fill(str(response), 100))
 ```
-In the mid-1980s, the context mentions the presence of a famous fund manager who was not much older
-than the author and was super rich. This sparked a thought in the author's mind about becoming rich
-as well to have the freedom to work on whatever he wanted.
+AI was in the air in the mid 1980s, and two things that influenced the desire to work on it were a
+novel by Heinlein called The Moon is a Harsh Mistress, which featured an intelligent computer called
+Mike, and a PBS documentary that showed Terry Winograd using SHRDLU.
 
 ```
 
@@ -248,8 +254,8 @@ print(textwrap.fill(str(response), 100))
 
 print(textwrap.fill(str(response), 100))
 ```
-The author worked on writing essays, programming, developing software, giving talks, and starting a
-startup.
+The author worked on writing essays, programming, creating microcomputers, developing software,
+giving talks, and starting a startup.
 
 ```
 
@@ -366,7 +372,7 @@ print(response)
 
 response = query_engine.query( "Who does Paul Graham think of with the word schtick, and why?" ) print(response)
 ```
-Paul Graham associates the word "schtick" with artists who have a distinctive signature style in their work. This signature style serves as a visual identifier unique to the artist, making their work easily recognizable and attributed to them.
+Paul Graham thinks of Roy Lichtenstein when using the word "schtick" because Lichtenstein's distinctive signature style in his paintings immediately identifies his work as his own.
 
 ```
 

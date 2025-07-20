@@ -395,6 +395,9 @@ class AgentWorkflow(Workflow, PromptMixin, metaclass=AgentWorkflowMeta):
                         output.structured_response = cast(
                             Dict[str, Any], self.structured_output_fn(messages)
                         )
+                    ctx.write_event_to_stream(
+                        AgentStreamStructuredOutput(output=output.structured_response)
+                    )
                 except Exception as e:
                     warnings.warn(
                         f"There was a problem with the generation of the structured output: {e}"
@@ -403,6 +406,9 @@ class AgentWorkflow(Workflow, PromptMixin, metaclass=AgentWorkflowMeta):
                 try:
                     output.structured_response = await generate_structured_response(
                         messages=messages, llm=agent.llm, output_cls=self.output_cls
+                    )
+                    ctx.write_event_to_stream(
+                        AgentStreamStructuredOutput(output=output.structured_response)
                     )
                 except Exception as e:
                     warnings.warn(
@@ -498,13 +504,15 @@ class AgentWorkflow(Workflow, PromptMixin, metaclass=AgentWorkflowMeta):
             await ctx.store.set("next_agent", None)
 
         if any(
-            tool_call_result.return_direct for tool_call_result in tool_call_results
+            tool_call_result.return_direct and not tool_call_result.tool_output.is_error
+            for tool_call_result in tool_call_results
         ):
-            # if any tool calls return directly, take the first one
+            # if any tool calls return directly and it's not an error tool call, take the first one
             return_direct_tool = next(
                 tool_call_result
                 for tool_call_result in tool_call_results
                 if tool_call_result.return_direct
+                and not tool_call_result.tool_output.is_error
             )
 
             # always finalize the agent, even if we're just handing off
@@ -549,6 +557,7 @@ class AgentWorkflow(Workflow, PromptMixin, metaclass=AgentWorkflowMeta):
         stepwise: bool = False,
         checkpoint_callback: Optional[CheckpointCallback] = None,
         max_iterations: Optional[int] = None,
+        start_event: Optional[AgentWorkflowStartEvent] = None,
         **kwargs: Any,
     ) -> WorkflowHandler:
         # Detect if hitl is needed
@@ -560,14 +569,15 @@ class AgentWorkflow(Workflow, PromptMixin, metaclass=AgentWorkflowMeta):
                 **kwargs,
             )
         else:
+            start_event = start_event or AgentWorkflowStartEvent(
+                user_msg=user_msg,
+                chat_history=chat_history,
+                memory=memory,
+                max_iterations=max_iterations,
+                **kwargs,
+            )
             return super().run(
-                start_event=AgentWorkflowStartEvent(
-                    user_msg=user_msg,
-                    chat_history=chat_history,
-                    memory=memory,
-                    max_iterations=max_iterations,
-                    **kwargs,
-                ),
+                start_event=start_event,
                 ctx=ctx,
                 stepwise=stepwise,
                 checkpoint_callback=checkpoint_callback,
@@ -581,6 +591,10 @@ class AgentWorkflow(Workflow, PromptMixin, metaclass=AgentWorkflowMeta):
         system_prompt: Optional[str] = None,
         state_prompt: Optional[Union[str, BasePromptTemplate]] = None,
         initial_state: Optional[dict] = None,
+        output_cls: Optional[Type[BaseModel]] = None,
+        structured_output_fn: Optional[
+            Callable[[List[ChatMessage]], Dict[str, Any]]
+        ] = None,
         timeout: Optional[float] = None,
         verbose: bool = False,
     ) -> "AgentWorkflow":
@@ -613,6 +627,8 @@ class AgentWorkflow(Workflow, PromptMixin, metaclass=AgentWorkflowMeta):
                     system_prompt=system_prompt,
                 )
             ],
+            output_cls=output_cls,
+            structured_output_fn=structured_output_fn,
             state_prompt=state_prompt,
             initial_state=initial_state,
             timeout=timeout,
@@ -890,13 +906,15 @@ async def aggregate_tool_results(
         await ctx.store.set("next_agent", None)
 
     if any(
-        tool_call_result.return_direct for tool_call_result in tool_call_results
+        tool_call_result.return_direct and not tool_call_result.tool_output.is_error
+        for tool_call_result in tool_call_results
     ):
-        # if any tool calls return directly, take the first one
+        # if any tool calls return directly and it's not an error tool call, take the first one
         return_direct_tool = next(
             tool_call_result
             for tool_call_result in tool_call_results
             if tool_call_result.return_direct
+            and not tool_call_result.tool_output.is_error
         )
 
         # always finalize the agent, even if we're just handing off
@@ -937,7 +955,7 @@ async def aggregate_tool_results(
 ---|---  
 ###  from_tools_or_functions `classmethod` #
 ```
-from_tools_or_functions(tools_or_functions: List[Union[BaseTool, Callable]], llm: Optional[LLM] = None, system_prompt: Optional[str] = None, state_prompt: Optional[Union[str, BasePromptTemplate]] = None, initial_state: Optional[dict] = None, timeout: Optional[float] = None, verbose: bool = False) -> AgentWorkflow
+from_tools_or_functions(tools_or_functions: List[Union[BaseTool, Callable]], llm: Optional[LLM] = None, system_prompt: Optional[str] = None, state_prompt: Optional[Union[str, BasePromptTemplate]] = None, initial_state: Optional[dict] = None, output_cls: Optional[Type[BaseModel]] = None, structured_output_fn: Optional[Callable[[List[ChatMessage]], Dict[str, Any]]] = None, timeout: Optional[float] = None, verbose: bool = False) -> AgentWorkflow
 
 ```
 
@@ -955,6 +973,10 @@ def from_tools_or_functions(
     system_prompt: Optional[str] = None,
     state_prompt: Optional[Union[str, BasePromptTemplate]] = None,
     initial_state: Optional[dict] = None,
+    output_cls: Optional[Type[BaseModel]] = None,
+    structured_output_fn: Optional[
+        Callable[[List[ChatMessage]], Dict[str, Any]]
+    ] = None,
     timeout: Optional[float] = None,
     verbose: bool = False,
 ) -> "AgentWorkflow":
@@ -987,6 +1009,8 @@ def from_tools_or_functions(
                 system_prompt=system_prompt,
             )
         ],
+        output_cls=output_cls,
+        structured_output_fn=structured_output_fn,
         state_prompt=state_prompt,
         initial_state=initial_state,
         timeout=timeout,
@@ -1387,6 +1411,9 @@ class BaseWorkflowAgent(
                         output.structured_response = cast(
                             Dict[str, Any], self.structured_output_fn(messages)
                         )
+                    ctx.write_event_to_stream(
+                        AgentStreamStructuredOutput(output=output.structured_response)
+                    )
                 except Exception as e:
                     warnings.warn(
                         f"There was a problem with the generation of the structured output: {e}"
@@ -1395,6 +1422,9 @@ class BaseWorkflowAgent(
                 try:
                     output.structured_response = await generate_structured_response(
                         messages=messages, llm=self.llm, output_cls=self.output_cls
+                    )
+                    ctx.write_event_to_stream(
+                        AgentStreamStructuredOutput(output=output.structured_response)
                     )
                 except Exception as e:
                     warnings.warn(
@@ -1482,13 +1512,15 @@ class BaseWorkflowAgent(
         await self.handle_tool_call_results(ctx, tool_call_results, memory)
 
         if any(
-            tool_call_result.return_direct for tool_call_result in tool_call_results
+            tool_call_result.return_direct and not tool_call_result.tool_output.is_error
+            for tool_call_result in tool_call_results
         ):
-            # if any tool calls return directly, take the first one
+            # if any tool calls return directly and it's not an error tool call, take the first one
             return_direct_tool = next(
                 tool_call_result
                 for tool_call_result in tool_call_results
                 if tool_call_result.return_direct
+                and not tool_call_result.tool_output.is_error
             )
 
             # always finalize the agent, even if we're just handing off
@@ -1509,6 +1541,10 @@ class BaseWorkflowAgent(
                 current_agent_name=self.name,
             )
             result = await self.finalize(ctx, result, memory)
+            # we don't want to stop the system if we're just handing off
+            if return_direct_tool.tool_name != "handoff":
+                await ctx.store.set("current_tool_calls", [])
+                return StopEvent(result=result)
 
         user_msg_str = await ctx.store.get("user_msg_str")
         input_messages = await memory.aget(input=user_msg_str)
@@ -1524,6 +1560,7 @@ class BaseWorkflowAgent(
         stepwise: bool = False,
         checkpoint_callback: Optional[CheckpointCallback] = None,
         max_iterations: Optional[int] = None,
+        start_event: Optional[AgentWorkflowStartEvent] = None,
         **kwargs: Any,
     ) -> WorkflowHandler:
         # Detect if hitl is needed
@@ -1535,14 +1572,15 @@ class BaseWorkflowAgent(
                 **kwargs,
             )
         else:
+            start_event = start_event or AgentWorkflowStartEvent(
+                user_msg=user_msg,
+                chat_history=chat_history,
+                memory=memory,
+                max_iterations=max_iterations,
+                **kwargs,
+            )
             return super().run(
-                start_event=AgentWorkflowStartEvent(
-                    user_msg=user_msg,
-                    chat_history=chat_history,
-                    memory=memory,
-                    max_iterations=max_iterations,
-                    **kwargs,
-                ),
+                start_event=start_event,
                 ctx=ctx,
                 stepwise=stepwise,
                 checkpoint_callback=checkpoint_callback,
@@ -1898,13 +1936,15 @@ async def aggregate_tool_results(
     await self.handle_tool_call_results(ctx, tool_call_results, memory)
 
     if any(
-        tool_call_result.return_direct for tool_call_result in tool_call_results
+        tool_call_result.return_direct and not tool_call_result.tool_output.is_error
+        for tool_call_result in tool_call_results
     ):
-        # if any tool calls return directly, take the first one
+        # if any tool calls return directly and it's not an error tool call, take the first one
         return_direct_tool = next(
             tool_call_result
             for tool_call_result in tool_call_results
             if tool_call_result.return_direct
+            and not tool_call_result.tool_output.is_error
         )
 
         # always finalize the agent, even if we're just handing off
@@ -1925,6 +1965,10 @@ async def aggregate_tool_results(
             current_agent_name=self.name,
         )
         result = await self.finalize(ctx, result, memory)
+        # we don't want to stop the system if we're just handing off
+        if return_direct_tool.tool_name != "handoff":
+            await ctx.store.set("current_tool_calls", [])
+            return StopEvent(result=result)
 
     user_msg_str = await ctx.store.get("user_msg_str")
     input_messages = await memory.aget(input=user_msg_str)
@@ -2238,7 +2282,7 @@ Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
 `reasoning_key` |  `str` |  |  `'current_reasoning'`  
-`output_parser` |  `ReActOutputParser` |  The react output parser |  `<llama_index.core.agent.react.output_parser.ReActOutputParser object at 0x7f7029f0e6c0>`  
+`output_parser` |  `ReActOutputParser` |  The react output parser |  `<llama_index.core.agent.react.output_parser.ReActOutputParser object at 0x76e0bb8b7320>`  
 `formatter` |  `ReActChatFormatter` |  The react chat formatter to format the reasoning steps and chat history into an llm input. |  `<dynamic>`  
 Source code in `llama-index-core/llama_index/core/agent/workflow/react_agent.py`
 
@@ -2345,7 +2389,21 @@ class ReActAgent(BaseWorkflowAgent):
         try:
             reasoning_step = output_parser.parse(message_content, is_streaming=False)
         except ValueError as e:
-            error_msg = f"Error: Could not parse output. Please follow the thought-action-input format. Try again. Details: {e!s}"
+            error_msg = (
+                f"Error while parsing the output: {e!s}\n\n"
+                "The output should be in one of the following formats:\n"
+                "1. To call a tool:\n"
+                "```\n"
+                "Thought: <thought>\n"
+                "Action: <action>\n"
+                "Action Input: <action_input>\n"
+                "```\n"
+                "2. To answer the question:\n"
+                "```\n"
+                "Thought: <thought>\n"
+                "Answer: <answer>\n"
+                "```\n"
+            )
 
             raw = (
                 last_chat_response.raw.model_dump()
@@ -2561,7 +2619,21 @@ async def take_step(
     try:
         reasoning_step = output_parser.parse(message_content, is_streaming=False)
     except ValueError as e:
-        error_msg = f"Error: Could not parse output. Please follow the thought-action-input format. Try again. Details: {e!s}"
+        error_msg = (
+            f"Error while parsing the output: {e!s}\n\n"
+            "The output should be in one of the following formats:\n"
+            "1. To call a tool:\n"
+            "```\n"
+            "Thought: <thought>\n"
+            "Action: <action>\n"
+            "Action Input: <action_input>\n"
+            "```\n"
+            "2. To answer the question:\n"
+            "```\n"
+            "Thought: <thought>\n"
+            "Answer: <answer>\n"
+            "```\n"
+        )
 
         raw = (
             last_chat_response.raw.model_dump()

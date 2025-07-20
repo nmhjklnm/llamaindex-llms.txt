@@ -18,7 +18,7 @@ Name | Type | Description | Default
 `audio_token_size_estimate` |  `int` |  The token size estimate for audio. |  `256`  
 `tokenizer_fn` |  `Callable[list, List]` |  The tokenizer function to use for token counting. |  `<dynamic>`  
 `sql_store` |  `SQLAlchemyChatStore` |  The chat store to use for storing messages. |  `SQLAlchemyChatStore(table_name='llama_index_memory', async_database_uri='sqlite+aiosqlite:///:memory:')`  
-`session_id` |  `str` |  The key to use for storing messages in the chat store. |  `'0798a2bc-7558-4ea1-a592-91e1fcd107df'`  
+`session_id` |  `str` |  The key to use for storing messages in the chat store. |  `'a3128616-5b6f-45c2-ac4c-e5d521883ced'`  
 Source code in `llama-index-core/llama_index/core/memory/memory.py`
 
 | ```
@@ -1334,11 +1334,12 @@ class VectorMemoryBlock(BaseMemoryBlock[str]):
     def _get_text_from_messages(self, messages: List[ChatMessage]) -> str:
         """Get the text from the messages."""
         text = ""
-        for message in messages:
+        for i, message in enumerate(messages):
             for block in message.blocks:
                 if isinstance(block, TextBlock):
                     text += block.text
-
+            if len(messages) > 1 and i != len(messages) - 1:
+                text += " "
         return text
 
     async def _aget(
@@ -1370,7 +1371,17 @@ class VectorMemoryBlock(BaseMemoryBlock[str]):
             if "filters" in self.query_kwargs and isinstance(
                 self.query_kwargs["filters"], MetadataFilters
             ):
-                self.query_kwargs["filters"].filters.append(filter)
+                # only add session_id filter if it does not exist in the filters list
+                session_id_filter_exists = False
+                for metadata_filter in self.query_kwargs["filters"].filters:
+                    if (
+                        isinstance(metadata_filter, MetadataFilter)
+                        and metadata_filter.key == "session_id"
+                    ):
+                        session_id_filter_exists = True
+                        break
+                if not session_id_filter_exists:
+                    self.query_kwargs["filters"].filters.append(filter)
             else:
                 self.query_kwargs["filters"] = MetadataFilters(filters=[filter])
 

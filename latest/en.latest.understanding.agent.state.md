@@ -71,9 +71,9 @@ Tools can also be defined that have access to the workflow context. This means y
 To access the Context, the Context parameter should be the first parameter of the tool, as we're doing here, in a tool that simply adds a name to the state:
 ```
 async def set_name(ctx: Context, name: str) -> str:
-    state = await ctx.store.get("state")
-    state["name"] = name
-    await ctx.store.set("state", state)
+    async with ctx.store.edit_state() as ctx_state:
+        ctx_state["state"]["name"] = name
+
     return f"Name set to {name}"
 
 ```

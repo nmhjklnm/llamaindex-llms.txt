@@ -424,7 +424,7 @@ class SQLAlchemyChatStore(AsyncDBChatStore):
             self._metadata,
             Column("id", Integer, primary_key=True, autoincrement=True),
             Column("key", String, nullable=False, index=True),
-            Column("timestamp", Integer, nullable=False, index=True),
+            Column("timestamp", BigInteger, nullable=False, index=True),
             Column("role", String, nullable=False),
             Column(
                 "status",
@@ -506,7 +506,7 @@ class SQLAlchemyChatStore(AsyncDBChatStore):
             await session.execute(
                 insert(table).values(
                     key=key,
-                    timestamp=int(time.time()),
+                    timestamp=time.time_ns(),
                     role=message.role,
                     status=status.value,
                     data=message.model_dump(mode="json"),
@@ -529,12 +529,12 @@ class SQLAlchemyChatStore(AsyncDBChatStore):
                     [
                         {
                             "key": key,
-                            "timestamp": int(time.time()),
+                            "timestamp": time.time_ns() + i,
                             "role": message.role,
                             "status": status.value,
                             "data": message.model_dump(mode="json"),
                         }
-                        for message in messages
+                        for i, message in enumerate(messages)
                     ]
                 )
             )
@@ -553,7 +553,7 @@ class SQLAlchemyChatStore(AsyncDBChatStore):
         await self.delete_messages(key)
 
         # Then add new messages
-        current_time = int(time.time())
+        current_time = time.time_ns()
 
         async with session_factory() as session:
             for i, message in enumerate(messages):
@@ -832,7 +832,7 @@ async def add_message(
         await session.execute(
             insert(table).values(
                 key=key,
-                timestamp=int(time.time()),
+                timestamp=time.time_ns(),
                 role=message.role,
                 status=status.value,
                 data=message.model_dump(mode="json"),
@@ -868,12 +868,12 @@ async def add_messages(
                 [
                     {
                         "key": key,
-                        "timestamp": int(time.time()),
+                        "timestamp": time.time_ns() + i,
                         "role": message.role,
                         "status": status.value,
                         "data": message.model_dump(mode="json"),
                     }
-                    for message in messages
+                    for i, message in enumerate(messages)
                 ]
             )
         )
@@ -905,7 +905,7 @@ async def set_messages(
     await self.delete_messages(key)
 
     # Then add new messages
-    current_time = int(time.time())
+    current_time = time.time_ns()
 
     async with session_factory() as session:
         for i, message in enumerate(messages):

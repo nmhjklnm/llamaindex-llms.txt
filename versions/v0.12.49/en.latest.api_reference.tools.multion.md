@@ -1,0 +1,67 @@
+# Multion
+##  MultionToolSpec #
+Bases: `BaseToolSpec`
+Multion tool spec.
+Source code in `llama-index-integrations/tools/llama-index-tools-multion/llama_index/tools/multion/base.py`
+
+| ```
+class MultionToolSpec(BaseToolSpec):
+    """Multion tool spec."""
+
+    spec_functions = ["browse"]
+
+    def __init__(self, api_key: str) -> None:
+        """Initialize with parameters."""
+        from multion.client import MultiOn
+
+        self.multion = MultiOn(api_key=api_key)
+
+    def browse(self, cmd: str):
+        """
+        Browse the web using Multion
+        Multion gives the ability for LLMs to control web browsers using natural language instructions.
+
+        You may have to repeat the instruction through multiple steps or update your instruction to get to
+        the final desired state. If the status is 'CONTINUE', reissue the same instruction to continue execution
+
+        Args:
+            cmd (str): The detailed and specific natural language instructrion for web browsing
+
+        """
+        return self.multion.browse(cmd=cmd, local=True)
+
+```
+  
+---|---  
+###  browse #
+```
+browse(cmd: str)
+
+```
+
+Browse the web using Multion Multion gives the ability for LLMs to control web browsers using natural language instructions.
+You may have to repeat the instruction through multiple steps or update your instruction to get to the final desired state. If the status is 'CONTINUE', reissue the same instruction to continue execution
+Parameters:
+Name | Type | Description | Default  
+---|---|---|---  
+`cmd` |  `str` |  The detailed and specific natural language instructrion for web browsing |  _required_  
+Source code in `llama-index-integrations/tools/llama-index-tools-multion/llama_index/tools/multion/base.py`
+
+| ```
+def browse(self, cmd: str):
+    """
+    Browse the web using Multion
+    Multion gives the ability for LLMs to control web browsers using natural language instructions.
+
+    You may have to repeat the instruction through multiple steps or update your instruction to get to
+    the final desired state. If the status is 'CONTINUE', reissue the same instruction to continue execution
+
+    Args:
+        cmd (str): The detailed and specific natural language instructrion for web browsing
+
+    """
+    return self.multion.browse(cmd=cmd, local=True)
+
+```
+  
+---|---

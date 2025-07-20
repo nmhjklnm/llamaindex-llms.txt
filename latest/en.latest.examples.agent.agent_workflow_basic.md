@@ -240,9 +240,8 @@ from llama_index.core.workflow import Context
 
 
 async def set_name(ctx: Context, name: str) -> str:
-    state = await ctx.store.get("state")
-    state["name"] = name
-    await ctx.store.set("state", state)
+    async with ctx.store.edit_state() as ctx_state:
+        ctx_state["state"]["name"] = name
     return f"Name set to {name}"
 
 
@@ -263,7 +262,7 @@ print(state["name"])
 
 ```
 
-from llama_index.core.workflow import Context async def set_name(ctx: Context, name: str) -> str: state = await ctx.store.get("state") state["name"] = name await ctx.store.set("state", state) return f"Name set to {name}" agent = FunctionAgent( tools=[set_name], llm=llm, system_prompt="You are a helpful assistant that can set a name.", initial_state={"name": "unset"}, ) ctx = Context(agent) response = await agent.run(user_msg="My name is Logan", ctx=ctx) print(str(response)) state = await ctx.store.get("state") print(state["name"])
+from llama_index.core.workflow import Context async def set_name(ctx: Context, name: str) -> str: async with ctx.store.edit_state() as ctx_state: ctx_state["state"]["name"] = name return f"Name set to {name}" agent = FunctionAgent( tools=[set_name], llm=llm, system_prompt="You are a helpful assistant that can set a name.", initial_state={"name": "unset"}, ) ctx = Context(agent) response = await agent.run(user_msg="My name is Logan", ctx=ctx) print(str(response)) state = await ctx.store.get("state") print(state["name"])
 ```
 Your name has been set to Logan.
 Logan

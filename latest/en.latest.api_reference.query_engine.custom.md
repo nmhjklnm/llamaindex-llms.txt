@@ -7,7 +7,7 @@ They can optionally implement the `acustom_query` method for async support.
 Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
-`callback_manager` |  `CallbackManager` |  |  `<llama_index.core.callbacks.base.CallbackManager object at 0x7f702dc83800>`  
+`callback_manager` |  `CallbackManager` |  |  `<llama_index.core.callbacks.base.CallbackManager object at 0x76e0bf76ee70>`  
 Source code in `llama-index-core/llama_index/core/query_engine/custom.py`
 
 | ```

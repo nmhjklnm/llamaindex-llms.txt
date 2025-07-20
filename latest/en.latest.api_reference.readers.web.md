@@ -516,7 +516,9 @@ class BeautifulSoupWebReader(BasePydanticReader):
             else:
                 data = soup.getText()
 
-            documents.append(Document(text=data, id_=url, extra_info=extra_info))
+            documents.append(
+                Document(text=data, id_=str(uuid.uuid4()), extra_info=extra_info)
+            )
 
         return documents
 
@@ -607,7 +609,9 @@ def load_data(
         else:
             data = soup.getText()
 
-        documents.append(Document(text=data, id_=url, extra_info=extra_info))
+        documents.append(
+            Document(text=data, id_=str(uuid.uuid4()), extra_info=extra_info)
+        )
 
     return documents
 
@@ -3367,11 +3371,15 @@ class SimpleWebPageReader(BasePydanticReader):
 
                 response = html2text.html2text(response)
 
-            metadata: Optional[Dict] = None
+            metadata: Dict = {"url": url}
             if self._metadata_fn is not None:
                 metadata = self._metadata_fn(url)
+                if "url" not in metadata:
+                    metadata["url"] = url
 
-            documents.append(Document(text=response, id_=url, metadata=metadata or {}))
+            documents.append(
+                Document(text=response, id_=str(uuid.uuid4()), metadata=metadata)
+            )
 
         return documents
 
@@ -3417,11 +3425,15 @@ def load_data(self, urls: List[str]) -> List[Document]:
 
             response = html2text.html2text(response)
 
-        metadata: Optional[Dict] = None
+        metadata: Dict = {"url": url}
         if self._metadata_fn is not None:
             metadata = self._metadata_fn(url)
+            if "url" not in metadata:
+                metadata["url"] = url
 
-        documents.append(Document(text=response, id_=url, metadata=metadata or {}))
+        documents.append(
+            Document(text=response, id_=str(uuid.uuid4()), metadata=metadata)
+        )
 
     return documents
 
@@ -3568,7 +3580,9 @@ class TrafilaturaWebReader(BasePydanticReader):
                 include_links=include_links,
                 **kwargs,
             )
-            documents.append(Document(text=response, id_=url))
+            documents.append(
+                Document(text=response, id_=str(uuid.uuid4()), metadata={"url": url})
+            )
 
         return documents
 
@@ -3676,7 +3690,9 @@ def load_data(
             include_links=include_links,
             **kwargs,
         )
-        documents.append(Document(text=response, id_=url))
+        documents.append(
+            Document(text=response, id_=str(uuid.uuid4()), metadata={"url": url})
+        )
 
     return documents
 
@@ -3923,6 +3939,9 @@ class WholeSiteReader(BaseReader):
 
                 doc = Document(text=page_content, extra_info={"URL": current_url})
                 if self.uri_as_id:
+                    warnings.warn(
+                        "Setting the URI as the id of the document might break the code execution downstream and should be avoided."
+                    )
                     doc.id_ = current_url
                 documents.append(doc)
                 time.sleep(1)
@@ -4038,6 +4057,9 @@ def load_data(self, base_url: str) -> List[Document]:
 
             doc = Document(text=page_content, extra_info={"URL": current_url})
             if self.uri_as_id:
+                warnings.warn(
+                    "Setting the URI as the id of the document might break the code execution downstream and should be avoided."
+                )
                 doc.id_ = current_url
             documents.append(doc)
             time.sleep(1)

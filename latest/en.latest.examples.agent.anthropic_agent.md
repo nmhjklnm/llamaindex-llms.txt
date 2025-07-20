@@ -49,7 +49,7 @@ llm = Anthropic(model="claude-3-opus-20240229", api_key="sk-...")
 
 from llama_index.llms.anthropic import Anthropic llm = Anthropic(model="claude-3-opus-20240229", api_key="sk-...")
 ## Initialize Anthropic Agent¶
-Here we initialize a simple Mistral agent with calculator functions.
+Here we initialize a simple Anthropic agent with calculator functions.
 In [ ]:
 Copied!
 ```

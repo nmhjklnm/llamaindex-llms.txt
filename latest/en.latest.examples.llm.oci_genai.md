@@ -264,6 +264,7 @@ print(resp)
 from llama_index.llms.oci_genai import OCIGenAI from llama_index.core.llms import ChatMessage llm = OCIGenAI( model="ocid1.generativeaiendpoint.oc1.us-chicago-1....", service_endpoint="https://inference.generativeai.us-chicago-1.oci.oraclecloud.com", compartment_id="DEDICATED_COMPARTMENT_OCID", auth_profile="MY_PROFILE", # replace with your profile name, auth_file_location="MY_CONFIG_FILE_LOCATION", # replace with file location where profile name configs present provider="MODEL_PROVIDER", # e.g., "cohere" or "meta" context_size="MODEL_CONTEXT_SIZE", # e.g., 128000 ) messages = [ ChatMessage( role="system", content="You are a pirate with a colorful personality" ), ChatMessage(role="user", content="Tell me a story"), ] resp = llm.chat(messages) print(resp)
 ## Basic tool calling in llamaindex¶
 Only Cohere supports tool calling for now
+Use chat_with_tools for tool calling.
 In [ ]:
 Copied!
 ```
@@ -293,6 +294,7 @@ multiply_tool = FunctionTool.from_defaults(fn=multiply)
 response = llm.chat_with_tools(
     tools=[add_tool, multiply_tool],
     user_msg="What is 3 * 12? Also, what is 11 + 49?",
+    allow_parallel_tool_calls=True,
 )
 
 print(response)
@@ -301,4 +303,47 @@ print(tool_calls)
 
 ```
 
-from llama_index.llms.oci_genai import OCIGenAI from llama_index.core.tools import FunctionTool llm = OCIGenAI( model="MY_MODEL", service_endpoint="https://inference.generativeai.us-chicago-1.oci.oraclecloud.com", compartment_id="MY_OCID", ) def multiply(a: int, b: int) -> int: """Multiple two integers and returns the result integer""" return a * b def add(a: int, b: int) -> int: """Addition function on two integers.""" return a + b add_tool = FunctionTool.from_defaults(fn=add) multiply_tool = FunctionTool.from_defaults(fn=multiply) response = llm.chat_with_tools( tools=[add_tool, multiply_tool], user_msg="What is 3 * 12? Also, what is 11 + 49?", ) print(response) tool_calls = response.message.additional_kwargs.get("tool_calls", []) print(tool_calls)
+from llama_index.llms.oci_genai import OCIGenAI from llama_index.core.tools import FunctionTool llm = OCIGenAI( model="MY_MODEL", service_endpoint="https://inference.generativeai.us-chicago-1.oci.oraclecloud.com", compartment_id="MY_OCID", ) def multiply(a: int, b: int) -> int: """Multiple two integers and returns the result integer""" return a * b def add(a: int, b: int) -> int: """Addition function on two integers.""" return a + b add_tool = FunctionTool.from_defaults(fn=add) multiply_tool = FunctionTool.from_defaults(fn=multiply) response = llm.chat_with_tools( tools=[add_tool, multiply_tool], user_msg="What is 3 * 12? Also, what is 11 + 49?", allow_parallel_tool_calls=True, ) print(response) tool_calls = response.message.additional_kwargs.get("tool_calls", []) print(tool_calls)
+Use chat for tool calling
+In [ ]:
+Copied!
+```
+from llama_index.llms.oci_genai import OCIGenAI
+from llama_index.core.llms import ChatMessage, MessageRole
+
+llm = OCIGenAI(
+    model="MY_MODEL",
+    service_endpoint="https://inference.generativeai.us-chicago-1.oci.oraclecloud.com",
+    compartment_id="MY_OCID",
+)
+
+
+def multiply(a: int, b: int) -> int:
+    """Multiple two integers and returns the result integer"""
+    return a * b
+
+
+def add(a: int, b: int) -> int:
+    """Addition function on two integers."""
+    return a + b
+
+
+add_tool = FunctionTool.from_defaults(fn=add)
+multiply_tool = FunctionTool.from_defaults(fn=multiply)
+
+user_msg = ChatMessage(
+    role=MessageRole.USER, content="What is 3 * 12? Also, what is 11 + 49?"
+)
+
+response = llm.chat(
+    messages=[user_msg],
+    tools=[multiply_tool, add_tool],
+)
+
+print(response)
+tool_calls = response.message.additional_kwargs.get("tool_calls", [])
+print(tool_calls)
+
+```
+
+from llama_index.llms.oci_genai import OCIGenAI from llama_index.core.llms import ChatMessage, MessageRole llm = OCIGenAI( model="MY_MODEL", service_endpoint="https://inference.generativeai.us-chicago-1.oci.oraclecloud.com", compartment_id="MY_OCID", ) def multiply(a: int, b: int) -> int: """Multiple two integers and returns the result integer""" return a * b def add(a: int, b: int) -> int: """Addition function on two integers.""" return a + b add_tool = FunctionTool.from_defaults(fn=add) multiply_tool = FunctionTool.from_defaults(fn=multiply) user_msg = ChatMessage( role=MessageRole.USER, content="What is 3 * 12? Also, what is 11 + 49?" ) response = llm.chat( messages=[user_msg], tools=[multiply_tool, add_tool], ) print(response) tool_calls = response.message.additional_kwargs.get("tool_calls", []) print(tool_calls)

@@ -297,6 +297,7 @@ class MyRandomObject:
 # This is our state model
 # NOTE: all fields must have defaults
 class MyState(BaseModel):
+    model_config = {"arbitrary_types_allowed": True}
     my_obj: MyRandomObject = Field(default_factory=MyRandomObject)
     some_key: str = Field(default="some_value")
 
@@ -334,14 +335,12 @@ from llama_index.core.workflow import (
 class MyWorkflow(Workflow):
     @step
     async def start(self, ctx: Context[MyState], ev: StartEvent) -> StopEvent:
-        # Returns MyState directly
-        state = await ctx.store.get_state()
-        state.my_obj.name = "new_name"
-        await ctx.store.set_state(state)
+        # Allows for atomic state updates
+        async with ctx.store.edit_state() as ctx_state:
+            ctx_state["state"]["my_obj"]["name"] = "new_name"
 
         # Can also access fields directly if needed
         name = await ctx.store.get("my_obj.name")
-        await ctx.store.set("my_obj.name", "newer_name")
 
         return StopEvent(result="Done!")
 
