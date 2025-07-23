@@ -270,12 +270,17 @@ class AgentWorkflow(Workflow, PromptMixin, metaclass=AgentWorkflowMeta):
                 ]
             )
             await ctx.store.set("user_msg_str", content_str)
-        elif chat_history:
+        elif chat_history and not all(
+            message.role == "system" for message in chat_history
+        ):
             # If no user message, use the last message from chat history as user_msg_str
+            user_hist: List[ChatMessage] = [
+                msg for msg in chat_history if msg.role == "user"
+            ]
             content_str = "\n".join(
                 [
                     block.text
-                    for block in chat_history[-1].blocks
+                    for block in user_hist[-1].blocks
                     if isinstance(block, TextBlock)
                 ]
             )
@@ -712,12 +717,17 @@ async def init_run(self, ctx: Context, ev: AgentWorkflowStartEvent) -> AgentInpu
             ]
         )
         await ctx.store.set("user_msg_str", content_str)
-    elif chat_history:
+    elif chat_history and not all(
+        message.role == "system" for message in chat_history
+    ):
         # If no user message, use the last message from chat history as user_msg_str
+        user_hist: List[ChatMessage] = [
+            msg for msg in chat_history if msg.role == "user"
+        ]
         content_str = "\n".join(
             [
                 block.text
-                for block in chat_history[-1].blocks
+                for block in user_hist[-1].blocks
                 if isinstance(block, TextBlock)
             ]
         )
@@ -1295,12 +1305,17 @@ class BaseWorkflowAgent(
                 ]
             )
             await ctx.store.set("user_msg_str", content_str)
-        elif chat_history:
+        elif chat_history and not all(
+            message.role == "system" for message in chat_history
+        ):
             # If no user message, use the last message from chat history as user_msg_str
+            user_hist: List[ChatMessage] = [
+                msg for msg in chat_history if msg.role == "user"
+            ]
             content_str = "\n".join(
                 [
                     block.text
-                    for block in chat_history[-1].blocks
+                    for block in user_hist[-1].blocks
                     if isinstance(block, TextBlock)
                 ]
             )
@@ -1577,6 +1592,7 @@ class BaseWorkflowAgent(
                 chat_history=chat_history,
                 memory=memory,
                 max_iterations=max_iterations,
+                system_prompt=self.system_prompt,
                 **kwargs,
             )
             return super().run(
@@ -1756,12 +1772,17 @@ async def init_run(self, ctx: Context, ev: AgentWorkflowStartEvent) -> AgentInpu
             ]
         )
         await ctx.store.set("user_msg_str", content_str)
-    elif chat_history:
+    elif chat_history and not all(
+        message.role == "system" for message in chat_history
+    ):
         # If no user message, use the last message from chat history as user_msg_str
+        user_hist: List[ChatMessage] = [
+            msg for msg in chat_history if msg.role == "user"
+        ]
         content_str = "\n".join(
             [
                 block.text
-                for block in chat_history[-1].blocks
+                for block in user_hist[-1].blocks
                 if isinstance(block, TextBlock)
             ]
         )
@@ -2282,7 +2303,7 @@ Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
 `reasoning_key` |  `str` |  |  `'current_reasoning'`  
-`output_parser` |  `ReActOutputParser` |  The react output parser |  `<llama_index.core.agent.react.output_parser.ReActOutputParser object at 0x76e0bb8b7320>`  
+`output_parser` |  `ReActOutputParser` |  The react output parser |  `<llama_index.core.agent.react.output_parser.ReActOutputParser object at 0x78f8f6d234a0>`  
 `formatter` |  `ReActChatFormatter` |  The react chat formatter to format the reasoning steps and chat history into an llm input. |  `<dynamic>`  
 Source code in `llama-index-core/llama_index/core/agent/workflow/react_agent.py`
 

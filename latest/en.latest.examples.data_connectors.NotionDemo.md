@@ -83,19 +83,19 @@ You can also pass the id of a database to index all the pages in that database:
 In [ ]:
 Copied!
 ```
-database_id = "<database-id>"
+database_ids = ["<database-id>"]
 
 # https://developers.notion.com/docs/working-with-databases for how to find your database id
 
 documents = NotionPageReader(integration_token=integration_token).load_data(
-    database_id=database_id
+    database_ids=database_ids
 )
 
 print(documents)
 
 ```
 
-database_id = "" # https://developers.notion.com/docs/working-with-databases for how to find your database id documents = NotionPageReader(integration_token=integration_token).load_data( database_id=database_id ) print(documents)
+database_ids = [""] # https://developers.notion.com/docs/working-with-databases for how to find your database id documents = NotionPageReader(integration_token=integration_token).load_data( database_ids=database_ids ) print(documents)
 In [ ]:
 Copied!
 ```

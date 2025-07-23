@@ -5,7 +5,7 @@ Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
 `tool_dict` |  `Dict[str, AsyncBaseTool]` |  Dictionary of tool names to tools. |  _required_  
-`callback_manager` |  `CallbackManager` |  |  `<llama_index.core.callbacks.base.CallbackManager object at 0x76e0bc2bc860>`  
+`callback_manager` |  `CallbackManager` |  |  `<llama_index.core.callbacks.base.CallbackManager object at 0x78f8f700c950>`  
 Source code in `llama-index-core/llama_index/core/query_pipeline/components/tool_runner.py`
 
 | ```

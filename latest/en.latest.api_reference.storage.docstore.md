@@ -144,7 +144,11 @@ class BaseDocumentStore(ABC):
             raise_error (bool): raise error if node_id not found
 
         """
-        return [self.get_node(node_id, raise_error=raise_error) for node_id in node_ids]
+        # if/else needed for type checking
+        if raise_error:
+            return [node for node_id in node_ids if (node := self.get_node(node_id, raise_error=True))]
+        else:
+            return [self.get_node(node_id) for node_id in node_ids]
 
     async def aget_nodes(
         self, node_ids: List[str], raise_error: bool = True
@@ -157,12 +161,26 @@ class BaseDocumentStore(ABC):
             raise_error (bool): raise error if node_id not found
 
         """
-        return [
-            await self.aget_node(node_id, raise_error=raise_error)
-            for node_id in node_ids
-        ]
+        # if/else needed for type checking
+        if raise_error:
+            return [
+                node
+                for node_id in node_ids
+                if (node := await self.aget_node(node_id, raise_error=True))
+            ]
+        else:
+            return [
+                await self.aget_node(node_id)
+                for node_id in node_ids
+            ]
 
-    def get_node(self, node_id: str, raise_error: bool = True) -> BaseNode:
+    @overload
+    def get_node(self, node_id: str, raise_error: Literal[True] = True) -> BaseNode: ...
+
+    @overload
+    def get_node(self, node_id: str, raise_error: Literal[False] = False) -> Optional[BaseNode]: ...
+
+    def get_node(self, node_id: str, raise_error: bool = True) -> Optional[BaseNode]:
         """
         Get node from docstore.
 
@@ -172,11 +190,27 @@ class BaseDocumentStore(ABC):
 
         """
         doc = self.get_document(node_id, raise_error=raise_error)
+
+        if doc is None:
+            # The doc store should have raised an error if the node_id is not found, but it didn't
+            # so we raise an error here
+            if raise_error:
+                raise ValueError(f"Node {node_id} not found")
+            return None
+
+        # The document should always be a BaseNode, but we check to be safe
         if not isinstance(doc, BaseNode):
             raise ValueError(f"Document {node_id} is not a Node.")
+
         return doc
 
-    async def aget_node(self, node_id: str, raise_error: bool = True) -> BaseNode:
+    @overload
+    async def aget_node(self, node_id: str, raise_error: Literal[True] = True) -> BaseNode: ...
+
+    @overload
+    async def aget_node(self, node_id: str, raise_error: Literal[False] = False) -> Optional[BaseNode]: ...
+
+    async def aget_node(self, node_id: str, raise_error: bool = True) -> Optional[BaseNode]:
         """
         Get node from docstore.
 
@@ -186,8 +220,18 @@ class BaseDocumentStore(ABC):
 
         """
         doc = await self.aget_document(node_id, raise_error=raise_error)
+
+        if doc is None:
+            # The doc store should have raised an error if the node_id is not found, but it didn't
+            # so we raise an error here
+            if raise_error:
+                raise ValueError(f"Node {node_id} not found")
+            return None
+
+        # The document should always be a BaseNode, but we check to be safe
         if not isinstance(doc, BaseNode):
             raise ValueError(f"Document {node_id} is not a Node.")
+
         return doc
 
     def get_node_dict(self, node_id_dict: Dict[int, str]) -> Dict[int, BaseNode]:
@@ -402,7 +446,11 @@ def get_nodes(
         raise_error (bool): raise error if node_id not found
 
     """
-    return [self.get_node(node_id, raise_error=raise_error) for node_id in node_ids]
+    # if/else needed for type checking
+    if raise_error:
+        return [node for node_id in node_ids if (node := self.get_node(node_id, raise_error=True))]
+    else:
+        return [self.get_node(node_id) for node_id in node_ids]
 
 ```
   
@@ -433,17 +481,35 @@ async def aget_nodes(
         raise_error (bool): raise error if node_id not found
 
     """
-    return [
-        await self.aget_node(node_id, raise_error=raise_error)
-        for node_id in node_ids
-    ]
+    # if/else needed for type checking
+    if raise_error:
+        return [
+            node
+            for node_id in node_ids
+            if (node := await self.aget_node(node_id, raise_error=True))
+        ]
+    else:
+        return [
+            await self.aget_node(node_id)
+            for node_id in node_ids
+        ]
 
 ```
   
 ---|---  
 ###  get_node #
 ```
-get_node(node_id: str, raise_error: bool = True) -> BaseNode
+get_node(node_id: str, raise_error: Literal[True] = True) -> BaseNode
+
+```
+
+```
+get_node(node_id: str, raise_error: Literal[False] = False) -> Optional[BaseNode]
+
+```
+
+```
+get_node(node_id: str, raise_error: bool = True) -> Optional[BaseNode]
 
 ```
 
@@ -456,7 +522,7 @@ Name | Type | Description | Default
 Source code in `llama-index-core/llama_index/core/storage/docstore/types.py`
 
 | ```
-def get_node(self, node_id: str, raise_error: bool = True) -> BaseNode:
+def get_node(self, node_id: str, raise_error: bool = True) -> Optional[BaseNode]:
     """
     Get node from docstore.
 
@@ -466,8 +532,18 @@ def get_node(self, node_id: str, raise_error: bool = True) -> BaseNode:
 
     """
     doc = self.get_document(node_id, raise_error=raise_error)
+
+    if doc is None:
+        # The doc store should have raised an error if the node_id is not found, but it didn't
+        # so we raise an error here
+        if raise_error:
+            raise ValueError(f"Node {node_id} not found")
+        return None
+
+    # The document should always be a BaseNode, but we check to be safe
     if not isinstance(doc, BaseNode):
         raise ValueError(f"Document {node_id} is not a Node.")
+
     return doc
 
 ```
@@ -475,7 +551,17 @@ def get_node(self, node_id: str, raise_error: bool = True) -> BaseNode:
 ---|---  
 ###  aget_node `async` #
 ```
-aget_node(node_id: str, raise_error: bool = True) -> BaseNode
+aget_node(node_id: str, raise_error: Literal[True] = True) -> BaseNode
+
+```
+
+```
+aget_node(node_id: str, raise_error: Literal[False] = False) -> Optional[BaseNode]
+
+```
+
+```
+aget_node(node_id: str, raise_error: bool = True) -> Optional[BaseNode]
 
 ```
 
@@ -488,7 +574,7 @@ Name | Type | Description | Default
 Source code in `llama-index-core/llama_index/core/storage/docstore/types.py`
 
 | ```
-async def aget_node(self, node_id: str, raise_error: bool = True) -> BaseNode:
+async def aget_node(self, node_id: str, raise_error: bool = True) -> Optional[BaseNode]:
     """
     Get node from docstore.
 
@@ -498,8 +584,18 @@ async def aget_node(self, node_id: str, raise_error: bool = True) -> BaseNode:
 
     """
     doc = await self.aget_document(node_id, raise_error=raise_error)
+
+    if doc is None:
+        # The doc store should have raised an error if the node_id is not found, but it didn't
+        # so we raise an error here
+        if raise_error:
+            raise ValueError(f"Node {node_id} not found")
+        return None
+
+    # The document should always be a BaseNode, but we check to be safe
     if not isinstance(doc, BaseNode):
         raise ValueError(f"Document {node_id} is not a Node.")
+
     return doc
 
 ```

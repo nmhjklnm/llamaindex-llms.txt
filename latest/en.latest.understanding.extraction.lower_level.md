@@ -89,3 +89,5 @@ For a deeper look at structured data extraction with LlamaIndex, check out the f
   * Output Parsing
 
 
+## Bonus Track#
+If you're curious of learning how to boost your LLM's performance using structured inputs, check out this guide!

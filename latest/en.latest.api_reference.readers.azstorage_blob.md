@@ -148,8 +148,16 @@ class AzStorageBlobReader(
 
         def get_metadata(file_name: str) -> Dict[str, Any]:
             sanitized_file_name = os.path.basename(file_name)
-            metadata = files_metadata.get(sanitized_file_name, {})
-            return dict(**metadata)
+            metadata_sanitized = files_metadata.get(sanitized_file_name, {})
+            try:
+                json_str = json.dumps(metadata_sanitized, cls=SanitizedJSONEncoder)
+                clean_metadata = json.loads(json_str)
+            except (TypeError, ValueError) as e:
+                logger.error(
+                    f"Failed to serialize/deserialize metadata for '{sanitized_file_name}': {e}"
+                )
+                clean_metadata = {}
+            return dict(**clean_metadata)
 
         loader = SimpleDirectoryReader(
             input_dir=temp_dir,
