@@ -409,8 +409,14 @@ class AgentWorkflow(Workflow, PromptMixin, metaclass=AgentWorkflowMeta):
                     )
             if self.output_cls is not None:
                 try:
+                    llm_input = [*messages]
+                    if agent.system_prompt:
+                        llm_input = [
+                            ChatMessage(role="system", content=agent.system_prompt),
+                            *llm_input,
+                        ]
                     output.structured_response = await generate_structured_response(
-                        messages=messages, llm=agent.llm, output_cls=self.output_cls
+                        messages=llm_input, llm=agent.llm, output_cls=self.output_cls
                     )
                     ctx.write_event_to_stream(
                         AgentStreamStructuredOutput(output=output.structured_response)
@@ -1435,8 +1441,14 @@ class BaseWorkflowAgent(
                     )
             if self.output_cls is not None:
                 try:
+                    llm_input = [*messages]
+                    if self.system_prompt:
+                        llm_input = [
+                            ChatMessage(role="system", content=self.system_prompt),
+                            *llm_input,
+                        ]
                     output.structured_response = await generate_structured_response(
-                        messages=messages, llm=self.llm, output_cls=self.output_cls
+                        messages=llm_input, llm=self.llm, output_cls=self.output_cls
                     )
                     ctx.write_event_to_stream(
                         AgentStreamStructuredOutput(output=output.structured_response)
@@ -1592,7 +1604,6 @@ class BaseWorkflowAgent(
                 chat_history=chat_history,
                 memory=memory,
                 max_iterations=max_iterations,
-                system_prompt=self.system_prompt,
                 **kwargs,
             )
             return super().run(
@@ -2303,7 +2314,7 @@ Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
 `reasoning_key` |  `str` |  |  `'current_reasoning'`  
-`output_parser` |  `ReActOutputParser` |  The react output parser |  `<llama_index.core.agent.react.output_parser.ReActOutputParser object at 0x78f8f6d234a0>`  
+`output_parser` |  `ReActOutputParser` |  The react output parser |  `<llama_index.core.agent.react.output_parser.ReActOutputParser object at 0x7132f9ee5880>`  
 `formatter` |  `ReActChatFormatter` |  The react chat formatter to format the reasoning steps and chat history into an llm input. |  `<dynamic>`  
 Source code in `llama-index-core/llama_index/core/agent/workflow/react_agent.py`
 

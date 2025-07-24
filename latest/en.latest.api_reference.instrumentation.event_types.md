@@ -4,8 +4,8 @@ Bases: `BaseModel`
 Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
-`timestamp` |  `datetime` |  |  `datetime.datetime(2025, 7, 22, 22, 20, 9, 19125)`  
-`id_` |  `str` |  |  `'30af1274-064e-4e71-bbb7-ff839133f4e4'`  
+`timestamp` |  `datetime` |  |  `datetime.datetime(2025, 7, 23, 18, 13, 0, 912806)`  
+`id_` |  `str` |  |  `'8dc9ddaf-4f95-42e7-850a-a6c37a3d3c43'`  
 `tags` |  `Dict[str, Any]` |  |  `{}`  
 Source code in `llama_index_instrumentation/base/event.py`
 
