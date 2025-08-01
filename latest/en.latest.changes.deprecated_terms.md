@@ -60,3 +60,22 @@ This includes the following deprecated classes:
   * `QueryUnderstandAgentWorker`
 
 
+## QueryPipeline (and related classes)#
+QueryPipeline has been deprecated in favour of Workflows.
+This includes the following deprecated classes:
+  * `AgentFnComponent`
+  * `AgentInputComponent`
+  * `BaseAgentComponent`
+  * `CustomAgentComponent`
+  * `ArgPackComponent`
+  * `FnComponent`
+  * `FunctionComponent`
+  * `InputComponent`
+  * `RouterComponent`
+  * `SelectorComponent`
+  * `ToolRunnerComponent`
+  * `StatefulFnComponent`
+  * `LoopComponent`
+  * etc.
+
+

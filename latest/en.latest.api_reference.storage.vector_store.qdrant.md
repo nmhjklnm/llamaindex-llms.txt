@@ -484,6 +484,7 @@ class QdrantVectorStore(BasePydanticVectorStore):
                 collection_name=self.collection_name,
                 vector_size=len(nodes[0].get_embedding()),
             )
+            collection_initialized = True
         if collection_initialized and self._legacy_vector_format is None:
             # If collection exists but we haven't detected the vector format yet
             await self._adetect_vector_format(self.collection_name)
@@ -1594,6 +1595,7 @@ async def async_add(self, nodes: List[BaseNode], **kwargs: Any) -> List[str]:
             collection_name=self.collection_name,
             vector_size=len(nodes[0].get_embedding()),
         )
+        collection_initialized = True
     if collection_initialized and self._legacy_vector_format is None:
         # If collection exists but we haven't detected the vector format yet
         await self._adetect_vector_format(self.collection_name)

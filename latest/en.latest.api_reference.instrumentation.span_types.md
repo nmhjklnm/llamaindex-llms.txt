@@ -5,7 +5,7 @@ Base data class representing a span.
 Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
-`id_` |  `str` |  Id of span. |  `'73d16172-4a9e-43d6-b9c4-88a7297e6cdf'`  
+`id_` |  `str` |  Id of span. |  `'e6243d14-7215-4304-a02b-20e75036f229'`  
 `parent_id` |  `str | None` |  Id of parent span. |  `None`  
 `tags` |  `Dict[str, Any]` |  |  `{}`  
 Source code in `llama_index_instrumentation/span/base.py`

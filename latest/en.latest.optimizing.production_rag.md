@@ -50,7 +50,6 @@ Resources: **2. Store Document Hierarchies (summaries - > raw chunks) + Recursiv
 **Resources**
   * Chroma Auto-Retrieval
   * Document Summary Index
-  * Recursive Retriever
   * Auto-Retriever vs. Recursive Retriever
 
 
@@ -70,7 +69,6 @@ You can use these modules to do joint question-answering and summarization, or e
 **Detailed Guide Resources**
   * Sub-Question Query Engine
   * Joint QA-Summary
-  * Recursive Retriever Agents
   * Router Query Engine
   * OpenAI Agent Cookbook
 

@@ -388,18 +388,16 @@ def add(a: int, b: int) -> int:
 add_tool = FunctionTool.from_defaults(fn=add)
 
 llm = NVIDIA("meta/llama-3.1-70b-instruct")
-from llama_index.core.agent import FunctionCallingAgentWorker
+from llama_index.core.agent import FunctionAgent
 
-agent_worker = FunctionCallingAgentWorker.from_tools(
-    [multiply_tool, add_tool],
+agent_worker = FunctionAgent(
+    tools=[multiply_tool, add_tool],
     llm=llm,
-    verbose=True,
 )
-agent = agent_worker.as_agent()
 
-response = agent.chat("What is (121 * 3) + 42?")
+response = await agent.run("What is (121 * 3) + 42?")
 print(str(response))
 
 ```
 
-from llama_index.core.tools import FunctionTool def multiply(a: int, b: int) -> int: """Multiple two integers and returns the result integer""" return a * b multiply_tool = FunctionTool.from_defaults(fn=multiply) def add(a: int, b: int) -> int: """Add two integers and returns the result integer""" return a + b add_tool = FunctionTool.from_defaults(fn=add) llm = NVIDIA("meta/llama-3.1-70b-instruct") from llama_index.core.agent import FunctionCallingAgentWorker agent_worker = FunctionCallingAgentWorker.from_tools( [multiply_tool, add_tool], llm=llm, verbose=True, ) agent = agent_worker.as_agent() response = agent.chat("What is (121 * 3) + 42?") print(str(response))
+from llama_index.core.tools import FunctionTool def multiply(a: int, b: int) -> int: """Multiple two integers and returns the result integer""" return a * b multiply_tool = FunctionTool.from_defaults(fn=multiply) def add(a: int, b: int) -> int: """Add two integers and returns the result integer""" return a + b add_tool = FunctionTool.from_defaults(fn=add) llm = NVIDIA("meta/llama-3.1-70b-instruct") from llama_index.core.agent import FunctionAgent agent_worker = FunctionAgent( tools=[multiply_tool, add_tool], llm=llm, ) response = await agent.run("What is (121 * 3) + 42?") print(str(response))

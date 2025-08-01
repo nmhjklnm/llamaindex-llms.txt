@@ -181,7 +181,7 @@ class MessageRole(str, Enum):
   
 ---|---  
 ##  BasePromptTemplate #
-Bases: `ChainableMixin`, `BaseModel`, `ABC`
+Bases: `BaseModel`, `ABC`
 Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
@@ -192,7 +192,7 @@ Name | Type | Description | Default
 Source code in `llama-index-core/llama_index/core/prompts/base.py`
 
 | ```
-class BasePromptTemplate(ChainableMixin, BaseModel, ABC):  # type: ignore[no-redef]
+class BasePromptTemplate(BaseModel, ABC):  # type: ignore[no-redef]
     model_config = ConfigDict(arbitrary_types_allowed=True)
     metadata: Dict[str, Any]
     template_vars: List[str]
@@ -269,12 +269,6 @@ class BasePromptTemplate(ChainableMixin, BaseModel, ABC):  # type: ignore[no-red
 
     @abstractmethod
     def get_template(self, llm: Optional[BaseLLM] = None) -> str: ...
-
-    def _as_query_component(
-        self, llm: Optional[BaseLLM] = None, **kwargs: Any
-    ) -> QueryComponent:
-        """As query component."""
-        return PromptComponent(prompt=self, format_messages=False, llm=llm)
 
 ```
   
@@ -397,12 +391,6 @@ class ChatPromptTemplate(BasePromptTemplate):  # type: ignore[no-redef]
 
     def get_template(self, llm: Optional[BaseLLM] = None) -> str:
         return default_messages_to_prompt(self.message_templates)
-
-    def _as_query_component(
-        self, llm: Optional[BaseLLM] = None, **kwargs: Any
-    ) -> QueryComponent:
-        """As query component."""
-        return PromptComponent(prompt=self, format_messages=True, llm=llm)
 
 ```
   

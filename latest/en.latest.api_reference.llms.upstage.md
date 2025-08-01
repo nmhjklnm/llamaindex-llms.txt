@@ -133,6 +133,8 @@ class Upstage(OpenAI):
             api_key=api_key, api_base=api_base
         )
 
+        default_headers = (default_headers or {}) | {"x-upstage-client": "llamaindex"}
+
         super().__init__(
             model=model,
             temperature=temperature,

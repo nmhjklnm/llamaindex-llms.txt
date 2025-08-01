@@ -464,6 +464,10 @@ class PGVectorStore(BasePydanticVectorStore):
             return "ILIKE"
         elif operator == FilterOperator.IS_EMPTY:
             return "IS NULL"
+        elif operator == FilterOperator.ANY:
+            return "?|"
+        elif operator == FilterOperator.ALL:
+            return "?&"
         else:
             _logger.warning(f"Unknown operator: {operator}, fallback to '='")
             return "="
@@ -482,6 +486,17 @@ class PGVectorStore(BasePydanticVectorStore):
                 f"metadata_->>'{filter_.key}' "
                 f"{self._to_postgres_operator(filter_.operator)} "
                 f"({filter_value})"
+            )
+        elif filter_.operator in [FilterOperator.ANY, FilterOperator.ALL]:
+            # Expects a list stored in the metadata, and a single value to compare
+
+            # We apply same logic as above, but as an array
+            filter_value = ", ".join(f"'{e}'" for e in filter_.value)
+
+            return text(
+                f"metadata_::jsonb->'{filter_.key}' "
+                f"{self._to_postgres_operator(filter_.operator)} "
+                f"array[{filter_value}]"
             )
         elif filter_.operator == FilterOperator.CONTAINS:
             # Expects a list stored in the metadata, and a single value to compare

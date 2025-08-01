@@ -9,6 +9,16 @@ We begin with the basic usage of the `SimpleComposableMemory`. Here we construct
 In [ ]:
 Copied!
 ```
+import os
+
+os.environ["OPENAI_API_KEY"] = "sk-..."
+
+```
+
+import os os.environ["OPENAI_API_KEY"] = "sk-..."
+In [ ]:
+Copied!
+```
 from llama_index.core.memory import (
     VectorMemory,
     SimpleComposableMemory,
@@ -65,7 +75,7 @@ composable_memory.secondary_memory_sources
 composable_memory.secondary_memory_sources
 Out[ ]:
 ```
-[VectorMemory(vector_index=<llama_index.core.indices.vector_store.base.VectorStoreIndex object at 0x137b912a0>, retriever_kwargs={'similarity_top_k': 1}, batch_by_user_message=True, cur_batch_textnode=TextNode(id_='288b0ef3-570e-4698-a1ae-b3531df66361', embedding=None, metadata={'sub_dicts': [{'role': <MessageRole.USER: 'user'>, 'content': 'Alice likes apples.', 'additional_kwargs': {}}]}, excluded_embed_metadata_keys=['sub_dicts'], excluded_llm_metadata_keys=['sub_dicts'], relationships={}, text='Alice likes apples.', start_char_idx=None, end_char_idx=None, text_template='{metadata_str}\n\n{content}', metadata_template='{key}: {value}', metadata_seperator='\n'))]
+[VectorMemory(vector_index=<llama_index.core.indices.vector_store.base.VectorStoreIndex object at 0x11a2d24b0>, retriever_kwargs={'similarity_top_k': 1}, batch_by_user_message=True, cur_batch_textnode=TextNode(id_='97f800fe-1988-44d8-a6dc-7a07bfd30f8e', embedding=None, metadata={'sub_dicts': [{'role': <MessageRole.USER: 'user'>, 'additional_kwargs': {}, 'blocks': [{'block_type': 'text', 'text': 'Alice likes apples.'}], 'content': 'Alice likes apples.'}]}, excluded_embed_metadata_keys=['sub_dicts'], excluded_llm_metadata_keys=['sub_dicts'], relationships={}, metadata_template='{key}: {value}', metadata_separator='\n', text='Alice likes apples.', mimetype='text/plain', start_char_idx=None, end_char_idx=None, metadata_seperator='\n', text_template='{metadata_str}\n\n{content}'))]
 ```
 
 ###  `put()` messages into memory¶
@@ -105,8 +115,8 @@ msgs
 msgs = composable_memory.get("What does Bob like?") msgs
 Out[ ]:
 ```
-[ChatMessage(role=<MessageRole.SYSTEM: 'system'>, content='You are a REALLY helpful assistant.\n\nBelow are a set of relevant dialogues retrieved from potentially several memory sources:\n\n=====Relevant messages from memory source 1=====\n\n\tUSER: Bob likes burgers.\n\tASSISTANT: Indeed, Bob likes apples.\n\n=====End of relevant messages from memory source 1======\n\nThis is the end of the retrieved message dialogues.', additional_kwargs={}),
- ChatMessage(role=<MessageRole.USER: 'user'>, content='Jerry likes juice.', additional_kwargs={})]
+[ChatMessage(role=<MessageRole.SYSTEM: 'system'>, additional_kwargs={}, blocks=[TextBlock(block_type='text', text='You are a REALLY helpful assistant.\n\nBelow are a set of relevant dialogues retrieved from potentially several memory sources:\n\n=====Relevant messages from memory source 1=====\n\n\tUSER: Bob likes burgers.\n\tASSISTANT: Indeed, Bob likes apples.\n\n=====End of relevant messages from memory source 1======\n\nThis is the end of the retrieved message dialogues.')]),
+ ChatMessage(role=<MessageRole.USER: 'user'>, additional_kwargs={}, blocks=[TextBlock(block_type='text', text='Jerry likes juice.')])]
 ```
 
 In [ ]:
@@ -147,8 +157,8 @@ msgs
 msgs = composable_memory.get("What does Alice like?") msgs
 Out[ ]:
 ```
-[ChatMessage(role=<MessageRole.SYSTEM: 'system'>, content='You are a REALLY helpful assistant.\n\nBelow are a set of relevant dialogues retrieved from potentially several memory sources:\n\n=====Relevant messages from memory source 1=====\n\n\tUSER: Alice likes apples.\n\n=====End of relevant messages from memory source 1======\n\nThis is the end of the retrieved message dialogues.', additional_kwargs={}),
- ChatMessage(role=<MessageRole.USER: 'user'>, content='Jerry likes juice.', additional_kwargs={})]
+[ChatMessage(role=<MessageRole.SYSTEM: 'system'>, additional_kwargs={}, blocks=[TextBlock(block_type='text', text='You are a REALLY helpful assistant.\n\nBelow are a set of relevant dialogues retrieved from potentially several memory sources:\n\n=====Relevant messages from memory source 1=====\n\n\tUSER: Alice likes apples.\n\n=====End of relevant messages from memory source 1======\n\nThis is the end of the retrieved message dialogues.')]),
+ ChatMessage(role=<MessageRole.USER: 'user'>, additional_kwargs={}, blocks=[TextBlock(block_type='text', text='Jerry likes juice.')])]
 ```
 
 In [ ]:
@@ -188,8 +198,8 @@ msgs
 msgs = composable_memory.get("What does Jerry like?") msgs
 Out[ ]:
 ```
-[ChatMessage(role=<MessageRole.SYSTEM: 'system'>, content='You are a REALLY helpful assistant.', additional_kwargs={}),
- ChatMessage(role=<MessageRole.USER: 'user'>, content='Jerry likes juice.', additional_kwargs={})]
+[ChatMessage(role=<MessageRole.SYSTEM: 'system'>, additional_kwargs={}, blocks=[TextBlock(block_type='text', text='You are a REALLY helpful assistant.')]),
+ ChatMessage(role=<MessageRole.USER: 'user'>, additional_kwargs={}, blocks=[TextBlock(block_type='text', text='Jerry likes juice.')])]
 ```
 
 ### How to `reset` memory¶
@@ -226,7 +236,7 @@ composable_memory.secondary_memory_sources[0].get("What does Alice like?")
 composable_memory.secondary_memory_sources[0].get("What does Alice like?")
 Out[ ]:
 ```
-[ChatMessage(role=<MessageRole.USER: 'user'>, content='Alice likes apples.', additional_kwargs={})]
+[ChatMessage(role=<MessageRole.USER: 'user'>, additional_kwargs={}, blocks=[TextBlock(block_type='text', text='Alice likes apples.')])]
 ```
 
 ####  `reset()` all memory sources¶
@@ -251,19 +261,6 @@ Out[ ]:
 []
 ```
 
-In [ ]:
-Copied!
-```
-composable_memory.secondary_memory_sources[0].get("What does Alice like?")
-
-```
-
-composable_memory.secondary_memory_sources[0].get("What does Alice like?")
-Out[ ]:
-```
-[]
-```
-
 ## Use `SimpleComposableMemory` With An Agent¶
 Here we will use a `SimpleComposableMemory` with an agent and demonstrate how a secondary, long-term memory source can be used to use messages from on agent conversation as part of another conversation with another agent session.
 In [ ]:
@@ -271,15 +268,11 @@ Copied!
 ```
 from llama_index.llms.openai import OpenAI
 from llama_index.core.tools import FunctionTool
-from llama_index.core.agent import FunctionCallingAgent
-
-import nest_asyncio
-
-nest_asyncio.apply()
+from llama_index.core.agent.workflow import FunctionAgent
 
 ```
 
-from llama_index.llms.openai import OpenAI from llama_index.core.tools import FunctionTool from llama_index.core.agent import FunctionCallingAgent import nest_asyncio nest_asyncio.apply()
+from llama_index.llms.openai import OpenAI from llama_index.core.tools import FunctionTool from llama_index.core.agent.workflow import FunctionAgent
 ### Define our memory modules¶
 In [ ]:
 Copied!
@@ -323,34 +316,29 @@ def multiply(a: int, b: int) -> int: """Multiply two integers and returns the re
 In [ ]:
 Copied!
 ```
-llm = OpenAI(model="gpt-3.5-turbo-0613")
-agent = FunctionCallingAgent.from_tools(
-    [multiply_tool, mystery_tool],
+llm = OpenAI(model="gpt-4.1-mini")
+agent = FunctionAgent(
+    tools=[multiply_tool, mystery_tool],
     llm=llm,
-    memory=composable_memory,
-    verbose=True,
 )
 
 ```
 
-llm = OpenAI(model="gpt-3.5-turbo-0613") agent = FunctionCallingAgent.from_tools( [multiply_tool, mystery_tool], llm=llm, memory=composable_memory, verbose=True, )
+llm = OpenAI(model="gpt-4.1-mini") agent = FunctionAgent( tools=[multiply_tool, mystery_tool], llm=llm, )
 ### Execute some function calls¶
 When `.chat()` is invoked, the messages are put into the composable memory, which we understand from the previous section implies that all the messages are put in both `primary` and `secondary` sources.
 In [ ]:
 Copied!
 ```
-response = agent.chat("What is the mystery function on 5 and 6?")
+response = await agent.run(
+    "What is the mystery function on 5 and 6?", memory=composable_memory
+)
+print(str(response))
 
 ```
 
-response = agent.chat("What is the mystery function on 5 and 6?")
+response = await agent.run( "What is the mystery function on 5 and 6?", memory=composable_memory ) print(str(response))
 ```
-Added user message to memory: What is the mystery function on 5 and 6?
-=== Calling Function ===
-Calling function: mystery with args: {"a": 5, "b": 6}
-=== Function Output ===
--11
-=== LLM Response ===
 The mystery function on 5 and 6 returns -11.
 
 ```
@@ -358,18 +346,15 @@ The mystery function on 5 and 6 returns -11.
 In [ ]:
 Copied!
 ```
-response = agent.chat("What happens if you multiply 2 and 3?")
+response = await agent.run(
+    "What happens if you multiply 2 and 3?", memory=composable_memory
+)
+print(str(response))
 
 ```
 
-response = agent.chat("What happens if you multiply 2 and 3?")
+response = await agent.run( "What happens if you multiply 2 and 3?", memory=composable_memory ) print(str(response))
 ```
-Added user message to memory: What happens if you multiply 2 and 3?
-=== Calling Function ===
-Calling function: multiply with args: {"a": 2, "b": 3}
-=== Function Output ===
-6
-=== LLM Response ===
 If you multiply 2 and 3, the result is 6.
 
 ```
@@ -380,28 +365,18 @@ Now that we've added the messages to our `vector_memory`, we can see the effect 
 In [ ]:
 Copied!
 ```
-llm = OpenAI(model="gpt-3.5-turbo-0613")
-agent_without_memory = FunctionCallingAgent.from_tools(
-    [multiply_tool, mystery_tool], llm=llm, verbose=True
-)
-
-```
-
-llm = OpenAI(model="gpt-3.5-turbo-0613") agent_without_memory = FunctionCallingAgent.from_tools( [multiply_tool, mystery_tool], llm=llm, verbose=True )
-In [ ]:
-Copied!
-```
-response = agent_without_memory.chat(
+response = await agent.run(
     "What was the output of the mystery function on 5 and 6 again? Don't recompute."
+    # memory=composable_memory
 )
 
+print(str(response))
+
 ```
 
-response = agent_without_memory.chat( "What was the output of the mystery function on 5 and 6 again? Don't recompute." )
+response = await agent.run( "What was the output of the mystery function on 5 and 6 again? Don't recompute." # memory=composable_memory ) print(str(response))
 ```
-Added user message to memory: What was the output of the mystery function on 5 and 6 again? Don't recompute.
-=== LLM Response ===
-I'm sorry, but I don't have access to the previous output of the mystery function on 5 and 6.
+I don't have the previous output of the mystery function on 5 and 6 stored. If you want, I can recompute it for you. Would you like me to do that?
 
 ```
 
@@ -410,54 +385,16 @@ We see that the agent without access to the our past memory cannot complete the 
 In [ ]:
 Copied!
 ```
-llm = OpenAI(model="gpt-3.5-turbo-0613")
-
-composable_memory = SimpleComposableMemory.from_defaults(
-    primary_memory=ChatMemoryBuffer.from_defaults(),
-    secondary_memory_sources=[
-        vector_memory.copy(
-            deep=True
-        )  # using a copy here for illustration purposes
-        # later will use original vector_memory again
-    ],
-)
-
-agent_with_memory = FunctionCallingAgent.from_tools(
-    [multiply_tool, mystery_tool],
-    llm=llm,
+response = await agent.run(
+    "What was the output of the mystery function on 5 and 6 again? Don't recompute.",
     memory=composable_memory,
-    verbose=True,
 )
+print(str(response))
 
 ```
 
-llm = OpenAI(model="gpt-3.5-turbo-0613") composable_memory = SimpleComposableMemory.from_defaults( primary_memory=ChatMemoryBuffer.from_defaults(), secondary_memory_sources=[ vector_memory.copy( deep=True ) # using a copy here for illustration purposes # later will use original vector_memory again ], ) agent_with_memory = FunctionCallingAgent.from_tools( [multiply_tool, mystery_tool], llm=llm, memory=composable_memory, verbose=True, )
-In [ ]:
-Copied!
+response = await agent.run( "What was the output of the mystery function on 5 and 6 again? Don't recompute.", memory=composable_memory, ) print(str(response))
 ```
-agent_with_memory.chat_history  # an empty chat history
-
-```
-
-agent_with_memory.chat_history # an empty chat history
-Out[ ]:
-```
-[]
-```
-
-In [ ]:
-Copied!
-```
-response = agent_with_memory.chat(
-    "What was the output of the mystery function on 5 and 6 again? Don't recompute."
-)
-
-```
-
-response = agent_with_memory.chat( "What was the output of the mystery function on 5 and 6 again? Don't recompute." )
-```
-Added user message to memory: What was the output of the mystery function on 5 and 6 again? Don't recompute.
-=== LLM Response ===
 The output of the mystery function on 5 and 6 is -11.
 
 ```
@@ -465,97 +402,19 @@ The output of the mystery function on 5 and 6 is -11.
 In [ ]:
 Copied!
 ```
-response = agent_with_memory.chat(
-    "What was the output of the multiply function on 2 and 3 again? Don't recompute."
+response = await agent.run(
+    "What was the output of the multiply function on 2 and 3 again? Don't recompute.",
+    memory=composable_memory,
 )
+print(str(response))
 
 ```
 
-response = agent_with_memory.chat( "What was the output of the multiply function on 2 and 3 again? Don't recompute." )
+response = await agent.run( "What was the output of the multiply function on 2 and 3 again? Don't recompute.", memory=composable_memory, ) print(str(response))
 ```
-Added user message to memory: What was the output of the multiply function on 2 and 3 again? Don't recompute.
-=== LLM Response ===
-The output of the multiply function on 2 and 3 is 6.
+The output of the multiply function on 2 and 3 was 6.
 
 ```
 
-In [ ]:
-Copied!
-```
-agent_with_memory.chat_history
-
-```
-
-agent_with_memory.chat_history
-Out[ ]:
-```
-[ChatMessage(role=<MessageRole.USER: 'user'>, content="What was the output of the mystery function on 5 and 6 again? Don't recompute.", additional_kwargs={}),
- ChatMessage(role=<MessageRole.ASSISTANT: 'assistant'>, content='The output of the mystery function on 5 and 6 is -11.', additional_kwargs={}),
- ChatMessage(role=<MessageRole.USER: 'user'>, content="What was the output of the multiply function on 2 and 3 again? Don't recompute.", additional_kwargs={}),
- ChatMessage(role=<MessageRole.ASSISTANT: 'assistant'>, content='The output of the multiply function on 2 and 3 is 6.', additional_kwargs={})]
-```
-
-### What happens under the hood with `.chat(user_input)`¶
-Under the hood, `.chat(user_input)` call effectively will call the memory's `.get()` method with `user_input` as the argument. As we learned in the previous section, this will ultimately return a composition of the `primary` and all of the `secondary` memory sources. These composed messages are what is being passed to the LLM's chat API as the chat history.
-In [ ]:
-Copied!
-```
-composable_memory = SimpleComposableMemory.from_defaults(
-    primary_memory=ChatMemoryBuffer.from_defaults(),
-    secondary_memory_sources=[
-        vector_memory.copy(
-            deep=True
-        )  # copy for illustrative purposes to explain what
-        # happened under the hood from previous subsection
-    ],
-)
-agent_with_memory = agent_worker.as_agent(memory=composable_memory)
-
-```
-
-composable_memory = SimpleComposableMemory.from_defaults( primary_memory=ChatMemoryBuffer.from_defaults(), secondary_memory_sources=[ vector_memory.copy( deep=True ) # copy for illustrative purposes to explain what # happened under the hood from previous subsection ], ) agent_with_memory = agent_worker.as_agent(memory=composable_memory)
-In [ ]:
-Copied!
-```
-agent_with_memory.memory.get(
-    "What was the output of the mystery function on 5 and 6 again? Don't recompute."
-)
-
-```
-
-agent_with_memory.memory.get( "What was the output of the mystery function on 5 and 6 again? Don't recompute." )
-Out[ ]:
-```
-[ChatMessage(role=<MessageRole.SYSTEM: 'system'>, content='You are a helpful assistant.\n\nBelow are a set of relevant dialogues retrieved from potentially several memory sources:\n\n=====Relevant messages from memory source 1=====\n\n\tUSER: What is the mystery function on 5 and 6?\n\tASSISTANT: None\n\tTOOL: -11\n\tASSISTANT: The mystery function on 5 and 6 returns -11.\n\n=====End of relevant messages from memory source 1======\n\nThis is the end of the retrieved message dialogues.', additional_kwargs={})]
-```
-
-In [ ]:
-Copied!
-```
-print(
-    agent_with_memory.memory.get(
-        "What was the output of the mystery function on 5 and 6 again? Don't recompute."
-    )[0]
-)
-
-```
-
-print( agent_with_memory.memory.get( "What was the output of the mystery function on 5 and 6 again? Don't recompute." )[0] )
-```
-system: You are a helpful assistant.
-
-Below are a set of relevant dialogues retrieved from potentially several memory sources:
-
-=====Relevant messages from memory source 1=====
-
-	USER: What is the mystery function on 5 and 6?
-	ASSISTANT: None
-	TOOL: -11
-	ASSISTANT: The mystery function on 5 and 6 returns -11.
-
-=====End of relevant messages from memory source 1======
-
-This is the end of the retrieved message dialogues.
-
-```
-
+### What happens under the hood with `.run(user_input)`¶
+Under the hood, `.run(user_input)` call effectively will call the memory's `.get()` method with `user_input` as the argument. As we learned in the previous section, this will ultimately return a composition of the `primary` and all of the `secondary` memory sources. These composed messages are what is being passed to the LLM's chat API as the chat history.

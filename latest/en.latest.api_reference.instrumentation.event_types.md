@@ -4,8 +4,8 @@ Bases: `BaseModel`
 Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
-`timestamp` |  `datetime` |  |  `datetime.datetime(2025, 7, 23, 18, 13, 0, 912806)`  
-`id_` |  `str` |  |  `'8dc9ddaf-4f95-42e7-850a-a6c37a3d3c43'`  
+`timestamp` |  `datetime` |  |  `datetime.datetime(2025, 7, 31, 20, 20, 58, 748558)`  
+`id_` |  `str` |  |  `'731f8a98-5327-4cc6-8305-2ca7f3d867c2'`  
 `tags` |  `Dict[str, Any]` |  |  `{}`  
 Source code in `llama_index_instrumentation/base/event.py`
 
@@ -258,7 +258,7 @@ AgentRunStepEndEvent.
 Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
-`step_output` |  `TaskStepOutput` |  Task step output. |  _required_  
+`step_output` |  `Any` |  Task step output. |  _required_  
 Source code in `llama-index-core/llama_index/core/instrumentation/events/agent.py`
 
 | ```
@@ -267,11 +267,11 @@ class AgentRunStepEndEvent(BaseEvent):
     AgentRunStepEndEvent.
 
     Args:
-        step_output (TaskStepOutput): Task step output.
+        step_output (Any): Task step output.
 
     """
 
-    step_output: TaskStepOutput
+    step_output: Any
 
     @classmethod
     def class_name(cls) -> str:
@@ -306,7 +306,7 @@ Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
 `task_id` |  `str` |  Task ID. |  _required_  
-`step` |  `Optional[TaskStep]` |  Task step. |  _required_  
+`step` |  `Optional[Any]` |  Task step. |  _required_  
 `input` |  `Optional[str]` |  Optional input. |  _required_  
 Source code in `llama-index-core/llama_index/core/instrumentation/events/agent.py`
 
@@ -317,13 +317,13 @@ class AgentRunStepStartEvent(BaseEvent):
 
     Args:
         task_id (str): Task ID.
-        step (Optional[TaskStep]): Task step.
+        step (Optional[Any]): Task step.
         input (Optional[str]): Optional input.
 
     """
 
     task_id: str
-    step: Optional[TaskStep]
+    step: Optional[Any]
     input: Optional[str]
 
     @classmethod

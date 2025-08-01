@@ -3,12 +3,12 @@ Response builder class.
 This class provides general functions for taking in a set of text and generating a response.
 Will support different modes, from 1) stuffing chunks into prompt, 2) create and refine separately over each chunk, 3) tree summarization.
 ##  BaseSynthesizer #
-Bases: `ChainableMixin`, `PromptMixin`, `DispatcherSpanMixin`
+Bases: `PromptMixin`, `DispatcherSpanMixin`
 Response builder class.
 Source code in `llama-index-core/llama_index/core/response_synthesizers/base.py`
 
 | ```
-class BaseSynthesizer(ChainableMixin, PromptMixin, DispatcherSpanMixin):
+class BaseSynthesizer(PromptMixin, DispatcherSpanMixin):
     """Response builder class."""
 
     def __init__(
@@ -269,10 +269,6 @@ class BaseSynthesizer(ChainableMixin, PromptMixin, DispatcherSpanMixin):
             )
         )
         return response
-
-    def _as_query_component(self, **kwargs: Any) -> QueryComponent:
-        """As query component."""
-        return SynthesizerComponent(synthesizer=self)
 
 ```
   

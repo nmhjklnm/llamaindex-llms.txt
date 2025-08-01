@@ -1,11 +1,11 @@
 # Guardrails
 ##  GuardrailsOutputParser #
-Bases: `ChainableOutputParser`
+Bases: `BaseOutputParser`
 Guardrails output parser.
 Source code in `llama-index-integrations/output_parsers/llama-index-output-parsers-guardrails/llama_index/output_parsers/guardrails/base.py`
 
 | ```
-class GuardrailsOutputParser(ChainableOutputParser):
+class GuardrailsOutputParser(BaseOutputParser):
     """Guardrails output parser."""
 
     def __init__(

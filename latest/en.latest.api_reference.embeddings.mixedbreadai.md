@@ -7,8 +7,7 @@ Name | Type | Description | Default
 ---|---|---|---  
 `api_key` |  `Optional[str]` |  mixedbread ai API key. Defaults to None. |  `None`  
 `model_name` |  `str` |  Model for embedding. Defaults to "mixedbread-ai/mxbai-embed-large-v1". |  `'mixedbread-ai/mxbai-embed-large-v1'`  
-`encoding_format` |  `EncodingFormat` |  Encoding format for embeddings. Defaults to EncodingFormat.FLOAT. |  `FLOAT`  
-`truncation_strategy` |  `TruncationStrategy` |  Truncation strategy. Defaults to TruncationStrategy.START. |  `START`  
+`encoding_format` |  `EncodingFormat` |  Encoding format for embeddings. Defaults to "float". |  `'float'`  
 `normalized` |  `bool` |  Whether to normalize the embeddings. Defaults to True. |  `True`  
 `dimensions` |  `Optional[int]` |  Number of dimensions for embeddings. Only applicable for models with matryoshka support. |  `None`  
 `prompt` |  `Optional[str]` |  An optional prompt to provide context to the model. |  `None`  
@@ -28,8 +27,7 @@ class MixedbreadAIEmbedding(BaseEmbedding):
     Args:
         api_key (Optional[str]): mixedbread ai API key. Defaults to None.
         model_name (str): Model for embedding. Defaults to "mixedbread-ai/mxbai-embed-large-v1".
-        encoding_format (EncodingFormat): Encoding format for embeddings. Defaults to EncodingFormat.FLOAT.
-        truncation_strategy (TruncationStrategy): Truncation strategy. Defaults to TruncationStrategy.START.
+        encoding_format (EncodingFormat): Encoding format for embeddings. Defaults to "float".
         normalized (bool): Whether to normalize the embeddings. Defaults to True.
         dimensions (Optional[int]): Number of dimensions for embeddings. Only applicable for models with matryoshka support.
         prompt (Optional[str]): An optional prompt to provide context to the model.
@@ -49,11 +47,7 @@ class MixedbreadAIEmbedding(BaseEmbedding):
         min_length=1,
     )
     encoding_format: EncodingFormat = Field(
-        default=EncodingFormat.FLOAT, description="Encoding format for the embeddings."
-    )
-    truncation_strategy: TruncationStrategy = Field(
-        default=TruncationStrategy.START,
-        description="Truncation strategy for input text.",
+        default="float", description="Encoding format for the embeddings."
     )
     normalized: bool = Field(
         default=True, description="Whether to normalize the embeddings."
@@ -72,16 +66,14 @@ class MixedbreadAIEmbedding(BaseEmbedding):
         default=128, description="The batch size for embedding calls.", gt=0, le=256
     )
 
-    _client: MixedbreadAI = PrivateAttr()
-    _async_client: AsyncMixedbreadAI = PrivateAttr()
-    _request_options: Optional[RequestOptions] = PrivateAttr()
+    _client: Mixedbread = PrivateAttr()
+    _async_client: AsyncMixedbread = PrivateAttr()
 
     def __init__(
         self,
         api_key: Optional[str] = None,
         model_name: str = "mixedbread-ai/mxbai-embed-large-v1",
-        encoding_format: EncodingFormat = EncodingFormat.FLOAT,
-        truncation_strategy: TruncationStrategy = TruncationStrategy.START,
+        encoding_format: EncodingFormat = "float",
         normalized: bool = True,
         dimensions: Optional[int] = None,
         prompt: Optional[str] = None,
@@ -108,7 +100,6 @@ class MixedbreadAIEmbedding(BaseEmbedding):
             api_key=api_key,
             model_name=model_name,
             encoding_format=encoding_format,
-            truncation_strategy=truncation_strategy,
             normalized=normalized,
             dimensions=dimensions,
             prompt=prompt,
@@ -117,15 +108,17 @@ class MixedbreadAIEmbedding(BaseEmbedding):
             **kwargs,
         )
 
-        self._client = MixedbreadAI(
-            api_key=api_key, timeout=timeout, httpx_client=httpx_client
+        self._client = Mixedbread(
+            api_key=api_key,
+            timeout=timeout,
+            http_client=httpx_client,
+            max_retries=max_retries if max_retries is not None else DEFAULT_MAX_RETRIES,
         )
-        self._async_client = AsyncMixedbreadAI(
-            api_key=api_key, timeout=timeout, httpx_client=httpx_async_client
-        )
-
-        self._request_options = (
-            RequestOptions(max_retries=max_retries) if max_retries is not None else None
+        self._async_client = AsyncMixedbread(
+            api_key=api_key,
+            timeout=timeout,
+            http_client=httpx_async_client,
+            max_retries=max_retries if max_retries is not None else DEFAULT_MAX_RETRIES,
         )
 
     @classmethod
@@ -143,15 +136,13 @@ class MixedbreadAIEmbedding(BaseEmbedding):
             List[List[float]]: List of embeddings.
 
         """
-        response = self._client.embeddings(
+        response = self._client.embed(
             model=self.model_name,
             input=texts,
             encoding_format=self.encoding_format,
             normalized=self.normalized,
-            truncation_strategy=self.truncation_strategy,
             dimensions=self.dimensions,
             prompt=self.prompt,
-            request_options=self._request_options,
         )
         return [item.embedding for item in response.data]
 
@@ -166,15 +157,13 @@ class MixedbreadAIEmbedding(BaseEmbedding):
             List[List[float]]: List of embeddings.
 
         """
-        response = await self._async_client.embeddings(
+        response = await self._async_client.embed(
             model=self.model_name,
             input=texts,
             encoding_format=self.encoding_format,
             normalized=self.normalized,
-            truncation_strategy=self.truncation_strategy,
             dimensions=self.dimensions,
             prompt=self.prompt,
-            request_options=self._request_options,
         )
         return [item.embedding for item in response.data]
 

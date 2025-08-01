@@ -329,14 +329,14 @@ print(response)
 ```
 
 import ads from llama_index.llms.oci_data_science import OCIDataScience from llama_index.core.tools import FunctionTool ads.set_auth(auth="security_token", profile="") llm = OCIDataScience( model="odsc-llm", endpoint="https:///predict", temperature=0.2, max_tokens=500, timeout=120, context_window=2500, additional_kwargs={ "top_p": 0.75, "logprobs": True, "top_logprobs": 3, }, ) def multiply(a: float, b: float) -> float: print(f"---> {a} * {b}") return a * b def add(a: float, b: float) -> float: print(f"---> {a} + {b}") return a + b def subtract(a: float, b: float) -> float: print(f"---> {a} - {b}") return a - b def divide(a: float, b: float) -> float: print(f"---> {a} / {b}") return a / b multiply_tool = FunctionTool.from_defaults(fn=multiply) add_tool = FunctionTool.from_defaults(fn=add) sub_tool = FunctionTool.from_defaults(fn=subtract) divide_tool = FunctionTool.from_defaults(fn=divide) response = llm.predict_and_call( [multiply_tool, add_tool, sub_tool, divide_tool], user_msg="Calculate the result of `8 + 2 - 6`.", verbose=True, ) print(response)
-### Using `FunctionCallingAgent`¶
+### Using `FunctionAgent`¶
 In [ ]:
 Copied!
 ```
 import ads
 from llama_index.llms.oci_data_science import OCIDataScience
 from llama_index.core.tools import FunctionTool
-from llama_index.core.agent import FunctionCallingAgent
+from llama_index.core.agent.workflow import FunctionAgent
 
 ads.set_auth(auth="security_token", profile="<replace-with-your-profile>")
 
@@ -380,12 +380,11 @@ add_tool = FunctionTool.from_defaults(fn=add)
 sub_tool = FunctionTool.from_defaults(fn=subtract)
 divide_tool = FunctionTool.from_defaults(fn=divide)
 
-agent = FunctionCallingAgent.from_tools(
+agent = FunctionAgent(
     tools=[multiply_tool, add_tool, sub_tool, divide_tool],
     llm=llm,
-    verbose=True,
 )
-response = agent.chat(
+response = await agent.run(
     "Calculate the result of `8 + 2 - 6`. Use tools. Return the calculated result."
 )
 
@@ -393,4 +392,4 @@ print(response)
 
 ```
 
-import ads from llama_index.llms.oci_data_science import OCIDataScience from llama_index.core.tools import FunctionTool from llama_index.core.agent import FunctionCallingAgent ads.set_auth(auth="security_token", profile="") llm = OCIDataScience( model="odsc-llm", endpoint="https:///predict", temperature=0.2, max_tokens=500, timeout=120, context_window=2500, additional_kwargs={ "top_p": 0.75, "logprobs": True, "top_logprobs": 3, }, ) def multiply(a: float, b: float) -> float: print(f"---> {a} * {b}") return a * b def add(a: float, b: float) -> float: print(f"---> {a} + {b}") return a + b def subtract(a: float, b: float) -> float: print(f"---> {a} - {b}") return a - b def divide(a: float, b: float) -> float: print(f"---> {a} / {b}") return a / b multiply_tool = FunctionTool.from_defaults(fn=multiply) add_tool = FunctionTool.from_defaults(fn=add) sub_tool = FunctionTool.from_defaults(fn=subtract) divide_tool = FunctionTool.from_defaults(fn=divide) agent = FunctionCallingAgent.from_tools( tools=[multiply_tool, add_tool, sub_tool, divide_tool], llm=llm, verbose=True, ) response = agent.chat( "Calculate the result of `8 + 2 - 6`. Use tools. Return the calculated result." ) print(response)
+import ads from llama_index.llms.oci_data_science import OCIDataScience from llama_index.core.tools import FunctionTool from llama_index.core.agent.workflow import FunctionAgent ads.set_auth(auth="security_token", profile="") llm = OCIDataScience( model="odsc-llm", endpoint="https:///predict", temperature=0.2, max_tokens=500, timeout=120, context_window=2500, additional_kwargs={ "top_p": 0.75, "logprobs": True, "top_logprobs": 3, }, ) def multiply(a: float, b: float) -> float: print(f"---> {a} * {b}") return a * b def add(a: float, b: float) -> float: print(f"---> {a} + {b}") return a + b def subtract(a: float, b: float) -> float: print(f"---> {a} - {b}") return a - b def divide(a: float, b: float) -> float: print(f"---> {a} / {b}") return a / b multiply_tool = FunctionTool.from_defaults(fn=multiply) add_tool = FunctionTool.from_defaults(fn=add) sub_tool = FunctionTool.from_defaults(fn=subtract) divide_tool = FunctionTool.from_defaults(fn=divide) agent = FunctionAgent( tools=[multiply_tool, add_tool, sub_tool, divide_tool], llm=llm, ) response = await agent.run( "Calculate the result of `8 + 2 - 6`. Use tools. Return the calculated result." ) print(response)

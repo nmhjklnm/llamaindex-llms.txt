@@ -1,6 +1,6 @@
 ![Open In Colab](https://colab.research.google.com/assets/colab-badge.svg)
 # OpenAI Agent + Query Engine Experimental Cookbook¶
-In this notebook, we try out the OpenAIAgent across a variety of query engine tools and datasets. We explore how OpenAIAgent can compare/replace existing workflows solved by our retrievers/query engines.
+In this notebook, we try out the FunctionAgent across a variety of query engine tools and datasets. We explore how FunctionAgent can compare/replace existing workflows solved by our retrievers/query engines.
   * Auto retrieval
   * Joint SQL and vector search
 
@@ -462,7 +462,7 @@ Here is a celebrity in the business category who was born after 1950:
 
 ## Joint Text-to-SQL and Semantic Search¶
 This is currently handled by our `SQLAutoVectorQueryEngine`.
-Let's try implementing this by giving our `OpenAIAgent` access to two query tools: SQL and Vector
+Let's try implementing this by giving our `FunctionAgent` access to two query tools: SQL and Vector
 **NOTE:** Any Text-to-SQL application should be aware that executing arbitrary SQL queries can be a security risk. It is recommended to take precautions as needed, such as using restricted roles, read-only databases, sandboxing, etc.
 #### Load and Index Structured Data¶
 We load sample structured datapoints into a SQL db and index it.

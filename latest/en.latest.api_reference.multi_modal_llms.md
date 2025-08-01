@@ -61,7 +61,7 @@ class MultiModalLLMMetadata(BaseModel):
   
 ---|---  
 ##  MultiModalLLM #
-Bases: `ChainableMixin`, `BaseComponent`, `DispatcherSpanMixin`
+Bases: `BaseComponent`, `DispatcherSpanMixin`
 Multi-Modal LLM interface.
 Parameters:
 Name | Type | Description | Default  
@@ -70,7 +70,7 @@ Name | Type | Description | Default
 Source code in `llama-index-core/llama_index/core/multi_modal_llms/base.py`
 
 | ```
-class MultiModalLLM(ChainableMixin, BaseComponent, DispatcherSpanMixin):
+class MultiModalLLM(BaseComponent, DispatcherSpanMixin):
     """Multi-Modal LLM interface."""
 
     model_config = ConfigDict(arbitrary_types_allowed=True)
@@ -156,14 +156,6 @@ class MultiModalLLM(ChainableMixin, BaseComponent, DispatcherSpanMixin):
         **kwargs: Any,
     ) -> ChatResponseAsyncGen:
         """Async streaming chat endpoint for Multi-Modal LLM."""
-
-    def _as_query_component(self, **kwargs: Any) -> QueryComponent:
-        """Return query component."""
-        if self.metadata.is_chat_model:
-            # TODO: we don't have a separate chat component
-            return MultiModalCompleteComponent(multi_modal_llm=self, **kwargs)
-        else:
-            return MultiModalCompleteComponent(multi_modal_llm=self, **kwargs)
 
     def __init_subclass__(cls, **kwargs: Any) -> None:
         """
@@ -368,135 +360,4 @@ async def astream_chat(
 
 ```
   
----|---  
-##  BaseMultiModalComponent #
-Bases: `QueryComponent`
-Base LLM component.
-Parameters:
-Name | Type | Description | Default  
----|---|---|---  
-`multi_modal_llm` |  `MultiModalLLM` |  LLM |  _required_  
-`streaming` |  `bool` |  Streaming mode |  `False`  
-Source code in `llama-index-core/llama_index/core/multi_modal_llms/base.py`
-
-| ```
-class BaseMultiModalComponent(QueryComponent):
-    """Base LLM component."""
-
-    model_config = ConfigDict(arbitrary_types_allowed=True)
-    multi_modal_llm: MultiModalLLM = Field(..., description="LLM")
-    streaming: bool = Field(default=False, description="Streaming mode")
-
-    def set_callback_manager(self, callback_manager: Any) -> None:
-        """Set callback manager."""
-
-```
-  
----|---  
-###  set_callback_manager #
-```
-set_callback_manager(callback_manager: Any) -> None
-
-```
-
-Set callback manager.
-Source code in `llama-index-core/llama_index/core/multi_modal_llms/base.py`
-
-| ```
-def set_callback_manager(self, callback_manager: Any) -> None:
-    """Set callback manager."""
-
-```
-  
----|---  
-##  MultiModalCompleteComponent #
-Bases: `BaseMultiModalComponent`
-Multi-modal completion component.
-Source code in `llama-index-core/llama_index/core/multi_modal_llms/base.py`
-
-| ```
-class MultiModalCompleteComponent(BaseMultiModalComponent):
-    """Multi-modal completion component."""
-
-    def _validate_component_inputs(self, input: Dict[str, Any]) -> Dict[str, Any]:
-        """Validate component inputs during run_component."""
-        if "prompt" not in input:
-            raise ValueError("Prompt must be in input dict.")
-
-        # do special check to see if prompt is a list of chat messages
-        if isinstance(input["prompt"], get_args(List[ChatMessage])):
-            raise NotImplementedError(
-                "Chat messages not yet supported as input to multi-modal model."
-            )
-        else:
-            input["prompt"] = validate_and_convert_stringable(input["prompt"])
-
-        # make sure image documents are valid
-        if "image_documents" in input:
-            if not isinstance(input["image_documents"], list):
-                raise ValueError("image_documents must be a list.")
-            for doc in input["image_documents"]:
-                if not isinstance(doc, (ImageDocument, ImageBlock, ImageNode)):
-                    raise ValueError(
-                        "image_documents must be a list of Union[ImageNode, ImageBlock] objects."
-                    )
-
-        return input
-
-    def _run_component(self, **kwargs: Any) -> Any:
-        """Run component."""
-        # TODO: support only complete for now
-        prompt = kwargs["prompt"]
-        image_documents = kwargs.get("image_documents", [])
-
-        response: Any
-        if self.streaming:
-            response = self.multi_modal_llm.stream_complete(prompt, image_documents)
-        else:
-            response = self.multi_modal_llm.complete(prompt, image_documents)
-        return {"output": response}
-
-    async def _arun_component(self, **kwargs: Any) -> Any:
-        """Run component."""
-        # TODO: support only complete for now
-        # non-trivial to figure how to support chat/complete/etc.
-        prompt = kwargs["prompt"]
-        image_documents = kwargs.get("image_documents", [])
-
-        response: Any
-        if self.streaming:
-            response = await self.multi_modal_llm.astream_complete(
-                prompt, image_documents
-            )
-        else:
-            response = await self.multi_modal_llm.acomplete(prompt, image_documents)
-        return {"output": response}
-
-    @property
-    def input_keys(self) -> InputKeys:
-        """Input keys."""
-        # TODO: support only complete for now
-        return InputKeys.from_keys({"prompt", "image_documents"})
-
-    @property
-    def output_keys(self) -> OutputKeys:
-        """Output keys."""
-        return OutputKeys.from_keys({"output"})
-
-```
-  
----|---  
-###  input_keys `property` #
-```
-input_keys: InputKeys
-
-```
-
-Input keys.
-###  output_keys `property` #
-```
-output_keys: OutputKeys
-
-```
-
-Output keys.
+---|---

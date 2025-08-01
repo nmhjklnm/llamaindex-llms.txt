@@ -477,7 +477,7 @@ os.environ["OPENAI_API_KEY"] = "YOUR_OPENAI_API_KEY"
 In [ ]:
 Copied!
 ```
-from llama_index.core.agent import FunctionCallingAgent
+from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.llms.openai import OpenAI
 
 # We add playwright's click, get_current_page, and navigate_to tools to the agent along with agentql tools
@@ -489,19 +489,19 @@ playwright_agent_tool_list = [
     if tool.metadata.name in ["click", "get_current_page", "navigate_to"]
 ]
 
-agent = FunctionCallingAgent.from_tools(
-    playwright_agent_tool_list + agentql_browser_tool.to_tool_list(),
+agent = FunctionAgent(
+    tools=playwright_agent_tool_list + agentql_browser_tool.to_tool_list(),
     llm=OpenAI(model="gpt-4o"),
 )
 
 ```
 
-from llama_index.core.agent import FunctionCallingAgent from llama_index.llms.openai import OpenAI # We add playwright's click, get_current_page, and navigate_to tools to the agent along with agentql tools playwright_tool = PlaywrightToolSpec(async_browser=async_browser) playwright_tool_list = playwright_tool.to_tool_list() playwright_agent_tool_list = [ tool for tool in playwright_tool_list if tool.metadata.name in ["click", "get_current_page", "navigate_to"] ] agent = FunctionCallingAgent.from_tools( playwright_agent_tool_list + agentql_browser_tool.to_tool_list(), llm=OpenAI(model="gpt-4o"), )
+from llama_index.core.agent.workflow import FunctionAgent from llama_index.llms.openai import OpenAI # We add playwright's click, get_current_page, and navigate_to tools to the agent along with agentql tools playwright_tool = PlaywrightToolSpec(async_browser=async_browser) playwright_tool_list = playwright_tool.to_tool_list() playwright_agent_tool_list = [ tool for tool in playwright_tool_list if tool.metadata.name in ["click", "get_current_page", "navigate_to"] ] agent = FunctionAgent( tools=playwright_agent_tool_list + agentql_browser_tool.to_tool_list(), llm=OpenAI(model="gpt-4o"), )
 In [ ]:
 Copied!
 ```
 print(
-    agent.chat(
+    await agent.run(
         """
         Navigate to https://blog.samaltman.com/archive,
         Find blog posts titled "What I wish someone had told me", click on the link,
@@ -512,7 +512,7 @@ print(
 
 ```
 
-print( agent.chat( """ Navigate to https://blog.samaltman.com/archive, Find blog posts titled "What I wish someone had told me", click on the link, Extract the blog text and number of views. """ ) )
+print( await agent.run( """ Navigate to https://blog.samaltman.com/archive, Find blog posts titled "What I wish someone had told me", click on the link, Extract the blog text and number of views. """ ) )
 ```
 I have extracted the blog post titled "What I wish someone had told me" along with the number of views. Here are the details:
 
@@ -521,101 +521,5 @@ I have extracted the blog post titled "What I wish someone had told me" along wi
 
 **Number of Views:** 531,222
 
-```
-
-## Using the playwright tool with agent workflow¶
-In [ ]:
-Copied!
-```
-from llama_index.llms.openai import OpenAI
-from llama_index.core.agent.workflow import AgentWorkflow
-
-from llama_index.core.agent.workflow import (
-    AgentInput,
-    AgentOutput,
-    ToolCall,
-    ToolCallResult,
-    AgentStream,
-)
-
-playwright_tool_list = playwright_tool.to_tool_list()
-playwright_agent_tool_list = [
-    tool
-    for tool in playwright_tool_list
-    if tool.metadata.name in ["click", "get_current_page", "navigate_to"]
-]
-
-```
-
-from llama_index.llms.openai import OpenAI from llama_index.core.agent.workflow import AgentWorkflow from llama_index.core.agent.workflow import ( AgentInput, AgentOutput, ToolCall, ToolCallResult, AgentStream, ) playwright_tool_list = playwright_tool.to_tool_list() playwright_agent_tool_list = [ tool for tool in playwright_tool_list if tool.metadata.name in ["click", "get_current_page", "navigate_to"] ]
-In [ ]:
-Copied!
-```
-llm = OpenAI(model="gpt-4o")
-
-workflow = AgentWorkflow.from_tools_or_functions(
-    playwright_agent_tool_list + agentql_browser_tool.to_tool_list(),
-    llm=llm,
-    system_prompt="You are a helpful assistant that can do browser automation, data extraction and text summarization",
-)
-
-handler = workflow.run(
-    user_msg="""
-    Navigate to https://blog.samaltman.com/archive,
-    Find blog posts titled "What I wish someone had told me", click on the link,
-    Detect if the webpage has navigated to the blog post, 
-    then extract the blog text and number of views.
-    """
-)
-
-async for event in handler.stream_events():
-    if isinstance(event, AgentStream):
-        print(event.delta, end="", flush=True)
-    elif isinstance(event, ToolCallResult):
-        print(event.tool_name)  # the tool name
-        print(event.tool_kwargs)  # the tool kwargs
-        print(event.tool_output)  # the tool output
-
-```
-
-llm = OpenAI(model="gpt-4o") workflow = AgentWorkflow.from_tools_or_functions( playwright_agent_tool_list + agentql_browser_tool.to_tool_list(), llm=llm, system_prompt="You are a helpful assistant that can do browser automation, data extraction and text summarization", ) handler = workflow.run( user_msg=""" Navigate to https://blog.samaltman.com/archive, Find blog posts titled "What I wish someone had told me", click on the link, Detect if the webpage has navigated to the blog post, then extract the blog text and number of views. """ ) async for event in handler.stream_events(): if isinstance(event, AgentStream): print(event.delta, end="", flush=True) elif isinstance(event, ToolCallResult): print(event.tool_name) # the tool name print(event.tool_kwargs) # the tool kwargs print(event.tool_output) # the tool output
-```
-navigate_to
-{'url': 'https://blog.samaltman.com/archive'}
-Navigating to https://blog.samaltman.com/archive returned status code 200
-get_web_element_from_browser
-{'prompt': "blog post titled 'What I wish someone had told me'"}
-[tf623_id='1849']
-click
-{'selector': "[tf623_id='1849']"}
-Clicked element '[tf623_id='1849']'
-get_current_page
-{}
-https://blog.samaltman.com/what-i-wish-someone-had-told-me
-extract_web_data_from_browser
-{'prompt': 'Extract the blog text and number of views from the page.'}
-{'blog_post_text': 'Optimism, obsession, self-belief, raw horsepower and personal connections are how things get started.\nCohesive teams, the right combination of calmness and urgency, and unreasonable commitment are how things get finished. Long-term orientation is in short supply; try not to worry about what people think in the short term, which will get easier over time.\nIt is easier for a team to do a hard thing that really matters than to do an easy thing that doesn’t really matter; audacious ideas motivate people.\nIncentives are superpowers; set them carefully.\nConcentrate your resources on a small number of high-conviction bets; this is easy to say but evidently hard to do. You can delete more stuff than you think.\nCommunicate clearly and concisely.\nFight bullshit and bureaucracy every time you see it and get other people to fight it too. Do not let the org chart get in the way of people working productively together.\nOutcomes are what count; don’t let good process excuse bad results.\nSpend more time recruiting. Take risks on high-potential people with a fast rate of improvement. Look for evidence of getting stuff done in addition to intelligence.\nSuperstars are even more valuable than they seem, but you have to evaluate people on their net impact on the performance of the organization.\nFast iteration can make up for a lot; it’s usually ok to be wrong if you iterate quickly. Plans should be measured in decades, execution should be measured in weeks.\nDon’t fight the business equivalent of the laws of physics.\nInspiration is perishable and life goes by fast. Inaction is a particularly insidious type of risk.\nScale often has surprising emergent properties.\nCompounding exponentials are magic. In particular, you really want to build a business that gets a compounding advantage with scale.\nGet back up and keep going.\nWorking with great people is one of the best parts of life.', 'views_count': 531223}
-I have navigated to the blog post titled "What I Wish Someone Had Told Me" and extracted the following information:
-
-**Blog Text:**
-Optimism, obsession, self-belief, raw horsepower and personal connections are how things get started.
-Cohesive teams, the right combination of calmness and urgency, and unreasonable commitment are how things get finished. Long-term orientation is in short supply; try not to worry about what people think in the short term, which will get easier over time.
-It is easier for a team to do a hard thing that really matters than to do an easy thing that doesn’t really matter; audacious ideas motivate people.
-Incentives are superpowers; set them carefully.
-Concentrate your resources on a small number of high-conviction bets; this is easy to say but evidently hard to do. You can delete more stuff than you think.
-Communicate clearly and concisely.
-Fight bullshit and bureaucracy every time you see it and get other people to fight it too. Do not let the org chart get in the way of people working productively together.
-Outcomes are what count; don’t let good process excuse bad results.
-Spend more time recruiting. Take risks on high-potential people with a fast rate of improvement. Look for evidence of getting stuff done in addition to intelligence.
-Superstars are even more valuable than they seem, but you have to evaluate people on their net impact on the performance of the organization.
-Fast iteration can make up for a lot; it’s usually ok to be wrong if you iterate quickly. Plans should be measured in decades, execution should be measured in weeks.
-Don’t fight the business equivalent of the laws of physics.
-Inspiration is perishable and life goes by fast. Inaction is a particularly insidious type of risk.
-Scale often has surprising emergent properties.
-Compounding exponentials are magic. In particular, you really want to build a business that gets a compounding advantage with scale.
-Get back up and keep going.
-Working with great people is one of the best parts of life.
-
-**Number of Views:** 531,223
 ```
 

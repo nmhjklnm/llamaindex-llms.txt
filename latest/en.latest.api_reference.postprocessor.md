@@ -1,6 +1,6 @@
 # Index
 ##  BaseNodePostprocessor #
-Bases: `ChainableMixin`, `BaseComponent`, `DispatcherSpanMixin`, `ABC`
+Bases: `BaseComponent`, `DispatcherSpanMixin`, `ABC`
 Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
@@ -8,7 +8,7 @@ Name | Type | Description | Default
 Source code in `llama-index-core/llama_index/core/postprocessor/types.py`
 
 | ```
-class BaseNodePostprocessor(ChainableMixin, BaseComponent, DispatcherSpanMixin, ABC):
+class BaseNodePostprocessor(BaseComponent, DispatcherSpanMixin, ABC):
     model_config = ConfigDict(arbitrary_types_allowed=True)
     callback_manager: CallbackManager = Field(
         default_factory=CallbackManager, exclude=True
@@ -76,10 +76,6 @@ class BaseNodePostprocessor(ChainableMixin, BaseComponent, DispatcherSpanMixin, 
     ) -> List[NodeWithScore]:
         """Postprocess nodes (async)."""
         return await asyncio.to_thread(self._postprocess_nodes, nodes, query_bundle)
-
-    def _as_query_component(self, **kwargs: Any) -> QueryComponent:
-        """As query component."""
-        return PostprocessorComponent(postprocessor=self)
 
 ```
   

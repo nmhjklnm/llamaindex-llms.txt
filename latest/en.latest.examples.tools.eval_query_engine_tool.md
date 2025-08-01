@@ -169,56 +169,17 @@ from llama_index.core.tools import ToolMetadata from llama_index.core.tools.eval
 In [ ]:
 Copied!
 ```
-from llama_index.agent.openai import OpenAIAgent
+from llama_index.core.agent.workflow import FunctionAgent
+from llama_index.llms.openai import OpenAI
 
-agent = OpenAIAgent.from_tools(query_engine_tools, verbose=True)
-
-```
-
-from llama_index.agent.openai import OpenAIAgent agent = OpenAIAgent.from_tools(query_engine_tools, verbose=True)
-## Query Engine Fails Evaluation¶
-For demonstration purposes, we will tell the agent to choose the wrong tool first so that we can observe the effect of the `EvalQueryEngineTool` when evaluation fails. To achieve this, we will `tool_choice` to `lyft` when calling the agent.
-This is what we should expect to happen:
-  1. The agent will use the `lyft` tool first, which contains the wrong financials, as we have instructed it to do so
-  2. The `EvalQueryEngineTool` will evaluate the response of the query engine using its evaluator
-  3. The query engine output will fail evaluation because it contains Lyft's financials and not Uber's
-  4. The tool will form a response that informs the agent that the tool could not be used, giving a reason
-  5. The agent will fallback to the second tool, being `uber`
-  6. The query engine output of the second tool will pass evaluation because it contains Uber's financials
-  7. The agent will respond with an answer
-
-
-In [ ]:
-Copied!
-```
-response = await agent.achat(
-    "What was Uber's revenue growth in 2021?", tool_choice="lyft"
-)
-print(str(response))
+agent = FunctionAgent(tools=query_engine_tools, llm=OpenAI(model="gpt-4.1"))
 
 ```
 
-response = await agent.achat( "What was Uber's revenue growth in 2021?", tool_choice="lyft" ) print(str(response))
-```
-Added user message to memory: What was Uber's revenue growth in 2021?
-=== Calling Function ===
-Calling function: lyft with args: {"input":"What was Uber's revenue growth in 2021?"}
-Got output: Could not use tool lyft because it failed evaluation.
-Reason: NO
-========================
-
-=== Calling Function ===
-Calling function: uber with args: {"input":"What was Uber's revenue growth in 2021?"}
-Got output: Uber's revenue grew by 57% in 2021.
-========================
-
-Uber's revenue grew by 57% in 2021.
-
-```
-
+from llama_index.core.agent.workflow import FunctionAgent from llama_index.llms.openai import OpenAI agent = FunctionAgent(tools=query_engine_tools, llm=OpenAI(model="gpt-4.1"))
 ## Query Engine Passes Evaluation¶
 Here we are asking a question about Lyft's financials. This is what we should expect to happen:
-  1. The agent will use the `lyftk` tool first, simply based on its description as we have **not** set `tool_choice` here
+  1. The agent will use the `lyftk` tool first
   2. The `EvalQueryEngineTool` will evaluate the response of the query engine using its evaluator
   3. The output of the query engine will pass evaluation because it contains Lyft's financials
 
@@ -226,12 +187,12 @@ Here we are asking a question about Lyft's financials. This is what we should ex
 In [ ]:
 Copied!
 ```
-response = await agent.achat("What was Lyft's revenue growth in 2021?")
+response = await agent.run("What was Lyft's revenue growth in 2021?")
 print(str(response))
 
 ```
 
-response = await agent.achat("What was Lyft's revenue growth in 2021?") print(str(response))
+response = await agent.run("What was Lyft's revenue growth in 2021?") print(str(response))
 ```
 Added user message to memory: What was Lyft's revenue growth in 2021?
 === Calling Function ===

@@ -45,7 +45,7 @@ We have multiple guides showing how to use OpenAI's finetuning endpoints to fine
 We use GPT-4 to automatically generate questions from any unstructured context, and use a GPT-4 query engine flow to generate "ground-truth" answers. Our `OpenAIFineTuningHandler` callback automatically logs questions/answers to a dataset.
 We then launch a finetuning job, and get back a distilled model. We can evaluate this model with Ragas to benchmark against a naive GPT-3.5 workflow.
   * GPT-3.5 Fine-tuning Notebook (Colab)
-  * GPT-3.5 Fine-tuning Notebook (Notebook link) /examples/finetuning/react_agent/react_agent_finetune.ipynb
+  * GPT-3.5 Fine-tuning Notebook (Notebook link)
   * [WIP] Function Calling Fine-tuning
 
 

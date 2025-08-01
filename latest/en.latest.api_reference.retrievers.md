@@ -1,12 +1,12 @@
 # Index
 Base retriever.
 ##  BaseRetriever #
-Bases: `ChainableMixin`, `PromptMixin`, `DispatcherSpanMixin`
+Bases: `PromptMixin`, `DispatcherSpanMixin`
 Base retriever.
 Source code in `llama-index-core/llama_index/core/base/base_retriever.py`
 
 | ```
-class BaseRetriever(ChainableMixin, PromptMixin, DispatcherSpanMixin):
+class BaseRetriever(PromptMixin, DispatcherSpanMixin):
     """Base retriever."""
 
     def __init__(
@@ -66,20 +66,6 @@ class BaseRetriever(ChainableMixin, PromptMixin, DispatcherSpanMixin):
             ]
         elif isinstance(obj, BaseRetriever):
             return obj.retrieve(query_bundle)
-        elif isinstance(obj, QueryComponent):
-            component_keys = obj.input_keys.required_keys
-            if len(component_keys) > 1:
-                raise ValueError(
-                    f"QueryComponent {obj} has more than one input key: {component_keys}"
-                )
-            elif len(component_keys) == 0:
-                component_response = obj.run_component()
-            else:
-                kwargs = {next(iter(component_keys)): query_bundle.query_str}
-                component_response = obj.run_component(**kwargs)
-
-            result_output = str(next(iter(component_response.values())))
-            return [NodeWithScore(node=TextNode(text=result_output), score=score)]
         else:
             raise ValueError(f"Object {obj} is not retrievable.")
 
@@ -99,20 +85,6 @@ class BaseRetriever(ChainableMixin, PromptMixin, DispatcherSpanMixin):
             return [NodeWithScore(node=TextNode(text=str(response)), score=score)]
         elif isinstance(obj, BaseRetriever):
             return await obj.aretrieve(query_bundle)
-        elif isinstance(obj, QueryComponent):
-            component_keys = obj.input_keys.required_keys
-            if len(component_keys) > 1:
-                raise ValueError(
-                    f"QueryComponent {obj} has more than one input key: {component_keys}"
-                )
-            elif len(component_keys) == 0:
-                component_response = await obj.arun_component()
-            else:
-                kwargs = {next(iter(component_keys)): query_bundle.query_str}
-                component_response = await obj.arun_component(**kwargs)
-
-            result_output = str(next(iter(component_response.values())))
-            return [NodeWithScore(node=TextNode(text=result_output), score=score)]
         else:
             raise ValueError(f"Object {obj} is not retrievable.")
 
@@ -275,10 +247,6 @@ class BaseRetriever(ChainableMixin, PromptMixin, DispatcherSpanMixin):
 
         """
         return self._retrieve(query_bundle)
-
-    def _as_query_component(self, **kwargs: Any) -> QueryComponent:
-        """Return a query component."""
-        return RetrieverComponent(retriever=self)
 
 ```
   

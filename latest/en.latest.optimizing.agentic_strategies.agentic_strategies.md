@@ -11,11 +11,11 @@ These include routing and query transformations.
 This guides below show you how to deploy a full agent loop, capable of chain-of-thought and query planning, on top of existing RAG query engines as tools for more advanced decision making.
 Make sure to check out our full module guide on Data Agents, which highlight these use cases and much more.
 Our lower-level agent API shows you the internals of how an agent works (with step-wise execution).
-Example guides below (using OpenAI function calling):
-  * OpenAIAgent
-  * OpenAIAgent with Query Engine Tools
-  * OpenAIAgent Retrieval
-  * OpenAIAgent Query Cookbook
-  * OpenAIAgent Context Retrieval
+Example guides below (using LLM-provider-specific function calling):
+  * Basic Function Agent
+  * Function Agent with Query Engine Tools
+  * Function Agent Retrieval
+  * Function Agent Query Cookbook
+  * Function Agent w/ Context Retrieval
 
 

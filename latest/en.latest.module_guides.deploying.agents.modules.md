@@ -7,7 +7,6 @@ For more detailed guides on how to use specific tools, check out our tools modul
   * Retrieval Augmented Agent
   * OpenAI Agent Cookbook
   * Context Retrieval Agent
-  * Recursive Retriever Agents
   * Multi Document Agents
   * Agent Builder
 

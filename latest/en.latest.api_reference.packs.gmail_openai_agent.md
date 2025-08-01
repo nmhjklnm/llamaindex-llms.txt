@@ -13,7 +13,10 @@ class GmailOpenAIAgentPack(BaseLlamaPack):
             raise ImportError("llama_hub not installed.")
 
         self.tool_spec = GmailToolSpec(**gmail_tool_kwargs)
-        self.agent = OpenAIAgent.from_tools(self.tool_spec.to_tool_list())
+        self.agent = FunctionAgent(
+            tools=self.tool_spec.to_tool_list(),
+            llm=OpenAI(model="gpt-4.1"),
+        )
 
     def get_modules(self) -> Dict[str, Any]:
         """Get modules."""
@@ -21,7 +24,11 @@ class GmailOpenAIAgentPack(BaseLlamaPack):
 
     def run(self, *args: Any, **kwargs: Any) -> Any:
         """Run the pipeline."""
-        return self.agent.chat(*args, **kwargs)
+        return asyncio_run(self.arun(*args, **kwargs))
+
+    async def arun(self, *args: Any, **kwargs: Any) -> Any:
+        """Run the pipeline asynchronously."""
+        return await self.agent.run(*args, **kwargs)
 
 ```
   
@@ -55,7 +62,24 @@ Source code in `llama-index-packs/llama-index-packs-gmail-openai-agent/llama_ind
 | ```
 def run(self, *args: Any, **kwargs: Any) -> Any:
     """Run the pipeline."""
-    return self.agent.chat(*args, **kwargs)
+    return asyncio_run(self.arun(*args, **kwargs))
+
+```
+  
+---|---  
+###  arun `async` #
+```
+arun(*args: Any, **kwargs: Any) -> Any
+
+```
+
+Run the pipeline asynchronously.
+Source code in `llama-index-packs/llama-index-packs-gmail-openai-agent/llama_index/packs/gmail_openai_agent/base.py`
+
+| ```
+async def arun(self, *args: Any, **kwargs: Any) -> Any:
+    """Run the pipeline asynchronously."""
+    return await self.agent.run(*args, **kwargs)
 
 ```
   

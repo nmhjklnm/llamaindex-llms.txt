@@ -1,11 +1,11 @@
 # Langchain
 ##  LangchainOutputParser #
-Bases: `ChainableOutputParser`
+Bases: `BaseOutputParser`
 Langchain output parser.
 Source code in `llama-index-integrations/output_parsers/llama-index-output-parsers-langchain/llama_index/output_parsers/langchain/base.py`
 
 | ```
-class LangchainOutputParser(ChainableOutputParser):
+class LangchainOutputParser(BaseOutputParser):
     """Langchain output parser."""
 
     def __init__(

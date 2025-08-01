@@ -39,7 +39,6 @@ We support integrations with OpenAI, Anthropic, Google, Hugging Face, and more.
   * Nvidia Triton
   * Ollama
   * OpenAI
-  * OpenLLM
   * OpenRouter
   * Perplexity
   * Pipeshift
@@ -55,6 +54,7 @@ We support integrations with OpenAI, Anthropic, Google, Hugging Face, and more.
   * Together.ai
   * Unify AI
   * Upstage
+  * Vercel AI Gateway
   * vLLM
   * Xorbits Inference
   * Yi

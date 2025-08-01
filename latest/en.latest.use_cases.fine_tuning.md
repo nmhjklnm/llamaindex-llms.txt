@@ -46,7 +46,6 @@ We use GPT-4 to automatically generate questions from any unstructured context, 
 We then launch a finetuning job, and get back a distilled model. We can evaluate this model with Ragas to benchmark against a naive GPT-3.5 flow.
   * GPT-3.5 Fine-tuning Notebook (Colab)
   * GPT-3.5 Fine-tuning Notebook (Notebook link)
-  * React Agent Finetuning
   * [WIP] Function Calling Fine-tuning
 
 

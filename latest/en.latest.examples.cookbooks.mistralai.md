@@ -138,13 +138,13 @@ In 2021, Lyft invested in several areas to advance its mission and maintain its 
 
 ```
 
-###  `FunctionCallingAgent` with RAG QueryEngineTools.¶
+###  `FunctionAgent` with RAG QueryEngineTools.¶
 Here we use `Fuction Calling` capabilities of the model.
 In [ ]:
 Copied!
 ```
 from llama_index.core.tools import QueryEngineTool, ToolMetadata
-from llama_index.core.agent import FunctionCallingAgent
+from llama_index.core.agent.workflow import FunctionAgent
 
 query_engine_tools = [
     QueryEngineTool(
@@ -163,69 +163,30 @@ query_engine_tools = [
     ),
 ]
 
-agent = FunctionCallingAgent.from_tools(
-    query_engine_tools,
+agent = FunctionAgent(
+    tools=query_engine_tools,
     llm=llm,
-    verbose=True,
-    allow_parallel_tool_calls=False,
 )
 
 ```
 
-from llama_index.core.tools import QueryEngineTool, ToolMetadata from llama_index.core.agent import FunctionCallingAgent query_engine_tools = [ QueryEngineTool( query_engine=lyft_query_engine, metadata=ToolMetadata( name="lyft_10k", description="Provides information about Lyft financials for year 2021", ), ), QueryEngineTool( query_engine=uber_query_engine, metadata=ToolMetadata( name="uber_10k", description="Provides information about Uber financials for year 2021", ), ), ] agent = FunctionCallingAgent.from_tools( query_engine_tools, llm=llm, verbose=True, allow_parallel_tool_calls=False, )
+from llama_index.core.tools import QueryEngineTool, ToolMetadata from llama_index.core.agent.workflow import FunctionAgent query_engine_tools = [ QueryEngineTool( query_engine=lyft_query_engine, metadata=ToolMetadata( name="lyft_10k", description="Provides information about Lyft financials for year 2021", ), ), QueryEngineTool( query_engine=uber_query_engine, metadata=ToolMetadata( name="uber_10k", description="Provides information about Uber financials for year 2021", ), ), ] agent = FunctionAgent( tools=query_engine_tools, llm=llm, )
 In [ ]:
 Copied!
 ```
-response = agent.chat("What is the revenue of uber in 2021.")
+response = await agent.run("What is the revenue of uber in 2021.")
 
 ```
 
-response = agent.chat("What is the revenue of uber in 2021.")
-```
-Added user message to memory: What is the revenue of uber in 2021.
-=== Calling Function ===
-Calling function: uber_10k with args: {"input": "revenue"}
-=== Function Output ===
-Uber's revenue is primarily derived from fees paid by Mobility Drivers for using their platforms and related services to facilitate and complete Mobility services. Additionally, revenue is generated from fees paid by end-users for connection services obtained via the platform in certain markets. Uber's revenue also includes immaterial revenue streams such as financial partnerships products and Vehicle Solutions.
-
-Uber's Delivery revenue is derived from Merchants' and Couriers' use of the Delivery platform and related services to facilitate and complete Delivery transactions. In certain markets where Uber is responsible for delivery services, delivery fees charged to end-users are also included in revenue. Advertising revenue from sponsored listing fees paid by merchants and brands in exchange for advertising services is also included in Delivery revenue.
-
-Freight revenue consists of revenue from freight transportation services provided to shippers. After the acquisition of Transplace in the fourth quarter of 2021, Freight revenue also includes revenue from transportation management.
-
-All Other revenue primarily includes collaboration revenue related to Uber's Advanced Technologies Group (ATG) business and revenue from New Mobility offerings and products. ATG collaboration revenue was related to a three-year joint collaboration agreement entered into in 2019. New Mobility offerings and products provided users access to rides through a variety of modes, including dockless e-bikes and e-scooters, platform incubator group offerings, and other immaterial revenue streams.
-
-Uber's revenue is presented in the following tables for the years ended December 31, 2019, 2020, and 2021, respectively (in millions):
-
-| Year Ended December 31, | 2019 | 2020 | 2021 |
-| --- | --- | --- | --- |
-| Mobility revenue | $10,707 | $6,089 | $6,953 |
-| Delivery revenue | 1,401 | 3,904 | 8,362 |
-| Freight revenue | 731 | 1,011 | 2,132 |
-| All Other revenue | 161 | 135 | 8 |
-| Total revenue
-=== LLM Response ===
-Uber's revenue for the year 2021 is presented in the following table:
-
-| Year Ended December 31, | 2019 | 2020 | 2021 |
-|---|---|---|---|
-| Mobility revenue | $10,707 | $6,089 | $6,953 |
-| Delivery revenue | 1,401 | 3,904 | 8,362 |
-| Freight revenue | 731 | 1,011 | 2,132 |
-| All Other revenue | 161 | 135 | 8 |
-| Total revenue | $13,000 | $11,139 | $17,455 |
-
-Uber's total revenue for the year 2021 was $17,455 million.
-
-```
-
+response = await agent.run("What is the revenue of uber in 2021.")
 In [ ]:
 Copied!
 ```
-print(response)
+print(str(response))
 
 ```
 
-print(response)
+print(str(response))
 ```
 assistant: Uber's revenue for the year 2021 is presented in the following table:
 
@@ -244,30 +205,19 @@ Uber's total revenue for the year 2021 was $17,455 million.
 In [ ]:
 Copied!
 ```
-response = agent.chat("What are lyft investments in 2021?")
+response = await agent.run("What are lyft investments in 2021?")
 
 ```
 
-response = agent.chat("What are lyft investments in 2021?")
-```
-Added user message to memory: What are lyft investments in 2021?
-=== Calling Function ===
-Calling function: lyft_10k with args: {"input": "investments"}
-=== Function Output ===
-The company's investments include cash and cash equivalents, short-term investments, and restricted investments. Cash equivalents consist of certificates of deposits, commercial paper, and corporate bonds with an original maturity of 90 days or less. Short-term investments are comprised of commercial paper, certificates of deposit, and corporate bonds that mature in twelve months or less. Restricted investments are held in trust accounts at third-party financial institutions and include debt security investments in commercial paper, certificates of deposit, corporate bonds, and U.S. government securities. The company also has investments in non-marketable equity securities, which are measured at cost with remeasurements to fair value only upon the occurrence of observable transactions for identical or similar investments of the same issuer or impairment.
-=== LLM Response ===
-Lyft's investments in 2021 include cash and cash equivalents, short-term investments, and restricted investments. Cash equivalents consist of certificates of deposits, commercial paper, and corporate bonds with an original maturity of 90 days or less. Short-term investments are comprised of commercial paper, certificates of deposit, and corporate bonds that mature in twelve months or less. Restricted investments are held in trust accounts at third-party financial institutions and include debt security investments in commercial paper, certificates of deposit, corporate bonds, and U.S. government securities. The company also has investments in non-marketable equity securities, which are measured at cost with remeasurements to fair value only upon the occurrence of observable transactions for identical or similar investments of the same issuer or impairment.
-
-```
-
+response = await agent.run("What are lyft investments in 2021?")
 In [ ]:
 Copied!
 ```
-print(response)
+print(str(response))
 
 ```
 
-print(response)
+print(str(response))
 ```
 assistant: Lyft's investments in 2021 include cash and cash equivalents, short-term investments, and restricted investments. Cash equivalents consist of certificates of deposits, commercial paper, and corporate bonds with an original maturity of 90 days or less. Short-term investments are comprised of commercial paper, certificates of deposit, and corporate bonds that mature in twelve months or less. Restricted investments are held in trust accounts at third-party financial institutions and include debt security investments in commercial paper, certificates of deposit, corporate bonds, and U.S. government securities. The company also has investments in non-marketable equity securities, which are measured at cost with remeasurements to fair value only upon the occurrence of observable transactions for identical or similar investments of the same issuer or impairment.
 
@@ -278,14 +228,14 @@ In [ ]:
 Copied!
 ```
 from llama_index.core.tools import FunctionTool
-from llama_index.core.agent import (
-    FunctionCallingAgent,
+from llama_index.core.agent.workflow import (
+    FunctionAgent,
     ReActAgent,
 )
 
 ```
 
-from llama_index.core.tools import FunctionTool from llama_index.core.agent import ( FunctionCallingAgent, ReActAgent, )
+from llama_index.core.tools import FunctionTool from llama_index.core.agent.workflow import ( FunctionAgent, ReActAgent, )
 In [ ]:
 Copied!
 ```
@@ -315,77 +265,38 @@ def multiply(a: int, b: int) -> int: """Multiply two integers and returns the re
 In [ ]:
 Copied!
 ```
-agent = FunctionCallingAgent.from_tools(
-    [multiply_tool, add_tool, subtract_tool],
+agent = FunctionAgent(
+    tools=[multiply_tool, add_tool, subtract_tool],
     llm=llm,
-    verbose=True,
-    allow_parallel_tool_calls=False,
 )
 
 ```
 
-agent = FunctionCallingAgent.from_tools( [multiply_tool, add_tool, subtract_tool], llm=llm, verbose=True, allow_parallel_tool_calls=False, )
+agent = FunctionAgent( tools=[multiply_tool, add_tool, subtract_tool], llm=llm, )
 In [ ]:
 Copied!
 ```
-response = agent.chat("What is (26 * 2) + 2024?")
-print(response)
+response = await agent.run("What is (26 * 2) + 2024?")
+print(str(response))
 
 ```
 
-response = agent.chat("What is (26 * 2) + 2024?") print(response)
-```
-Added user message to memory: What is (26 * 2) + 2024?
-=== Calling Function ===
-Calling function: multiply with args: {"a": 26, "b": 2}
-=== Function Output ===
-52
-=== Calling Function ===
-Calling function: add with args: {"a": 52, "b": 2024}
-=== Function Output ===
-2076
-=== LLM Response ===
-The result of (26 * 2) + 2024 is 2076.
-assistant: The result of (26 * 2) + 2024 is 2076.
-
-```
-
+response = await agent.run("What is (26 * 2) + 2024?") print(str(response))
 ### With ReAct Agent¶
 In [ ]:
 Copied!
 ```
-agent = ReActAgent.from_tools(
-    [multiply_tool, add_tool, subtract_tool], llm=llm, verbose=True
-)
+agent = ReActAgent(tools=[multiply_tool, add_tool, subtract_tool], llm=llm)
 
 ```
 
-agent = ReActAgent.from_tools( [multiply_tool, add_tool, subtract_tool], llm=llm, verbose=True )
+agent = ReActAgent(tools=[multiply_tool, add_tool, subtract_tool], llm=llm)
 In [ ]:
 Copied!
 ```
-response = agent.chat("What is (26 * 2) + 2024?")
-print(response)
+response = await agent.run("What is (26 * 2) + 2024?")
+print(str(response))
 
 ```
 
-response = agent.chat("What is (26 * 2) + 2024?") print(response)
-```
-Thought: I need to use a tool to help me answer the question.
-Action: multiply
-Action Input: {"a": 26, "b": 2}
-
-Observation: 52
-
-Thought: I need to use another tool to continue answering the question.
-Action: add
-Action Input: {"a": 52, "b": 2024}
-
-Observation: 2076
-
-Thought: I can answer without using any more tools. I'll use the user's language to answer
-Answer: (26 * 2) + 2024 equals 2076.
-(26 * 2) + 2024 equals 2076.
-
-```
-
+response = await agent.run("What is (26 * 2) + 2024?") print(str(response))

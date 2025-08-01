@@ -126,11 +126,11 @@ Song(name='Rap God', artist='Eminem')
 In [ ]:
 Copied!
 ```
-from llama_index.agent.openai import OpenAIAgent
+from llama_index.core.agent.workflow import FunctionAgent
 
 ```
 
-from llama_index.agent.openai import OpenAIAgent
+from llama_index.core.agent.workflow import FunctionAgent
 In [ ]:
 Copied!
 ```
@@ -158,35 +158,20 @@ from llama_index.core.tools import BaseTool, FunctionTool def multiply(a: int, b
 In [ ]:
 Copied!
 ```
-agent = OpenAIAgent.from_tools(
-    [multiply_tool, add_tool], llm=llm, verbose=True
+agent = FunctionAgent(
+    tools=[multiply_tool, add_tool],
+    llm=llm,
 )
 
 ```
 
-agent = OpenAIAgent.from_tools( [multiply_tool, add_tool], llm=llm, verbose=True )
+agent = FunctionAgent( tools=[multiply_tool, add_tool], llm=llm, )
 In [ ]:
 Copied!
 ```
-response = agent.chat("What is (121 * 3) + 42?")
+response = await agent.run("What is (121 * 3) + 42?")
 print(str(response))
 
 ```
 
-response = agent.chat("What is (121 * 3) + 42?") print(str(response))
-```
-Added user message to memory: What is (121 * 3) + 42?
-=== Calling Function ===
-Calling function: multiply with args: {"a": 121, "b": 3}
-Got output: 363
-========================
-
-=== Calling Function ===
-Calling function: add with args: {"a": 363, "b": 42}
-Got output: 405
-========================
-
-The result of (121 * 3) + 42 is 405.
-
-```
-
+response = await agent.run("What is (121 * 3) + 42?") print(str(response))

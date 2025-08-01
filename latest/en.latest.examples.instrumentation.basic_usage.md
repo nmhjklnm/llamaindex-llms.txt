@@ -176,7 +176,7 @@ qe_dispatcher
 qe_dispatcher
 Out[ ]:
 ```
-Dispatcher(name='llama_index.core.base.base_query_engine', event_handlers=[], span_handlers=[NullSpanHandler(open_spans={}, current_span_id=None)], parent_name='root', manager=<llama_index.core.instrumentation.dispatcher.Manager object at 0x1481ab4c0>, root_name='root', propagate=True)
+Dispatcher(name='llama_index.core.base.base_query_engine', event_handlers=[], span_handlers=[], parent_name='root', manager=<llama_index_instrumentation.dispatcher.Manager object at 0x105e5a780>, root_name='root', propagate=True, current_span_ids={})
 ```
 
 In [ ]:
@@ -189,7 +189,7 @@ qe_dispatcher.parent
 qe_dispatcher.parent
 Out[ ]:
 ```
-Dispatcher(name='root', event_handlers=[NullEventHandler(), MyEventHandler()], span_handlers=[NullSpanHandler(open_spans={}, current_span_id=None), SimpleSpanHandler(open_spans={}, current_span_id=None, completed_spans=[])], parent_name='', manager=None, root_name='root', propagate=False)
+Dispatcher(name='root', event_handlers=[NullEventHandler(), MyEventHandler()], span_handlers=[NullSpanHandler(open_spans={}, completed_spans=[], dropped_spans=[], current_span_ids={}), SimpleSpanHandler(open_spans={}, completed_spans=[], dropped_spans=[], current_span_ids={})], parent_name='', manager=None, root_name='root', propagate=False, current_span_ids={})
 ```
 
 ### Test It Out¶

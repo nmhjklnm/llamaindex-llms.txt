@@ -154,12 +154,12 @@ object_node_mapping: BaseObjectNodeMapping
 
 Object node mapping.
 ##  ObjectRetriever #
-Bases: `ChainableMixin`, `Generic[OT]`
+Bases: `Generic[OT]`
 Object retriever.
 Source code in `llama-index-core/llama_index/core/objects/base.py`
 
 | ```
-class ObjectRetriever(ChainableMixin, Generic[OT]):
+class ObjectRetriever(Generic[OT]):
     """Object retriever."""
 
     def __init__(
@@ -214,10 +214,6 @@ class ObjectRetriever(ChainableMixin, Generic[OT]):
             )
 
         return [self._object_node_mapping.from_node(node.node) for node in nodes]
-
-    def _as_query_component(self, **kwargs: Any) -> QueryComponent:
-        """As query component."""
-        return ObjectRetrieverComponent(retriever=self)
 
 ```
   

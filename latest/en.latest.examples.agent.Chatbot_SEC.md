@@ -174,7 +174,7 @@ query_engine = SubQuestionQueryEngine.from_defaults(
 
 from llama_index.core.query_engine import SubQuestionQueryEngine query_engine = SubQuestionQueryEngine.from_defaults( query_engine_tools=individual_query_engine_tools, )
 ### Setting up the Chatbot Agent¶
-We use a LlamaIndex Data Agent to setup the outer chatbot agent, which has access to a set of Tools. Specifically, we will use an OpenAIAgent, that takes advantage of OpenAI API function calling. We want to use the separate Tools we defined previously for each index (corresponding to a given year), as well as a tool for the sub question query engine we defined above.
+We use a LlamaIndex Data Agent to setup the outer chatbot agent, which has access to a set of Tools. Specifically, we will use an FunctionAgent, that takes advantage of OpenAI API function calling. We want to use the separate Tools we defined previously for each index (corresponding to a given year), as well as a tool for the sub question query engine we defined above.
 First we define a `QueryEngineTool` for the sub question query engine:
 In [ ]:
 Copied!

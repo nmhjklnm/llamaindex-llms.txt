@@ -125,7 +125,7 @@ Name | Type | Description | Default
 `is_function` |  `bool | None` |  |  `None`  
 `new_item_event` |  `Event | None` |  |  `None`  
 `is_function_false_event` |  `Event | None` |  |  `None`  
-`is_function_not_none_thread_event` |  `Event` |  Class implementing event objects. Events manage a flag that can be set to true with the set() method and reset to false with the clear() method. The wait() method blocks until the flag is true. The flag is initially false. |  `<threading.Event at 0x7132fe9e1970: unset>`  
+`is_function_not_none_thread_event` |  `Event` |  Class implementing event objects. Events manage a flag that can be set to true with the set() method and reset to false with the clear() method. The wait() method blocks until the flag is true. The flag is initially false. |  `<threading.Event at 0x71097c670b90: unset>`  
 `is_writing_to_memory` |  `bool` |  |  `True`  
 `exception` |  `Exception | None` |  |  `None`  
 `awrite_response_to_history_task` |  `Task | None` |  |  `None`  
@@ -654,6 +654,8 @@ class ChatMode(str, Enum):
     """Corresponds to `ReActAgent`.
 
     Use a ReAct agent loop with query engine tools.
+
+    NOTE: Deprecated and unsupported.
     """
 
     OPENAI = "openai"
@@ -661,14 +663,13 @@ class ChatMode(str, Enum):
 
     Use an OpenAI function calling agent loop.
 
-    NOTE: only works with OpenAI models that support function calling API.
+    NOTE: Deprecated and unsupported.
     """
 
     BEST = "best"
     """Select the best chat engine based on the current LLM.
 
-    Corresponds to `OpenAIAgent` if using an OpenAI model that supports
-    function calling API, otherwise, corresponds to `ReActAgent`.
+    Corresponds to `condense_plus_context`
     """
 
 ```
@@ -714,6 +715,7 @@ REACT = 'react'
 
 Corresponds to `ReActAgent`.
 Use a ReAct agent loop with query engine tools.
+NOTE: Deprecated and unsupported.
 ###  OPENAI `class-attribute` `instance-attribute` #
 ```
 OPENAI = 'openai'
@@ -722,7 +724,7 @@ OPENAI = 'openai'
 
 Corresponds to `OpenAIAgent`.
 Use an OpenAI function calling agent loop.
-NOTE: only works with OpenAI models that support function calling API.
+NOTE: Deprecated and unsupported.
 ###  BEST `class-attribute` `instance-attribute` #
 ```
 BEST = 'best'
@@ -730,7 +732,7 @@ BEST = 'best'
 ```
 
 Select the best chat engine based on the current LLM.
-Corresponds to `OpenAIAgent` if using an OpenAI model that supports function calling API, otherwise, corresponds to `ReActAgent`.
+Corresponds to `condense_plus_context`
 ##  is_function #
 ```
 is_function(message: ChatMessage) -> bool

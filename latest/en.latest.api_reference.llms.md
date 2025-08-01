@@ -38,13 +38,6 @@ class_name() -> str
 
 Get the class name, used as a unique ID in serialization.
 This provides a key that makes serialization robust against actual class name changes.
-###  as_query_component #
-```
-as_query_component(partial: Optional[Dict[str, Any]] = None, **kwargs: Any) -> QueryComponent
-
-```
-
-Get query component.
 ###  convert_chat_messages #
 ```
 convert_chat_messages(messages: Sequence[ChatMessage]) -> List[Any]

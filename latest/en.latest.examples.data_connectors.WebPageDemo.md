@@ -649,7 +649,7 @@ display(Markdown(f"<b>{response}</b>"))
 index = VectorStoreIndex.from_documents(document) query_engine = index.as_query_engine() response = query_engine.query( "Find companies that are working on web agent, list their names, locations and link" ) display(Markdown(f"**{response}** "))
 # Using OxylabsWebReader¶
 OxylabsWebReader allows a user to scrape any website with different parameters while bypassing most of the anti-bot tools. Check out the Oxylabs documentation to get the full list of parameters.
-Get the credentials by creating an Oxylabs Account here.
+Claim free API credentials by creating an Oxylabs account here.
 In [ ]:
 Copied!
 ```

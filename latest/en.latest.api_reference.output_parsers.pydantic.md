@@ -1,7 +1,7 @@
 # Pydantic
 Output parsers.
 ##  PydanticOutputParser #
-Bases: `ChainableOutputParser`, `Generic[Model]`
+Bases: `BaseOutputParser`, `Generic[Model]`
 Pydantic Output Parser.
 Parameters:
 Name | Type | Description | Default  
@@ -10,7 +10,7 @@ Name | Type | Description | Default
 Source code in `llama-index-core/llama_index/core/output_parsers/pydantic.py`
 
 | ```
-class PydanticOutputParser(ChainableOutputParser, Generic[Model]):
+class PydanticOutputParser(BaseOutputParser, Generic[Model]):
     """
     Pydantic Output Parser.
 

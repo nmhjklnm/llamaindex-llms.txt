@@ -22,7 +22,7 @@ class CodeHierarchyAgentPack(BaseLlamaPack):
             description="Search the code hierarchy for a specific code element, using keywords or IDs.",
         )
 
-        self.agent = OpenAIAgent.from_tools(
+        self.agent = FunctionAgent(
             tools=[self.tool],
             llm=llm,
             system_prompt=self.query_engine.get_tool_instructions(),
@@ -38,7 +38,11 @@ class CodeHierarchyAgentPack(BaseLlamaPack):
 
     def run(self, user_message: str) -> str:
         """Run the agent on the user message."""
-        return str(self.agent.chat(user_message))
+        return asyncio_run(self.arun(user_message))
+
+    async def arun(self, user_message: str) -> str:
+        """Run the agent on the user message."""
+        return str(await self.agent.run(user_message))
 
 ```
   
@@ -55,7 +59,24 @@ Source code in `llama-index-packs/llama-index-packs-code-hierarchy/llama_index/p
 | ```
 def run(self, user_message: str) -> str:
     """Run the agent on the user message."""
-    return str(self.agent.chat(user_message))
+    return asyncio_run(self.arun(user_message))
+
+```
+  
+---|---  
+###  arun `async` #
+```
+arun(user_message: str) -> str
+
+```
+
+Run the agent on the user message.
+Source code in `llama-index-packs/llama-index-packs-code-hierarchy/llama_index/packs/code_hierarchy/base.py`
+
+| ```
+async def arun(self, user_message: str) -> str:
+    """Run the agent on the user message."""
+    return str(await self.agent.run(user_message))
 
 ```
   

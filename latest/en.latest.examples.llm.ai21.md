@@ -227,7 +227,7 @@ from llama_index.llms.ai21 import AI21 llm = AI21(api_key=api_key, model="jamba-
 In [ ]:
 Copied!
 ```
-from llama_index.core.agent import FunctionCallingAgentWorker
+from llama_index.core.agent import FunctionAgent
 from llama_index.llms.ai21 import AI21
 from llama_index.core.tools import FunctionTool
 
@@ -259,18 +259,15 @@ divide_tool = FunctionTool.from_defaults(fn=divide)
 
 llm = AI21(model="jamba-1.5-mini", api_key=api_key)
 
-agent_worker = FunctionCallingAgentWorker.from_tools(
-    [multiply_tool, add_tool, subtract_tool, divide_tool],
+agent = FunctionAgent(
+    tools=[multiply_tool, add_tool, subtract_tool, divide_tool],
     llm=llm,
-    verbose=True,
-    allow_parallel_tool_calls=True,
 )
-agent = agent_worker.as_agent()
 
-response = agent.chat(
+response = await agent.run(
     "My friend Moses had 10 apples. He ate 5 apples in the morning. Then he found a box with 25 apples. He divided all his apples between his 5 friends. How many apples did each friend get?"
 )
 
 ```
 
-from llama_index.core.agent import FunctionCallingAgentWorker from llama_index.llms.ai21 import AI21 from llama_index.core.tools import FunctionTool def multiply(a: int, b: int) -> int: """Multiply two integers and returns the result integer""" return a * b def subtract(a: int, b: int) -> int: """Subtract two integers and returns the result integer""" return a - b def divide(a: int, b: int) -> float: """Divide two integers and returns the result float""" return a - b def add(a: int, b: int) -> int: """Add two integers and returns the result integer""" return a + b multiply_tool = FunctionTool.from_defaults(fn=multiply) add_tool = FunctionTool.from_defaults(fn=add) subtract_tool = FunctionTool.from_defaults(fn=subtract) divide_tool = FunctionTool.from_defaults(fn=divide) llm = AI21(model="jamba-1.5-mini", api_key=api_key) agent_worker = FunctionCallingAgentWorker.from_tools( [multiply_tool, add_tool, subtract_tool, divide_tool], llm=llm, verbose=True, allow_parallel_tool_calls=True, ) agent = agent_worker.as_agent() response = agent.chat( "My friend Moses had 10 apples. He ate 5 apples in the morning. Then he found a box with 25 apples. He divided all his apples between his 5 friends. How many apples did each friend get?" )
+from llama_index.core.agent import FunctionAgent from llama_index.llms.ai21 import AI21 from llama_index.core.tools import FunctionTool def multiply(a: int, b: int) -> int: """Multiply two integers and returns the result integer""" return a * b def subtract(a: int, b: int) -> int: """Subtract two integers and returns the result integer""" return a - b def divide(a: int, b: int) -> float: """Divide two integers and returns the result float""" return a - b def add(a: int, b: int) -> int: """Add two integers and returns the result integer""" return a + b multiply_tool = FunctionTool.from_defaults(fn=multiply) add_tool = FunctionTool.from_defaults(fn=add) subtract_tool = FunctionTool.from_defaults(fn=subtract) divide_tool = FunctionTool.from_defaults(fn=divide) llm = AI21(model="jamba-1.5-mini", api_key=api_key) agent = FunctionAgent( tools=[multiply_tool, add_tool, subtract_tool, divide_tool], llm=llm, ) response = await agent.run( "My friend Moses had 10 apples. He ate 5 apples in the morning. Then he found a box with 25 apples. He divided all his apples between his 5 friends. How many apples did each friend get?" )

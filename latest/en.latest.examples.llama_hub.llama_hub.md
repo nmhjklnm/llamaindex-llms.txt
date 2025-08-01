@@ -112,24 +112,28 @@ In [ ]:
 Copied!
 ```
 # plug into your agent
-from llama_index.agent.openai import OpenAIAgent
+from llama_index.core.agent.workflow import FunctionAgent
+from llama_index.llms.openai import OpenAI
 
 ```
 
-# plug into your agent from llama_index.agent.openai import OpenAIAgent
+# plug into your agent from llama_index.core.agent.workflow import FunctionAgent from llama_index.llms.openai import OpenAI
 In [ ]:
 Copied!
 ```
-agent = OpenAIAgent.from_tools(tool_spec.to_tool_list())
+agent = FunctionAgent(
+    tools=tool_spec.to_tool_list(),
+    llm=OpenAI(model="gpt-4.1-mini"),
+)
 
 ```
 
-agent = OpenAIAgent.from_tools(tool_spec.to_tool_list())
+agent = FunctionAgent( tools=tool_spec.to_tool_list(), llm=OpenAI(model="gpt-4.1-mini"), )
 In [ ]:
 Copied!
 ```
-agent.chat("What is my most recent email")
+await agent.run("What is my most recent email")
 
 ```
 
-agent.chat("What is my most recent email")
+await agent.run("What is my most recent email")

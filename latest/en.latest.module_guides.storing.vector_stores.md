@@ -42,6 +42,7 @@ Postgres | self-hosted / cloud | ✓ | ✓ | ✓ | ✓ | ✓
 pgvecto.rs | self-hosted / cloud | ✓ | ✓ | ✓ | ✓ |   
 Qdrant | self-hosted / cloud | ✓ | ✓ | ✓ | ✓ | ✓  
 Redis | self-hosted / cloud | ✓ |  | ✓ | ✓ |   
+S3 | cloud | ✓ |  | ✓ | ✓ | ✓* (using asyncio.to_thread)  
 Simple | in-memory | ✓ |  | ✓ |  |   
 SingleStore | self-hosted / cloud | ✓ |  | ✓ | ✓ |   
 Supabase | self-hosted / cloud | ✓ |  | ✓ | ✓ |   
@@ -101,6 +102,7 @@ For more details, see Vector Store Integrations.
   * Qdrant
   * Qdrant Hybrid Search
   * Rockset
+  * S3
   * Simple
   * Supabase
   * Tablestore

@@ -37,9 +37,8 @@ class MixedbreadAIRerank(BaseNodePostprocessor):
     )
     top_n: int = Field(default=10, description="Top N nodes to return.", gt=0)
 
-    _client: Any = PrivateAttr()
-    _async_client: Any = PrivateAttr()
-    _request_options: Optional[RequestOptions] = PrivateAttr()
+    _client: Mixedbread = PrivateAttr()
+    _async_client: AsyncMixedbread = PrivateAttr()
 
     def __init__(
         self,
@@ -60,14 +59,17 @@ class MixedbreadAIRerank(BaseNodePostprocessor):
                 "specify via MXBAI_API_KEY environment variable"
             )
 
-        self._client = MixedbreadAI(
-            api_key=api_key, timeout=timeout, httpx_client=httpx_client
+        self._client = Mixedbread(
+            api_key=api_key,
+            timeout=timeout,
+            http_client=httpx_client,
+            max_retries=max_retries if max_retries is not None else DEFAULT_MAX_RETRIES,
         )
-        self._async_client = MixedbreadAI(
-            api_key=api_key, timeout=timeout, httpx_client=httpx_async_client
-        )
-        self._request_options = (
-            RequestOptions(max_retries=max_retries) if max_retries is not None else None
+        self._async_client = AsyncMixedbread(
+            api_key=api_key,
+            timeout=timeout,
+            http_client=httpx_async_client,
+            max_retries=max_retries if max_retries is not None else DEFAULT_MAX_RETRIES,
         )
 
     @classmethod
@@ -115,13 +117,12 @@ class MixedbreadAIRerank(BaseNodePostprocessor):
                 node.node.get_content(metadata_mode=MetadataMode.EMBED)
                 for node in nodes
             ]
-            results = self._client.reranking(
+            results = self._client.rerank(
                 model=self.model,
                 query=query_bundle.query_str,
                 input=texts,
                 top_k=self.top_n,
                 return_input=False,
-                request_options=self._request_options,
             )
 
             new_nodes = []
