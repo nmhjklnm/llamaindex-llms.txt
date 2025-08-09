@@ -530,6 +530,36 @@ assistant: The image contains four wooden dice with black dots on a dark gray su
 
 ```
 
+You can also pass in documents.
+In [ ]:
+Copied!
+```
+from llama_index.core.llms import DocumentBlock
+
+messages = [
+    ChatMessage(
+        role="user",
+        blocks=[
+            DocumentBlock(
+                path="/path/to/your/test.pdf", mime_type="application/pdf"
+            ),
+            TextBlock(text="Describe the document in a sentence."),
+        ],
+    )
+]
+
+resp = llm.chat(messages)
+print(resp)
+
+```
+
+from llama_index.core.llms import DocumentBlock messages = [ ChatMessage( role="user", blocks=[ DocumentBlock( path="/path/to/your/test.pdf", mime_type="application/pdf" ), TextBlock(text="Describe the document in a sentence."), ], ) ] resp = llm.chat(messages) print(resp)
+```
+assistant: This research paper assesses and mitigates multi-turn jailbreak vulnerabilities in recent large language models (LLMs) using the Crescendo attack, evaluating prompt hardening and LLM-as-guardrail strategies across various task categories.
+
+
+```
+
 ## Structured Prediction¶
 LlamaIndex provides an intuitive interface for converting any LLM into a structured LLM through `structured_predict` - simply define the target Pydantic class (can be nested), and given a prompt, we extract out the desired object.
 In [ ]:
@@ -721,6 +751,51 @@ chat_history = [ ChatMessage(role="user", content="What is the current time in N
 Calling get_current_time with {'timezone': 'America/New_York'}
 Tool output:  {'time': '2025-03-14 10:59:06', 'timezone': 'America/New_York'}
 Final response:  The current time in New York is 2025-03-14 10:59:06.
+
+```
+
+We can also call multiple tools simultaneously in a single request, making it efficient for complex queries that require different types of information.
+In [ ]:
+Copied!
+```
+# Define another tool for temperature
+def get_temperature(city: str) -> dict:
+    """Get the current temperature for a city"""
+    return {
+        "city": city,
+        "temperature": "25°C",
+    }
+
+
+# Create tools from functions
+tool1 = FunctionTool.from_defaults(fn=get_current_time)
+tool2 = FunctionTool.from_defaults(fn=get_temperature)
+
+# Ask a question that requires both tools
+chat_history = [
+    ChatMessage(
+        role="user",
+        content="What is the current time and temperature in New York?",
+    )
+]
+
+# The model will intelligently decide which tools to call
+resp = llm.chat_with_tools([tool1, tool2], chat_history=chat_history)
+tool_calls = llm.get_tool_calls_from_response(
+    resp, error_on_no_tool_call=False
+)
+
+print(f"Model made {len(tool_calls)} tool calls:")
+for i, tool_call in enumerate(tool_calls, 1):
+    print(f"{i}. {tool_call.tool_name} with args: {tool_call.tool_kwargs}")
+
+```
+
+# Define another tool for temperature def get_temperature(city: str) -> dict: """Get the current temperature for a city""" return { "city": city, "temperature": "25°C", } # Create tools from functions tool1 = FunctionTool.from_defaults(fn=get_current_time) tool2 = FunctionTool.from_defaults(fn=get_temperature) # Ask a question that requires both tools chat_history = [ ChatMessage( role="user", content="What is the current time and temperature in New York?", ) ] # The model will intelligently decide which tools to call resp = llm.chat_with_tools([tool1, tool2], chat_history=chat_history) tool_calls = llm.get_tool_calls_from_response( resp, error_on_no_tool_call=False ) print(f"Model made {len(tool_calls)} tool calls:") for i, tool_call in enumerate(tool_calls, 1): print(f"{i}. {tool_call.tool_name} with args: {tool_call.tool_kwargs}")
+```
+Model made 2 tool calls:
+1. get_current_time with args: {'timezone': 'America/New_York'}
+2. get_temperature with args: {'city': 'New York'}
 
 ```
 

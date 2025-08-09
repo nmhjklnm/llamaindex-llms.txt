@@ -92,7 +92,7 @@ llm = OpenAI(model="gpt-4o", api_key="sk-...")
 
 from llama_index.llms.openai import OpenAI llm = OpenAI(model="gpt-4o", api_key="sk-...")
 ## Mem0 for Function Calling Agents¶
-Use `Mem0` as memory for `FunctionCallingAgents`.
+Use `Mem0` as memory for `FunctionAgent`s.
 ### Initialize Tools¶
 In [ ]:
 Copied!

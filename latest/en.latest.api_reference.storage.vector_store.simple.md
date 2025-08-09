@@ -168,7 +168,7 @@ class SimpleVectorStore(BasePydanticVectorStore):
         filters: Optional[MetadataFilters] = None,
         **delete_kwargs: Any,
     ) -> None:
-        filter_fn = _build_metadata_filter_fn(
+        filter_fn = build_metadata_filter_fn(
             lambda node_id: self.data.metadata_dict[node_id], filters
         )
 
@@ -210,7 +210,7 @@ class SimpleVectorStore(BasePydanticVectorStore):
                 "Please rebuild the store with metadata to enable filtering."
             )
         # Prefilter nodes based on the query filter and node ID restrictions.
-        query_filter_fn = _build_metadata_filter_fn(
+        query_filter_fn = build_metadata_filter_fn(
             lambda node_id: self.data.metadata_dict[node_id], query.filters
         )
 
@@ -562,7 +562,7 @@ def query(
             "Please rebuild the store with metadata to enable filtering."
         )
     # Prefilter nodes based on the query filter and node ID restrictions.
-    query_filter_fn = _build_metadata_filter_fn(
+    query_filter_fn = build_metadata_filter_fn(
         lambda node_id: self.data.metadata_dict[node_id], query.filters
     )
 

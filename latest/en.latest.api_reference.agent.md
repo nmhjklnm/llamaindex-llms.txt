@@ -2314,7 +2314,7 @@ Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
 `reasoning_key` |  `str` |  |  `'current_reasoning'`  
-`output_parser` |  `ReActOutputParser` |  The react output parser |  `<llama_index.core.agent.react.output_parser.ReActOutputParser object at 0x710977808ce0>`  
+`output_parser` |  `ReActOutputParser` |  The react output parser |  `<llama_index.core.agent.react.output_parser.ReActOutputParser object at 0x7a386459ba70>`  
 `formatter` |  `ReActChatFormatter` |  The react chat formatter to format the reasoning steps and chat history into an llm input. |  `<dynamic>`  
 Source code in `llama-index-core/llama_index/core/agent/workflow/react_agent.py`
 
@@ -2360,7 +2360,7 @@ class ReActAgent(BaseWorkflowAgent):
             react_header = prompts["react_header"]
             if isinstance(react_header, str):
                 react_header = PromptTemplate(react_header)
-            self.formatter.system_header = react_header.get_template()
+            self.formatter.system_header = react_header.format()
 
     async def take_step(
         self,

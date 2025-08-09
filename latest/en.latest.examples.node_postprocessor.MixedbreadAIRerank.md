@@ -6,10 +6,11 @@ Copied!
 ```
 %pip install llama-index > /dev/null
 %pip install llama-index-postprocessor-mixedbreadai-rerank > /dev/null
+%pip install llama-index-llms-openai > /dev/null
 
 ```
 
-%pip install llama-index > /dev/null %pip install llama-index-postprocessor-mixedbreadai-rerank > /dev/null
+%pip install llama-index > /dev/null %pip install llama-index-postprocessor-mixedbreadai-rerank > /dev/null %pip install llama-index-llms-openai > /dev/null
 In [ ]:
 Copied!
 ```
@@ -30,16 +31,16 @@ Copied!
 
 !mkdir -p 'data/paul_graham/' !wget 'https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt' -O 'data/paul_graham/paul_graham_essay.txt'
 ```
---2024-06-17 19:19:32--  https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt
-Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 185.199.108.133, 185.199.111.133, 185.199.109.133, ...
-Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|185.199.108.133|:443... connected.
+--2025-07-24 19:14:25--  https://raw.githubusercontent.com/run-llama/llama_index/main/docs/docs/examples/data/paul_graham/paul_graham_essay.txt
+Resolving raw.githubusercontent.com (raw.githubusercontent.com)... 2606:50c0:8000::154, 2606:50c0:8001::154, 2606:50c0:8002::154, ...
+Connecting to raw.githubusercontent.com (raw.githubusercontent.com)|2606:50c0:8000::154|:443... connected.
 HTTP request sent, awaiting response... 200 OK
 Length: 75042 (73K) [text/plain]
 Saving to: ‘data/paul_graham/paul_graham_essay.txt’
 
 data/paul_graham/pa 100%[===================>]  73.28K  --.-KB/s    in 0.03s   
 
-2024-06-17 19:19:32 (2.11 MB/s) - ‘data/paul_graham/paul_graham_essay.txt’ saved [75042/75042]
+2025-07-24 19:14:25 (2.35 MB/s) - ‘data/paul_graham/paul_graham_essay.txt’ saved [75042/75042]
 
 
 ```

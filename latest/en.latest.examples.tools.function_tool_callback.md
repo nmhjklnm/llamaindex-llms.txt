@@ -14,13 +14,13 @@ In [ ]:
 Copied!
 ```
 from llama_index.core.tools import FunctionTool
-from llama_index.agent.openai import OpenAIAgent
+from llama_index.core.agent.workflow import FunctionAgent
 from llama_index.llms.openai import OpenAI
 import os
 
 ```
 
-from llama_index.core.tools import FunctionTool from llama_index.agent.openai import OpenAIAgent from llama_index.llms.openai import OpenAI import os
+from llama_index.core.tools import FunctionTool from llama_index.core.agent.workflow import FunctionAgent from llama_index.llms.openai import OpenAI import os
 In [ ]:
 Copied!
 ```
@@ -71,34 +71,21 @@ def send_hello(destination: str, message: str) -> str: """ Say hello with a rhym
 In [ ]:
 Copied!
 ```
-hello_tool.to_langchain_tool
+llm = OpenAI(model="gpt-4.1")
+agent = FunctionAgent(tools=[hello_tool])
 
 ```
 
-hello_tool.to_langchain_tool
-Out[ ]:
-```
-<bound method FunctionTool.to_langchain_tool of <llama_index.core.tools.function_tool.FunctionTool object at 0x7f7da9fa5670>>
-```
-
+llm = OpenAI(model="gpt-4.1") agent = FunctionAgent(tools=[hello_tool])
 In [ ]:
 Copied!
 ```
-llm = OpenAI()
-agent = OpenAIAgent.from_tools([hello_tool])
-
-```
-
-llm = OpenAI() agent = OpenAIAgent.from_tools([hello_tool])
-In [ ]:
-Copied!
-```
-response = agent.chat("Send hello to Karen")
+response = await agent.run("Send hello to Karen")
 print(str(response))
 
 ```
 
-response = agent.chat("Send hello to Karen") print(str(response))
+response = await agent.run("Send hello to Karen") print(str(response))
 ```
 The hello message has been sent to Karen with the rhyme "Hello Karen, you're a star!"
 
@@ -107,12 +94,12 @@ The hello message has been sent to Karen with the rhyme "Hello Karen, you're a s
 In [ ]:
 Copied!
 ```
-response = agent.chat("Send hello to Joe")
+response = await agent.run("Send hello to Joe")
 print(str(response))
 
 ```
 
-response = agent.chat("Send hello to Joe") print(str(response))
+response = await agent.run("Send hello to Joe") print(str(response))
 ```
 I have successfully sent a hello message to Joe with the greeting "Hello Joe, you're a pro!"
 

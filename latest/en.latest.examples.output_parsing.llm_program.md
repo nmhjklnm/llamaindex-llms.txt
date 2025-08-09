@@ -130,10 +130,10 @@ Sometimes you may want to parse an output your own way into a JSON object.
 In [ ]:
 Copied!
 ```
-from llama_index.core.output_parsers import ChainableOutputParser
+from llama_index.core.output_parsers import BaseOutputParser
 
 
-class CustomAlbumOutputParser(ChainableOutputParser):
+class CustomAlbumOutputParser(BaseOutputParser):
     """Custom Album output parser.
 
     Assume first line is name and artist.
@@ -160,7 +160,7 @@ class CustomAlbumOutputParser(ChainableOutputParser):
 
 ```
 
-from llama_index.core.output_parsers import ChainableOutputParser class CustomAlbumOutputParser(ChainableOutputParser): """Custom Album output parser. Assume first line is name and artist. Assume each subsequent line is the song. """ def __init__(self, verbose: bool = False): self.verbose = verbose def parse(self, output: str) -> Album: """Parse output.""" if self.verbose: print(f"> Raw output: {output}") lines = output.split("\n") name, artist = lines[0].split(",") songs = [] for i in range(1, len(lines)): title, length_seconds = lines[i].split(",") songs.append(Song(title=title, length_seconds=length_seconds)) return Album(name=name, artist=artist, songs=songs)
+from llama_index.core.output_parsers import BaseOutputParser class CustomAlbumOutputParser(BaseOutputParser): """Custom Album output parser. Assume first line is name and artist. Assume each subsequent line is the song. """ def __init__(self, verbose: bool = False): self.verbose = verbose def parse(self, output: str) -> Album: """Parse output.""" if self.verbose: print(f"> Raw output: {output}") lines = output.split("\n") name, artist = lines[0].split(",") songs = [] for i in range(1, len(lines)): title, length_seconds = lines[i].split(",") songs.append(Song(title=title, length_seconds=length_seconds)) return Album(name=name, artist=artist, songs=songs)
 In [ ]:
 Copied!
 ```

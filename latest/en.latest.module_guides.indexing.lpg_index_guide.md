@@ -111,7 +111,7 @@ kg_extractor = ImplicitPathExtractor()
 
 ```
 
-###  `DynamicLLMPathExtractor`#
+####  `DynamicLLMPathExtractor`#
 Will extract paths (including entity types!) according to optional list of allowed entity types and relation types. If none are provided, then the LLM will assign types as it sees fit. If they are provided, it will help guide the LLM, but will not enforce exactly those types.
 ```
 from llama_index.core.indices.property_graph import DynamicLLMPathExtractor

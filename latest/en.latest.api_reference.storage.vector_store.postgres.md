@@ -693,15 +693,15 @@ class PGVectorStore(BasePydanticVectorStore):
         if query_str is None:
             raise ValueError("query_str must be specified for a sparse vector query.")
 
-        # Replace '&' with '|' to perform an OR search for higher recall
-        config_type_coerce = type_coerce(self.text_search_config, REGCONFIG)
+        # Remove "&", "|" and collapse multiple spaces ("&" and "|" are used by ts_query)
+        query_str = re.sub(r"\s*(?:[|&]|\s)\s*", " ", query_str).strip()
+
+        # Replace space with "|" to perform an OR search for higher recall
+        query_str = query_str.replace(" ", "|")
+
         ts_query = func.to_tsquery(
-            config_type_coerce,
-            func.replace(
-                func.text(func.plainto_tsquery(config_type_coerce, query_str)),
-                "&",
-                "|",
-            ),
+            type_coerce(self.text_search_config, REGCONFIG),
+            query_str,
         )
         stmt = (
             select(  # type: ignore

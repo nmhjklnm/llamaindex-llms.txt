@@ -228,6 +228,100 @@ There were plenty of earnest students too: kids who "could draw" in high school,
 I learned a lot in the color class I took at RISD, but otherwise I was basically teaching myself to paint, and I could do that for free. So in 1993 I dropped out. I hung around Providence for a bit, and then my college friend Nancy Parmet did me a big favor. A rent-controlled apartment in a building her mother owned in New York was becoming vacant. Did I want it? It wasn't much more than my current place, and New York was supposed to be where the artists were. So yes, I wanted it! [7]
 Asterix comics begin by zooming in on a tiny corner of Roman Gaul that turns out not to be controlled by the Romans.  
 
+## BM25 Retriever + MetadataFiltering¶
+In [ ]:
+Copied!
+```
+# Intialize document with some metadata
+from llama_index.core import Document
+
+documents = [
+    Document(text="Hello, world!", metadata={"key": "1"}),
+    Document(text="Hello, world! 2", metadata={"key": "2"}),
+    Document(text="Hello, world! 3", metadata={"key": "3"}),
+    Document(text="Hello, world! 2.1", metadata={"key": "2"}),
+]
+
+```
+
+# Intialize document with some metadata from llama_index.core import Document documents = [ Document(text="Hello, world!", metadata={"key": "1"}), Document(text="Hello, world! 2", metadata={"key": "2"}), Document(text="Hello, world! 3", metadata={"key": "3"}), Document(text="Hello, world! 2.1", metadata={"key": "2"}), ]
+In [ ]:
+Copied!
+```
+# Initialize node parser
+from llama_index.core.node_parser import SentenceSplitter
+
+from llama_index.core.storage.docstore import SimpleDocumentStore
+
+splitter = SentenceSplitter(chunk_size=512)
+nodes = splitter.get_nodes_from_documents(documents)
+
+# Add nodes to docstore
+docstore = SimpleDocumentStore()
+docstore.add_documents(nodes)
+
+```
+
+# Initialize node parser from llama_index.core.node_parser import SentenceSplitter from llama_index.core.storage.docstore import SimpleDocumentStore splitter = SentenceSplitter(chunk_size=512) nodes = splitter.get_nodes_from_documents(documents) # Add nodes to docstore docstore = SimpleDocumentStore() docstore.add_documents(nodes)
+In [ ]:
+Copied!
+```
+# Define metadata filters
+from llama_index.core.vector_stores.types import (
+    MetadataFilters,
+    MetadataFilter,
+    FilterOperator,
+    FilterCondition,
+)
+
+filters = MetadataFilters(
+    filters=[
+        MetadataFilter(
+            key="key",
+            value="2",
+            operator=FilterOperator.EQ,
+        )
+    ],
+    condition=FilterCondition.AND,
+)
+
+```
+
+# Define metadata filters from llama_index.core.vector_stores.types import ( MetadataFilters, MetadataFilter, FilterOperator, FilterCondition, ) filters = MetadataFilters( filters=[ MetadataFilter( key="key", value="2", operator=FilterOperator.EQ, ) ], condition=FilterCondition.AND, )
+In [ ]:
+Copied!
+```
+from llama_index.core.response.notebook_utils import display_source_node
+
+from llama_index.retrievers.bm25 import BM25Retriever
+import Stemmer
+
+retrieved_nodes = BM25Retriever.from_defaults(
+    docstore=docstore,
+    similarity_top_k=3,
+    filters=filters,  # Add filters here
+    stemmer=Stemmer.Stemmer("english"),
+    language="english",
+).retrieve("Hello, world!")
+
+for node in retrieved_nodes:
+    display_source_node(node, source_length=5000)
+
+```
+
+from llama_index.core.response.notebook_utils import display_source_node from llama_index.retrievers.bm25 import BM25Retriever import Stemmer retrieved_nodes = BM25Retriever.from_defaults( docstore=docstore, similarity_top_k=3, filters=filters, # Add filters here stemmer=Stemmer.Stemmer("english"), language="english", ).retrieve("Hello, world!") for node in retrieved_nodes: display_source_node(node, source_length=5000)
+**Node ID:** 0f3edb98-b775-4487-ae21-fb74b0fa03ca  
+**Similarity:** 0.08428841084241867  
+**Text:** Hello, world! 2.1  
+
+**Node ID:** d1e65c33-30a8-4ed7-85d4-361ba7788d29  
+**Similarity:** 0.08428841084241867  
+**Text:** Hello, world! 2  
+
+**Node ID:** 906c8190-02fe-473b-ac92-89ea1f6f2237  
+**Similarity:** 0.0  
+**Text:** Hello, world! 3  
+
 ## Hybrid Retriever with BM25 + Chroma¶
 Now we will combine bm25 and chroma for sparse and dense retrieval.
 The results are combined using the `QueryFusionRetriever`.

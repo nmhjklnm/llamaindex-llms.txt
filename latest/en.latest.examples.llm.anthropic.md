@@ -815,16 +815,12 @@ from llama_index.llms.anthropic import Anthropic
 
 llm = Anthropic(
     model="claude-sonnet-4-0",
-    api_key="sk-...",
-    # NOTE: beta headers are required for this feature as of 2025-07-03
-    additional_kwargs={
-        "extra_headers": {"anthropic-beta": "search-results-2025-06-09"}
-    },
+    # api_key="sk-...",
 )
 
 ```
 
-from llama_index.llms.anthropic import Anthropic llm = Anthropic( model="claude-sonnet-4-0", api_key="sk-...", # NOTE: beta headers are required for this feature as of 2025-07-03 additional_kwargs={ "extra_headers": {"anthropic-beta": "search-results-2025-06-09"} }, )
+from llama_index.llms.anthropic import Anthropic llm = Anthropic( model="claude-sonnet-4-0", # api_key="sk-...", )
 ### Agents + Citable Tools¶
 You can also use these tools directly in pre-built agents, like the `FunctionAgent`, to get the same citations in the output.
 In [ ]:
@@ -880,7 +876,7 @@ This is where LlamaIndex comes in as the solution. LlamaIndex is a "data framewo
 LlamaIndex offers data connectors to ingest your existing data sources and data formats (APIs, PDFs, docs, SQL, etc.) and provides ways to structure your data (indices, graphs) so that this data can be easily used with LLMs.
 
 ## Enhanced Query Interface
-LlamaIndex provides an advanced retrieval/query interface over your data: Feed in any LLM input prompt, get back retrieved context and knowledge-augmented output. This means when you ask a question, LlamaIndex retrieves relevant information from your private data and combines it with the LLM's capabilities to provide more accurate, contextual responses.
+LlamaIndex provides an advanced retrieval/query interface over your data: Feed in any LLM input prompt, get back retrieved context and knowledge-augmented output. This means when you ask a question, LlamaIndex retrieves relevant information from your private data and provides it as context to the LLM, enabling more accurate and personalized responses.
 
 ## Flexible Integration
 LlamaIndex allows easy integrations with your outer application framework (e.g. with LangChain, Flask, Docker, ChatGPT, anything else).
@@ -978,41 +974,35 @@ from llama_index.core.llms import ChatMessage, CitationBlock chat_history = [ Ch
 Based on the search results, I can explain how LlamaIndex and LLMs work together:
 
 
-LLMs are a phenomenal piece of technology for knowledge generation and reasoning. They are pre-trained on large amounts of publicly available data.
- However, there's a key challenge: 
-How do we best augment LLMs with our own private data?
+LlamaIndex is a "data framework" to help you build LLM apps
+. The integration works by addressing a key challenge: 
+while LLMs are a phenomenal piece of technology for knowledge generation and reasoning and are pre-trained on large amounts of publicly available data, we need a comprehensive toolkit to help perform data augmentation for LLMs with our own private data
+.
 
+Here's how LlamaIndex and LLMs work together:
 
-
-That's where LlamaIndex comes in. LlamaIndex is a "data framework" to help you build LLM apps.
- Here's how they work together:
-
-## Key Integration Points
-
-**1. Data Ingestion and Connection**
+## Data Integration
 
 LlamaIndex offers data connectors to ingest your existing data sources and data formats (APIs, PDFs, docs, SQL, etc.)
+, allowing you to bring your private data into a format that LLMs can work with.
 
+## Data Structuring
 
-**2. Data Structuring for LLM Compatibility**
+LlamaIndex provides ways to structure your data (indices, graphs) so that this data can be easily used with LLMs
+. This structuring is crucial for making your data accessible and searchable by the LLM.
 
-LlamaIndex provides ways to structure your data (indices, graphs) so that this data can be easily used with LLMs.
+## Enhanced Querying
 
+LlamaIndex provides an advanced retrieval/query interface over your data: Feed in any LLM input prompt, get back retrieved context and knowledge-augmented output
+. This means when you ask the LLM a question, LlamaIndex retrieves relevant information from your data and provides it as context to enhance the LLM's response.
 
-**3. Enhanced Query Interface**
+## Application Integration
 
-LlamaIndex provides an advanced retrieval/query interface over your data: Feed in any LLM input prompt, get back retrieved context and knowledge-augmented output.
+LlamaIndex allows easy integrations with your outer application framework (e.g. with LangChain, Flask, Docker, ChatGPT, anything else)
+, making it flexible to incorporate into existing systems.
 
-
-**4. Application Integration**
-
-LlamaIndex allows easy integrations with your outer application framework (e.g. with LangChain, Flask, Docker, ChatGPT, anything else).
-
-
-## Flexibility for Different Users
-
-
-LlamaIndex provides tools for both beginner users and advanced users. The high-level API allows beginner users to use LlamaIndex to ingest and query their data in 5 lines of code. The lower-level APIs allow advanced users to customize and extend any module (data connectors, indices, retrievers, query engines, reranking modules), to fit their needs.
+The framework is designed to be accessible to users at different levels: 
+LlamaIndex's high-level API allows beginner users to use LlamaIndex to ingest and query their data in 5 lines of code, while
 --------------------------------------------------------------------------------
 Source:  https://docs.llamaindex.ai
 Title:  Facts about LLMs and LlamaIndex

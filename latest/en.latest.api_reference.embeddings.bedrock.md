@@ -113,6 +113,7 @@ class BedrockEmbedding(BaseEmbedding):
                     retries={"max_attempts": max_retries, "mode": "standard"},
                     connect_timeout=timeout,
                     read_timeout=timeout,
+                    user_agent_extra="x-client-framework:llama_index",
                 )
                 if botocore_config is None
                 else botocore_config
@@ -205,6 +206,7 @@ class BedrockEmbedding(BaseEmbedding):
 
         try:
             import boto3
+            from botocore.config import Config
 
             session = boto3.Session(**session_kwargs)
         except ImportError:
@@ -213,7 +215,8 @@ class BedrockEmbedding(BaseEmbedding):
             )
 
         if "bedrock-runtime" in session.get_available_services():
-            self._client = session.client("bedrock-runtime")
+            config = Config(user_agent_extra="x-client-framework:llama_index")
+            self._client = session.client("bedrock-runtime", config=config)
         else:
             self._client = session.client("bedrock")
 
@@ -277,6 +280,7 @@ class BedrockEmbedding(BaseEmbedding):
 
         try:
             import boto3
+            from botocore.config import Config
 
             session = boto3.Session(**session_kwargs)
         except ImportError:
@@ -285,7 +289,8 @@ class BedrockEmbedding(BaseEmbedding):
             )
 
         if "bedrock-runtime" in session.get_available_services():
-            client = session.client("bedrock-runtime")
+            config = Config(user_agent_extra="x-client-framework:llama_index")
+            client = session.client("bedrock-runtime", config=config)
         else:
             client = session.client("bedrock")
         return cls(
@@ -554,6 +559,7 @@ def from_credentials(
 
     try:
         import boto3
+        from botocore.config import Config
 
         session = boto3.Session(**session_kwargs)
     except ImportError:
@@ -562,7 +568,8 @@ def from_credentials(
         )
 
     if "bedrock-runtime" in session.get_available_services():
-        client = session.client("bedrock-runtime")
+        config = Config(user_agent_extra="x-client-framework:llama_index")
+        client = session.client("bedrock-runtime", config=config)
     else:
         client = session.client("bedrock")
     return cls(

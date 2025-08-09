@@ -335,7 +335,7 @@ The definition of a session.
 Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
-`session_id` |  `str` |  |  `'5c5dcb53-2213-48a0-8798-ad594772c7a0'`  
+`session_id` |  `str` |  |  `'dff97d69-f9b6-4f5d-8128-d9b1cfdff7d6'`  
 `task_ids` |  `list[str]` |  Built-in mutable sequence. If no argument is given, the constructor creates a new empty list. The argument must be an iterable if specified. |  `<dynamic>`  
 Attributes:
 Name | Type | Description  
@@ -380,7 +380,7 @@ Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
 `input` |  `str` |  |  _required_  
-`task_id` |  `str` |  |  `'d20f5de3-a8c7-41f6-b464-a441d0eb1856'`  
+`task_id` |  `str` |  |  `'8bafc484-dc25-498d-9a3d-ff6b51143988'`  
 `session_id` |  `str | None` |  |  `None`  
 `agent_id` |  `str | None` |  |  `None`  
 Attributes:
@@ -511,7 +511,7 @@ A tool call.
 Parameters:
 Name | Type | Description | Default  
 ---|---|---|---  
-`id_` |  `str` |  |  `'f724ecf9-0ba5-487c-a6eb-1b1a6a62f0dd'`  
+`id_` |  `str` |  |  `'78494b62-846f-4232-aaff-5f6bf24f6ff0'`  
 `tool_call_bundle` |  `ToolCallBundle` |  |  _required_  
 `source_id` |  `str` |  |  _required_  
 Attributes:
