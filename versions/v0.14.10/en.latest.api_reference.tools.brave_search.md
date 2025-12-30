@@ -1,0 +1,116 @@
+# Brave search
+##  BraveSearchToolSpec #
+Bases: `BaseToolSpec`
+Brave Search tool spec.
+Source code in `llama-index-integrations/tools/llama-index-tools-brave-search/llama_index/tools/brave_search/base.py`
+
+| ```
+class BraveSearchToolSpec(BaseToolSpec):
+    """
+    Brave Search tool spec.
+    """
+
+    spec_functions = ["brave_search"]
+
+    def __init__(self, api_key: str) -> None:
+        """
+        Initialize with parameters.
+        """
+        self.api_key = api_key
+
+    def _make_request(self, params: Dict) -> requests.Response:
+        """
+        Make a request to the Brave Search API.
+
+        Args:
+            params (dict): The parameters to be passed to the API.
+
+        Returns:
+            requests.Response: The response from the API.
+
+        """
+        headers = {
+            "Accept": "application/json",
+            "Accept-Encoding": "gzip",
+            "X-Subscription-Token": self.api_key,
+        }
+        url = SEARCH_URL_TMPL.format(params=urllib.parse.urlencode(params))
+
+        response = requests.get(url, headers=headers)
+        response.raise_for_status()
+        return response
+
+    def brave_search(
+        self, query: str, search_lang: str = "en", num_results: int = 5
+    ) -> [Document]:
+        """
+        Make a query to the Brave Search engine to receive a list of results.
+
+        Args:
+            query (str): The query to be passed to Brave Search.
+            search_lang (str): The search language preference (ISO 639-1), default is "en".
+            num_results (int): The number of search results returned in response, default is 5.
+
+        Returns:
+            [Document]: A list of documents containing search results.
+
+        """
+        search_params = {
+            "q": query,
+            "search_lang": search_lang,
+            "count": num_results,
+        }
+
+        response = self._make_request(search_params)
+        return [Document(text=response.text)]
+
+```
+  
+---|---  
+###  brave_search #
+```
+brave_search(query: str, search_lang: str = 'en', num_results: int = 5) -> [Document]
+
+```
+
+Make a query to the Brave Search engine to receive a list of results.
+Parameters:
+Name | Type | Description | Default  
+---|---|---|---  
+`query` |  `str` |  The query to be passed to Brave Search. |  _required_  
+`search_lang` |  `str` |  The search language preference (ISO 639-1), default is "en". |  `'en'`  
+`num_results` |  `int` |  The number of search results returned in response, default is 5. |  `5`  
+Returns:
+Type | Description  
+---|---  
+`[Document]` |  [Document]: A list of documents containing search results.  
+Source code in `llama-index-integrations/tools/llama-index-tools-brave-search/llama_index/tools/brave_search/base.py`
+
+| ```
+def brave_search(
+    self, query: str, search_lang: str = "en", num_results: int = 5
+) -> [Document]:
+    """
+    Make a query to the Brave Search engine to receive a list of results.
+
+    Args:
+        query (str): The query to be passed to Brave Search.
+        search_lang (str): The search language preference (ISO 639-1), default is "en".
+        num_results (int): The number of search results returned in response, default is 5.
+
+    Returns:
+        [Document]: A list of documents containing search results.
+
+    """
+    search_params = {
+        "q": query,
+        "search_lang": search_lang,
+        "count": num_results,
+    }
+
+    response = self._make_request(search_params)
+    return [Document(text=response.text)]
+
+```
+  
+---|---
